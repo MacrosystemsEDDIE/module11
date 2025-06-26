@@ -2,7 +2,7 @@
 title: "Module 11 Canning data workflow"
 author: "Mary Lofton, Austin Delany, Sherry Zhai"
 date: "2025-06-26"
-output: html_document
+output: md_document
 ---
 
 ```{r setup, include=FALSE}
