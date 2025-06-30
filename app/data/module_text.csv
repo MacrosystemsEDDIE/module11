@@ -20,8 +20,8 @@ workflow1,"After the instructor completes the PowerPoint presentation, students 
 workflow2,"There are questions in blue text boxes embedded throughout the Shiny app which correspond to the questions in the final report. Students should input their answers into the final report Word document. In addition, students will be cued to download visualizations generated throughout the module and copy-paste them into the final report. "
 workflow3,"Once students have completed all three activities, the final report may be submitted to the instructor for assessment."
 workflow4,"We encourage you to save your progress regularly by clicking ""Bookmark my progress"" and copying the (quite long!) link to a secure location. When pasted into your web browser, this link will load a Shiny app session that contains your progress."
-obj_01,"Select a NEON site from the table, then click on the ""View latest photo"" button to load the latest image from that site. Follow the link at the bottom of the 'About Site' section to find out more about the site."
-obj_02,Explore the data measured at the selected site. These are data that has been downloaded from the NEON Data Portal. The variables shown have been selected for this module but there are a wide range of variables collected at each NEON site.
+obj_01,"Select a case study from the table, then read the text in the 'About Case Study' section to find out more about the case study."
+obj_02,"Explore the data measured at the selected site, including how each variable changes over time and how the variables relate to each other."
 obj_03,We will use chlorophyll-a sensor data to estimate primary productivity. Chlorophyll-a concentrations are an indicator of phytoplankton abundance and biomass. Explore the options below to see if there are any relationships between chlorophyll-a and the other variables measured at your site. This information will be used to build your model.
 obj_04,"Using your understanding of aquatic ecosystems, you will build a simple ecological model to predict primary productivity."
 obj_05,Test different scenarios with your model to understand how it will respond under different environmental conditions. Use observed data to calibrate the model (i.e. make your model better match observed data).
@@ -52,3 +52,5 @@ phenocam,A 'phenocam' is a digital camera capturing time-lapse images of foliage
 privacy_policy,This Shiny App does not collect or store any of your data.
 acknowledgement,"This module was developed by: Lofton, M.E., Hipsey, M.H., Kurucz, K., and C.C. Carey. 27 June 2025. Macrosystems EDDIE: Time Series Modeling and Prediction of Environmental Data. Macrosystems EDDIE Module 11, Version 1. http://module11.macrosystemseddie.org. Module development was supported by NSF grants XX."
 linear_regression,"A linear regression models the relationship between two variables by fitting a linear equation to observed data. One variable (x) is a predictor variable, and the other is a response variable (y). For example, we will model surface water temperature (the response variable) using air temperature as a predictor variable."
+cann,Important information students should know about the Canning River
+cann_photo,"Canning River, Perth, Australia. Photo credit: Mary Lofton"

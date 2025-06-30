@@ -3,11 +3,11 @@ mtab1,Module Overview
 mtab2,Presentation
 mtab3,Introduction
 mtab4,Activity A
-obj1,Objective 1 - Select and view site
+obj1,Objective 1 - Select case study
 obj2,Objective 2 - Explore data
-obj3,Objective 3 - Explore variable relationships
-obj4,Objective 4 - Understand model
-obj5,Objective 5 - Build Model
+obj3,Objective 3 - Learn about ARIMA model
+obj4,Objective 4 - Fit model
+obj5,Objective 5 - Assess model fit
 mtab5,Activity B
 obj6,Objective 6 - Examine uncertainty
 obj7,Objective 7 - Prepare inputs

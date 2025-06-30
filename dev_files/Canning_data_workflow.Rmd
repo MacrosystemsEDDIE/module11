@@ -245,6 +245,15 @@ chla_df <- profile_data_grouped %>%
   rename(obs_datetime = datetime) %>%
   rename(datetime = chla_dates) %>%
   bind_rows(., dailyData)
+
+module_data <- chla_df %>%
+  select(-site_id, -datetime) %>%
+  rename(datetime = obs_datetime) %>%
+  filter(year(datetime) %in% c(2024:2025)) %>%
+  pivot_wider(names_from = variable, values_from = observation)
+
+write.csv(module_data, "/Users/marylofton/RProjects/module11_dev/app/data/cann.csv",row.names = FALSE)
+
 ```
 
 Plot final dataframe
