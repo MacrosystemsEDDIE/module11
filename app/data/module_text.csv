@@ -22,7 +22,7 @@ workflow3,"Once students have completed all three activities, the final report m
 workflow4,"We encourage you to save your progress regularly by clicking ""Bookmark my progress"" and copying the (quite long!) link to a secure location. When pasted into your web browser, this link will load a Shiny app session that contains your progress."
 obj_01,"Select a case study from the table, then read the text in the 'About Case Study' section to find out more about the case study."
 obj_02,"Explore the data measured at the selected site, including how each variable changes over time and how the variables relate to each other."
-obj_03,We will use chlorophyll-a sensor data to estimate primary productivity. Chlorophyll-a concentrations are an indicator of phytoplankton abundance and biomass. Explore the options below to see if there are any relationships between chlorophyll-a and the other variables measured at your site. This information will be used to build your model.
+obj_03,"We will use the environmental data from your case study to fit an ARIMA model that will predict future values of the target variable. But first, we will learn about how ARIMA models are used for time series prediction."
 obj_04,"Using your understanding of aquatic ecosystems, you will build a simple ecological model to predict primary productivity."
 obj_05,Test different scenarios with your model to understand how it will respond under different environmental conditions. Use observed data to calibrate the model (i.e. make your model better match observed data).
 obj_06,Gain an understanding of what uncertainty is in the context of an ecological forecast and explore weather forecast data. Demonstrate how uncertainty can be quantified.

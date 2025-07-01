@@ -450,30 +450,71 @@ ui <- function(request) {
                                                       )
                                                )
                                              ),
-                                             # hr(),
-                                             # fluidRow(
-                                             #   column(4,
-                                             #          h3("Calculate statistics"),
-                                             #          selectInput("stat_calc", label = "Select calculation:", choices = stats),
-                                             #          wellPanel(
-                                             #            textOutput("out_stats")
-                                             #          )
-                                             #   ),
-                                             #   column(8,
-                                             #          box(id = "box4", width = 12, status = "primary",
-                                             #              solidHeader = TRUE,
-                                             #              fluidRow(
-                                             #                column(10, offset = 1,
-                                             #                       h3("Questions"),
-                                             #                       h4(quest["q4", 1]),
-                                             #                       DTOutput("q6_tab"),
-                                             #                       br()
-                                             #                )
-                                             #              )
-                                             #          )
-                                             #   )
-                                             # ),
-                                             hr()
+                                             hr(),
+                                             fluidRow(
+                                               column(4,
+                                                      h3("Calculate statistics"),
+                                                      selectInput("stat_calc", label = "Select calculation:", choices = stats),
+                                                      wellPanel(
+                                                        textOutput("out_stats")
+                                                      )
+                                               ),
+                                               column(8,
+                                                      box(id = "box4", width = 12, status = "primary",
+                                                          solidHeader = TRUE,
+                                                          fluidRow(
+                                                            column(10, offset = 1,
+                                                                   h3("Questions"),
+                                                                   h4(quest["q5", 1]),
+                                                                   DTOutput("stat_tab"),
+                                                                   br()
+                                                            )
+                                                          )
+                                                      )
+                                               )
+                                             ),
+                                             hr(),
+                                             fluidRow(
+                                               column(4,
+                                                      h3("Investigate variable relationships"),
+                                                      p("For Q. 6 you will explore the relationship between the target variable for prediction and the other variables at this site. You may or may not discover any relationships between these variables."),
+                                                      selectizeInput("x_var", "Select X variable",
+                                                                     choices = unique(site_vars$variable_name)[-1],
+                                                                     options = list(
+                                                                       placeholder = 'Please select a variable',
+                                                                       onInitialize = I('function() { this.setValue(""); }'))
+                                                                     )
+                                               ),
+                                               #** Comparison Plot ----
+                                               column(6,
+                                                      wellPanel(
+                                                        plotlyOutput("xy_plot")
+                                                      )
+                                               )
+                                             ),
+                                             hr(),
+                                             fluidRow(
+                                               column(10, align = "left",
+                                                      box(id = "box5", width = 12, status = "primary",
+                                                          solidHeader = TRUE,
+                                                          fluidRow(
+                                                            column(10, offset = 1,
+                                                                   h3("Questions"),
+                                                                   h4(quest["q6", 1]),
+                                                                   DTOutput('rel_tab'),
+                                                                   br()
+                                                            )
+                                                          )
+                                                      )
+                                               )
+                                             ),
+                                             hr(),
+                                             fluidRow(
+                                               column(10, offset = 1,
+                                                      h3("Next step"),
+                                                      p("We will learn about the first time series model (an ARIMA model) that we will fit to data from the environmental case study you have chosen.")
+                                               )
+                                             )
                                              ),
                                     tabPanel(title = "Objective 3 - Learn about ARIMA model", value = "obj3",
                                              #* Objective 3 - Explore variable relationships ----
@@ -484,7 +525,76 @@ ui <- function(request) {
                                                                 p(style="text-align: justify;", module_text["obj_03", ])
                                                       )
                                                )
-                                             )
+                                             ),
+                                             fluidRow(
+                                               column(4,
+                                                      h3("Before we fit our model to data..."),
+                                                      p(tags$em("Use the slides and text below to understand the time series model we will be using.")),
+                                                      p(tags$b("What is an ARIMA model?")),
+                                                      tags$ul(
+                                                        tags$li("An ",tags$b("ARIMA model"), " stands for AutoRegressive Integrated Moving Average model. ARIMA models are commonly used in time series forecasting in fields ranging from business to ecology.")
+                                                      ),
+                                                      p(tags$b("AutoRegressive")),
+                                                      tags$ul(
+                                                        tags$li(tags$b("Autoregressive")," models use past values of a variable to predict future values.")
+                                                      ),
+                                                      p(tags$b("Integrated")),
+                                                      tags$ul(
+                                                        tags$li(tags$b("Integrated")," refers to differencing the time series data used to fit an ARIMA model so they are stationary. ",tags$b("Differencing")," means subtracting each value in a series of numbers from the value that comes after it. ",tags$b("Stationary")," means the statistical properties, such as mean and variance, of the time series do not change over time.")
+                                                      ),
+                                                      p(tags$b("Moving Average")),
+                                                      tags$ul(
+                                                        tags$li(tags$b("Moving Average")," refers to using past model errors to help make future predictions.")
+                                                      )
+                                               ),
+                                               column(8,
+                                                      h5("Click the arrows to navigate through the slides", align = "center"),
+                                                      wellPanel(
+                                                        slickROutput("model_slides", width = "700px", height = "525px")
+                                                      )
+                                               )
+                                             ),
+                                             hr(),
+                                             fluidRow(
+                                               column(10, align = "left",
+                                                      box(id = "box5", width = 12, status = "primary",
+                                                          solidHeader = TRUE,
+                                                          fluidRow(
+                                                            column(10, offset = 1,
+                                                                   h3("Questions"),
+                                                                   p(tags$b(quest["q7", 1], width = "90%")),
+                                                                   br()
+                                                            )
+                                                          )
+                                                      )
+                                               )
+                                             ),
+                                             hr(),
+                                             fluidRow(
+                                               column(6,
+                                                      h3("Plot 1-day lag of target variable"),
+                                                      p(id = "txt_j", "Let's explore lags and autocorrelation in the target data from your chosen environmental case study."),
+                                                      br(),
+                                                      actionButton("plot_lag", "Plot lagged timeseries"),
+                                                      br(), br(),
+                                                      box(id = "box2", width = 12, status = "primary",
+                                                          solidHeader = TRUE,
+                                                          fluidRow(
+                                                            column(10, offset = 1,
+                                                                   h3("Questions"),
+                                                                   p(tags$b(quest["q8", 1]))
+                                                            )
+                                                          )
+                                                      )
+                                               ),
+                                               column(6,
+                                                      wellPanel(
+                                                        plotlyOutput("lag_plot")
+                                                      ),
+                                                      downloadButton("save_lag_plot", "Download plot", icon = icon("download"))
+                                               )
+                                             ),
+                                             hr()
                                              ),
                                     tabPanel(title = "Objective 4 - Fit model", value = "obj4",
                                              #* Objective 4 - Understand the ecological model ----

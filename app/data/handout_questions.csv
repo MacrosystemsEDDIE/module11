@@ -8,17 +8,12 @@ q3c,c. Latitude
 q3d,d. Longitude
 q3e,f. Elevation (m)
 q4,Q4. What is the desired target variable for prediction in the case study you have chosen? Why is that variable important for ecosystem function and management?
-q5,Q4. Fill out the table in your Word document with the description of site variables:
-q5a,Air temperature
-q5b,Surface water temperature
-q5c,Nitrogen
-q5d,Underwater PAR
-q5e,Chlorophyll-a
-q6,"Q5. Describe the effect of each of the following variables on chlorophyll-a. Chlorophyll-a (chl-a) is used as a proxy measurement for phytoplankton concentration and primary productivity in aquatic environments. For each variable, write in the table whether increases in that variable are associated with increases in chl-a (positive relationship), decreases in chl-a (negative relationship), or no change in chl-a (no relationship). "
-q6a,Air temperature
-q6b,Surface water temperature
-q6c,Nitrogen
-q6d,Underwater PAR
-q7,"Q6. Describe the relationship between each of these driving variables and productivity according to the ecosystem model we are using today (depicted above). For example, if the driving variable increases, will it cause productivity to increase (positive), decrease (negative), or have no effect (stay the same)."
-q7a,a. Surface water temperature
-q7b,b. Incoming light
+q5,Q5. Fill out the table in your Word document with the description of site variables:
+q5a,a. Variable name
+q5b,b. Units
+q5c,c. Maximum value
+q5d,d. Minimum value
+q5e,e. Mean value
+q6,"Q6. Describe the relationship between each variable and the target variable. For each variable, write in the table in your Word document whether increases in that variable are associated with increases in the target variable (positive relationship), decreases in the target variable (negative relationship), or no change in the target variable (no relationship). "
+q7,"Q7. Describe the three components of an ARIMA model (autoregressive, integrated, moving average) in your own words."
+q8,Q8. Observe the plot on the right. Does the target variable exhibit autocorrelation at a 1-day lag? Explain how you know.

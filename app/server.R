@@ -145,6 +145,30 @@ server <- function(input, output, session) {#
   })
   
   # Read in site data 
+  site_data <- reactive({ # view_var
+    validate(
+      need(input$table01_rows_selected != "",
+           message = "Please select a site in Objective 1.")
+    )
+    
+    row_selected = sites_df[input$table01_rows_selected, ]
+    site_id <- row_selected$SiteID
+    
+    if(site_id == "cann"){
+      df <- cann_data
+      
+      autocorrelation_data <- df %>%
+        select(datetime, chla) %>%
+        mutate(chla = na.approx(chla, na.rm = F)) %>% 
+        mutate(chla_lag = lag(chla)) %>%
+        filter(complete.cases(.))
+    }
+    
+    return(list(data = df,
+                ac = autocorrelation_data))
+  })
+  
+  # Select variable for plotting/data table
   site_DT <- reactive({ # view_var
     validate(
       need(input$table01_rows_selected != "",
@@ -152,7 +176,7 @@ server <- function(input, output, session) {#
     )
     
     read_var <- site_vars$variable_id[which(site_vars$variable_name == input$view_var)][1]
-    df <- cann_data[,c("datetime",read_var)]
+    df <- site_data()$data[,c("datetime",read_var)]
     df[, -1] <- signif(df[, -1], 4)
     names(df)[ncol(df)] <- read_var
     
@@ -200,6 +224,144 @@ server <- function(input, output, session) {#
     return(out_txt)
   })
   
+  # Output stats ----
+  output$out_stats <- renderText({
+    
+    validate(
+      need(input$table01_rows_selected != "",
+           message = "Please select a site in Objective 1.")
+    )
+    
+    sum_stat <- summary(site_DT()$data)
+    ridx <- grep(input$stat_calc, sum_stat[, ncol(sum_stat)])
+    out_stat <- sum_stat[ridx, ncol(sum_stat)]
+    
+    return(out_stat)
+  })
+  
+  # Table for stats
+  stat_ans <- reactiveValues(dt = stat_table) # %>% formatStyle(c(1:3), border = '1px solid #ddd'))
+  
+  output$stat_tab <- DT::renderDT(
+    stat_ans$dt, 
+    selection = "none", class = "cell-border stripe",
+    options = list(searching = FALSE, paging = FALSE, ordering= FALSE, dom = "t"),
+    server = FALSE, escape = FALSE, editable = FALSE
+  )
+  
+  # Comparison plot ----
+  output$xy_plot <- renderPlotly({
+    
+    validate(
+      need(input$table01_rows_selected != "",
+           message = "Please select a site in Objective 1.")
+    )
+    
+    validate(
+      need(input$x_var != "",
+           message = "Please select an X variable.")
+    )
+    
+    row_selected = sites_df[input$table01_rows_selected, ]
+    site_id <- row_selected$SiteID
+    
+    ref <- site_vars$variable_id[which(site_vars$variable_name == input$x_var)][1]
+    
+    if(site_id == "cann"){
+      plot_data <- site_data()$data[,c("datetime",ref,"chla")]
+      x_units <- site_vars$variable_unit[which(site_vars$variable_name == input$x_var)]
+      target = "chlorophyll-a"
+      y_units = "mg/L"
+    }
+    
+    validate(
+      need(nrow(plot_data) > 0, message = "No variables at matching timesteps. Please select different  X-Y variables.")
+    )
+    
+    p <- ggplot(plot_data, aes_string(names(plot_data)[2], names(plot_data)[3])) +
+      geom_point() +
+      xlab(paste0(input$x_var, " (", x_units, ")")) +
+      ylab(paste0(target, " (", y_units, ")")) +
+      theme_minimal(base_size = 12)
+    return(ggplotly(p, dynamicTicks = TRUE))
+    
+  })
+  
+  # Table for relationships
+  rel_ans <- reactiveValues(dt = rel_table) # %>% formatStyle(c(1:3), border = '1px solid #ddd'))
+  
+  output$rel_tab <- DT::renderDT(
+    rel_ans$dt, 
+    selection = "none", class = "cell-border stripe",
+    options = list(searching = FALSE, paging = FALSE, ordering= FALSE, dom = "t"),
+    server = FALSE, escape = FALSE, editable = FALSE
+  )
+  
+  # Objective 3 ----
+  
+  #** ARIMA model slides ----
+  output$model_slides <- renderSlickR({
+    slickR(arima_slides) + settings(dots = TRUE)
+  })
+  
+  # Plot 1-day lag
+  plot.lag <- reactiveValues(main=NULL)
+  
+  observe({
+    
+    output$lag_plot <- renderPlotly({ 
+      
+      validate(
+        need(input$table01_rows_selected != "",
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(site_data()$data),
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(input$plot_lag > 0,
+             message = "Click 'Plot lag scatterplot'")
+      )
+      
+      df <- site_data()$ac
+      
+      row_selected = sites_df[input$table01_rows_selected, ]
+      site_id <- row_selected$SiteID
+      
+      if(site_id == "cann"){
+        x_lab = "1-day lag of chlorophyll-a (mg/L)"
+        y_lab = "chlorophyll-a (mg/L)"
+      }
+      
+      p <- ggplot(data = df, aes(x = chla_lag, y = chla))+
+        geom_point()+
+        xlab(x_lab)+
+        ylab(y_lab)+
+        geom_abline(slope = 1, intercept = 0, linetype = 2)+
+        theme_bw()
+      
+      plot.lag$main <- p
+      
+      return(ggplotly(p, dynamicTicks = TRUE))
+      
+    })
+    
+  })
+  
+  # Download scatterplot of lagged chl-a
+  output$save_lag_plot <- downloadHandler(
+    filename = function() {
+      paste("Q8-plot-", Sys.Date(), ".png", sep="")
+    },
+    content = function(file) {
+      device <- function(..., width, height) {
+        grDevices::png(..., width = 8, height = 4,
+                       res = 200, units = "in")
+      }
+      ggsave(file, plot = plot.lag$main, device = device)
+    }
+  )
   
 
 

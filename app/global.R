@@ -38,6 +38,7 @@ help_text <- read.csv("data/help_text.csv", row.names = 1)
 
 # Slides for slickR
 recap_slides <- list.files("www/shiny_slides", full.names = TRUE)
+arima_slides <- list.files("www/arima_slides", full.names = TRUE)
 
 # Create case study site dataframe
 sites_df <- tibble(SiteID = c("cann"),
@@ -58,6 +59,24 @@ siteIcons <- iconList(
   Aquatic = makeIcon("icons/water-icon.png", iconWidth = 28, iconHeight = 28)
 )
 
+# Statistics for exploring data
+stats <- list("Minimum" = "Min.", "Maximum" = "Max.", "Mean" = "Mean")
+
+# Statistics table
+stat_table <- data.frame(
+  Variable = rep(NA, 5),
+  Units = rep(NA, 5),
+  Mean = rep(NA, 5),
+  Min = rep(NA, 5),
+  Max = rep(NA, 5)
+)
+
+# Variable relationships table
+rel_table <- data.frame(
+  Target = rep(NA, 5),
+  Variable = rep(NA, 5),
+  Relationship = rep(NA, 5)
+)
 
 # Tab names for updating buttons
 tab_names <- read.csv("data/tab_names.csv", fileEncoding = "UTF-8-BOM")
