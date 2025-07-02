@@ -17,3 +17,5 @@ q5e,e. Mean value
 q6,"Q6. Describe the relationship between each variable and the target variable. For each variable, write in the table in your Word document whether increases in that variable are associated with increases in the target variable (positive relationship), decreases in the target variable (negative relationship), or no change in the target variable (no relationship). "
 q7,"Q7. Describe the three components of an ARIMA model (autoregressive, integrated, moving average) in your own words."
 q8,Q8. Observe the plot on the right. Does the target variable exhibit autocorrelation at a 1-day lag? Explain how you know.
+q9,"Q9. Observe the PACF plot on the right. Based on this figure, how many lags of the target variable do you anticipate being included in the fitted ARIMA model? Explain your reasoning."
+q10,"Q10. Observe the plot on the right. Based on visual inspection, does differencing substantially improve the stationarity of the target variable data? Explain your reasoning."

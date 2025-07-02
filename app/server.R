@@ -363,7 +363,133 @@ server <- function(input, output, session) {#
     }
   )
   
-
+  # PACF plot ----
+  plot.pacf <- reactiveValues(main=NULL)
+  
+  observe({
+    
+    output$pacf_plot <- renderPlotly({ 
+      
+      validate(
+        need(input$table01_rows_selected != "",
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(site_data()$data),
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(input$plot_pacf > 0,
+             message = "Click 'Plot PACF'")
+      )
+      
+      df <- site_data()$ac
+      
+      row_selected = sites_df[input$table01_rows_selected, ]
+      site_id <- row_selected$SiteID
+      
+      if(site_id == "cann"){
+        pacf_list <- acf(df$chla, type = c("partial"), plot = FALSE)
+      }
+      
+      pacf_plot_data <- tibble(Lag = pacf_list$lag,
+                               Partial_ACF = round(pacf_list$acf, 2))
+      
+      p <- ggplot(data = pacf_plot_data, aes(x = Lag, y = Partial_ACF))+
+        geom_bar(stat = "identity", color = "#446c84", fill = "#cee3f1")+
+        xlab("Lag in days")+
+        ylab("Partial autocorrelation of target data")+
+        theme_bw()
+      
+      plot.pacf$main <- p
+      
+      return(ggplotly(p, dynamicTicks = TRUE))
+      
+    })
+    
+  })
+  
+  # Download scatterplot of pacf
+  output$save_pacf_plot <- downloadHandler(
+    filename = function() {
+      paste("Q9-plot-", Sys.Date(), ".png", sep="")
+    },
+    content = function(file) {
+      device <- function(..., width, height) {
+        grDevices::png(..., width = 8, height = 4,
+                       res = 200, units = "in")
+      }
+      ggsave(file, plot = plot.pacf$main, device = device)
+    }
+  )
+  
+  # Differencing plot ----
+  plot.diff <- reactiveValues(main=NULL)
+  
+  observe({
+    
+    output$diff_plot <- renderPlotly({ 
+      
+      validate(
+        need(input$table01_rows_selected != "",
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(site_data()$data),
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(input$plot_diff > 0,
+             message = "Click 'Plot differenced data'")
+      )
+      
+      df <- site_data()$ac
+      
+      row_selected = sites_df[input$table01_rows_selected, ]
+      site_id <- row_selected$SiteID
+      
+      if(site_id == "cann"){
+        diff_data <- diff(df$chla)
+        y_lab = "chlorophyll-a (mg/L)"
+      }
+      
+      diff_plot_data <- tibble(datetime = df$datetime,
+                               undiff = df$chla,
+                               diff = c(NA,diff_data)) %>%
+        pivot_longer(undiff:diff, names_to = "series_name", values_to = "value") %>%
+        mutate(series_name = ifelse(series_name == "undiff","undifferenced data","differenced data"))
+      
+      p <- ggplot(data = diff_plot_data, aes(x = datetime, y = value, group = series_name, color = series_name))+
+        geom_line()+
+        xlab("datetime")+
+        ylab(y_lab)+
+        labs(color = "")+
+        theme_bw()+
+        scale_color_manual(values = c("undifferenced data" = "#ccd9e0",
+                                      "differenced data" = "#0d3658"))
+      
+      plot.diff$main <- p
+      
+      return(ggplotly(p, dynamicTicks = TRUE))
+      
+    })
+    
+  })
+  
+  # Download scatterplot of pacf
+  output$save_diff_plot <- downloadHandler(
+    filename = function() {
+      paste("Q10-plot-", Sys.Date(), ".png", sep="")
+    },
+    content = function(file) {
+      device <- function(..., width, height) {
+        grDevices::png(..., width = 8, height = 4,
+                       res = 200, units = "in")
+      }
+      ggsave(file, plot = plot.diff$main, device = device)
+    }
+  )
+  
 
   # Navigating Tabs ----
   #* Main Tab ====

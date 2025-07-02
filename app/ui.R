@@ -594,7 +594,66 @@ ui <- function(request) {
                                                       downloadButton("save_lag_plot", "Download plot", icon = icon("download"))
                                                )
                                              ),
-                                             hr()
+                                             hr(),
+                                             fluidRow(
+                                               column(6,
+                                                      h3("Partial autocorrelation"),
+                                                      p("It can be difficult to decide exactly how many lags to include in a forecasting model. Fortunately, forecasters have developed tools to help make this decision. One such tool is the ", tags$b("partial autocorrelation function"), " or ", tags$b("PACF.")," This function calculates the autocorrelation of a particular lag ",tags$em("while removing")," the effects of indirect correlations with other lags."),
+                                                      p("To explain another way: the ",tags$b("autocorrelation")," of a variable and its 7-day lag is affected by the autocorrelation of the variable with the 1-day lag, the 2-day lag, the 3-day lag, and so on, as well as the relationship of the 7-day lag to the 1-day lag, the 2-day lag, the 3-day lag, and so on."),
+                                                      p("The PACF avoids this problem. You can think of it as only measuring the effect of one particular set of lagged values (e.g., the 5-day lagged values), while accounting for (and thereby removing the influence of) all other lags. ",tags$b("The PACF ranges from -1 to 1, and can be interpreted in the same way as autocorrelation,")," where PACF values close to -1 and 1 indicate strong correspondence of a lag with the current value, while PACF values close to 0 indicate low correspondence between a lag and the current value."),
+                                                      p("Let's plot the PACF of the target varible for your chosen environmental case study."),
+                                                      actionButton("plot_pacf",label = "Plot PACF"),
+                                                      br(),br(),
+                                                      box(id = "box2", width = 12, status = "primary",
+                                                          solidHeader = TRUE,
+                                                          fluidRow(
+                                                            column(10, offset = 1,
+                                                                   h3("Questions"),
+                                                                   p(tags$b(quest["q9", 1]))
+                                                            )
+                                                          )
+                                                      )
+                                               ),
+                                               column(6,
+                                                      wellPanel(
+                                                        plotlyOutput("pacf_plot"),
+                                                      ),
+                                                      downloadButton("save_pacf_plot", "Download plot", icon = icon("download"))
+                                               )
+                                             ),
+                                             hr(),
+                                             fluidRow(
+                                               column(6,
+                                                      h3("Differenced time series"),
+                                                      p("Recall that the ",tags$b("integrated")," component of an ARIMA model refers to whether or not the time series is differenced to achieve ",tags$b("stationarity")," in the data."),
+                                                      p(tags$b("Stationarity"), " data are data whose mean and variance do not vary over time. If data are not stationarity, one method for achieving stationarity is ",tags$b("differencing,"), " or subtracting each value in the time series from the value after it."),
+                                                      p("Let's plot the differenced time series of the target varible for your chosen environmental case study and see whether we think differencing improves the stationarity of the data."),
+                                                      actionButton("plot_diff",label = "Plot differenced data"),
+                                                      br(),br(),
+                                                      box(id = "box2", width = 12, status = "primary",
+                                                          solidHeader = TRUE,
+                                                          fluidRow(
+                                                            column(10, offset = 1,
+                                                                   h3("Questions"),
+                                                                   p(tags$b(quest["q10", 1]))
+                                                            )
+                                                          )
+                                                      )
+                                               ),
+                                               column(6,
+                                                      wellPanel(
+                                                        plotlyOutput("diff_plot"),
+                                                      ),
+                                                      downloadButton("save_diff_plot", "Download plot", icon = icon("download"))
+                                               )
+                                             ),
+                                             hr(),
+                                             fluidRow(
+                                               column(10, offset = 1,
+                                                      h3("Next step"),
+                                                      p("We will fit an ARIMA model to data from the environmental case study you have chosen.")
+                                               )
+                                             )
                                              ),
                                     tabPanel(title = "Objective 4 - Fit model", value = "obj4",
                                              #* Objective 4 - Understand the ecological model ----
