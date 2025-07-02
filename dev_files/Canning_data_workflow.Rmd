@@ -295,6 +295,8 @@ model_df3 <- model_df2 %>%
   select(-datetime) %>%
   rename(datetime = mod_datetime)
 
+write.csv(model_df3, "/Users/marylofton/RProjects/module11_dev/app/data/cann_mod.csv", row.names = FALSE)
+
 ```
 
 Fit and assess ARIMA model from fable package

@@ -635,7 +635,8 @@ ui <- function(request) {
                                                           fluidRow(
                                                             column(10, offset = 1,
                                                                    h3("Questions"),
-                                                                   p(tags$b(quest["q10", 1]))
+                                                                   p(tags$b(quest["q10", 1])),
+                                                                   p(tags$i("Hint: look at slide 5 in the slide deck at the top of this objective page to see examples of non-stationary and stationary data."))
                                                             )
                                                           )
                                                       )
@@ -664,6 +665,19 @@ ui <- function(request) {
                                                                 p(module_text["obj_04", ])
                                                       )
                                                )
+                                             ),
+                                             hr(),
+                                             fluidRow(
+                                               column(12,
+                                                      selectInput( 
+                                                        "select", 
+                                                        "Select options below:", 
+                                                        choices = NULL, 
+                                                        multiple = TRUE 
+                                                      ),
+                                                      p(tags$i("If no choices appear when you click in the dropdown menu, please go back and select a case study in Objective 1.")),
+                                                      textOutput("value")
+                                                      )
                                              )
                                              ),
                                     #* Objective 5 - Run ecological model ----

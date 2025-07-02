@@ -48,7 +48,10 @@ sites_df <- tibble(SiteID = c("cann"),
                    Longitude = c(115.92079680626996)) # currently Kent St Weir coords, needs updating
 
 # Load case study data
-cann_data <- read_csv("./data/cann.csv")
+
+# Canning River
+cann_data <- read_csv("./data/cann.csv") # joined observational data at weekly timestep
+cann_model_data <- read_csv("./data/cann_mod.csv") # interpolated data for model fitting
 
 # Load variable descriptions
 site_vars <- read.csv("data/site_variables.csv")

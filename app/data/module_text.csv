@@ -23,7 +23,7 @@ workflow4,"We encourage you to save your progress regularly by clicking ""Bookma
 obj_01,"Select a case study from the table, then read the text in the 'About Case Study' section to find out more about the case study."
 obj_02,"Explore the data measured at the selected site, including how each variable changes over time and how the variables relate to each other."
 obj_03,"We will use the environmental data from your case study to fit an ARIMA model that will predict future values of the target variable. But first, we will learn about how ARIMA models are used for time series prediction."
-obj_04,"Using your understanding of aquatic ecosystems, you will build a simple ecological model to predict primary productivity."
+obj_04,Fit a ARIMA time series model to the data from your chosen environmental case study.
 obj_05,Test different scenarios with your model to understand how it will respond under different environmental conditions. Use observed data to calibrate the model (i.e. make your model better match observed data).
 obj_06,Gain an understanding of what uncertainty is in the context of an ecological forecast and explore weather forecast data. Demonstrate how uncertainty can be quantified.
 obj_07,"Using observed data from your lake site, you will build a linear model to convert air temperature to surface water temperature and shortwave radiation (SWR) to underwater photosynthetic active radiation (uPAR), which are the inputs required for your primary productivity model. "

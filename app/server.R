@@ -490,6 +490,75 @@ server <- function(input, output, session) {#
     }
   )
   
+  # Objective 4 ----
+  
+  # make multi-select list
+  multi.select <- reactiveValues(lst=NULL)
+  
+  observe({
+    
+    validate(
+      need(input$table01_rows_selected != "",
+           message = "Please select a site in Objective 1.")
+    )
+    validate(
+      need(!is.null(site_data()$data),
+           message = "Please select a site in Objective 1.")
+    )
+    
+    row_selected = sites_df[input$table01_rows_selected, ]
+    site_id <- row_selected$SiteID
+    
+    if(site_id == "cann"){
+      selected_site_vars <- site_vars %>%
+        filter(site_id == "cann")
+      select_list <- unique(selected_site_vars$variable_id)
+      names(select_list) = unique(selected_site_vars$variable_name)
+    }
+    
+    multi.select$lst <- select_list
+    
+  })
+  
+  # Update the selectInput with the named list
+  observe({
+    updateSelectInput(session, "select", choices = multi.select$lst)
+  })
+  
+  # test of multi select dropdown
+  output$value <- renderText({input$select})
+  
+  # fit ARIMA
+  observe({
+    validate(
+      need(input$table01_rows_selected != "",
+           message = "Please select a site in Objective 1.")
+    )
+    validate(
+      need(!is.null(site_data()$data),
+           message = "Please select a site in Objective 1.")
+    )
+    validate(
+      need(input$fit_arima > 0,
+           message = "Click 'Fit ARIMA'")
+    )
+    
+    row_selected = sites_df[input$table01_rows_selected, ]
+    site_id <- row_selected$SiteID
+    
+    if(site_id == "cann"){
+      model_df4 <- as_tsibble(cann_model_data) %>%
+        slice_head(prop = .7) %>% # using a 70:30 split here
+        fill_gaps() %>%
+        select(datetime, chla, input$select)
+      
+      my.arima <- model_df4 %>%
+        model(`ARIMA` = fable::ARIMA(formula = chla ~ .)) # get errors if include all variables due to small data size
+    }
+    
+    
+  })
+  
 
   # Navigating Tabs ----
   #* Main Tab ====
