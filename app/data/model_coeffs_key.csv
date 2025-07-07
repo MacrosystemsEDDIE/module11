@@ -1,0 +1,10 @@
+﻿site_id,term,coeff_description
+cann,ar1,term for 1-timestep lag
+cann,ar2,term for 2-timestep lag
+cann,frp_zscore,standardized filterable reduced phosphorus
+cann,don_zscore,standardized dissolved organic nitrogen
+cann,oxygen_zscore,standardized bottom water dissolved oxygen
+cann,temperature_zscore,standardized water temperature
+cann,flow_zscore,standardized discharge
+cann,amm_zscore,standardized ammonia (NH4-N)
+cann,intercept,constant value added to fitted model

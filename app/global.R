@@ -5,7 +5,7 @@ enableBookmarking(store = "url")
 suppressPackageStartupMessages(library(shiny, quietly = TRUE)); library(shinycssloaders)
 suppressPackageStartupMessages(library(shinyjs, quietly = TRUE, warn.conflicts = FALSE))
 library(shinydashboard, quietly = TRUE, warn.conflicts = FALSE); library(shinyalert, quietly = TRUE, warn.conflicts = FALSE)
-library(leaflet); library(htmltools); library(xml2)
+library(leaflet); library(htmltools); library(xml2); library(zoo); library(tsibble); library(fable);
 suppressPackageStartupMessages(library(sf, quietly = TRUE, warn.conflicts = FALSE))
 suppressPackageStartupMessages(library(ggplot2, quietly = TRUE)); library(plotly, quietly = TRUE, warn.conflicts = FALSE)
 library(ncdf4); library(reshape, quietly = TRUE, warn.conflicts = FALSE)
@@ -80,6 +80,9 @@ rel_table <- data.frame(
   Variable = rep(NA, 5),
   Relationship = rep(NA, 5)
 )
+
+# Model coefficients key
+model_coeffs_key <- read_csv("./data/model_coeffs_key.csv")
 
 # Tab names for updating buttons
 tab_names <- read.csv("data/tab_names.csv", fileEncoding = "UTF-8-BOM")

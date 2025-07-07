@@ -476,7 +476,7 @@ server <- function(input, output, session) {#
     
   })
   
-  # Download scatterplot of pacf
+  # Download scatterplot of diff
   output$save_diff_plot <- downloadHandler(
     filename = function() {
       paste("Q10-plot-", Sys.Date(), ".png", sep="")
@@ -516,20 +516,13 @@ server <- function(input, output, session) {#
       names(select_list) = unique(selected_site_vars$variable_name)
     }
     
-    multi.select$lst <- select_list
+    multi.select$lst <- select_list[-1]
     
   })
   
-  # Update the selectInput with the named list
-  observe({
-    updateSelectInput(session, "select", choices = multi.select$lst)
-  })
-  
-  # test of multi select dropdown
-  output$value <- renderText({input$select})
-  
-  # fit ARIMA
-  observe({
+  # made header text for multi-select list
+  output$dropdown_txt <- renderText({
+    
     validate(
       need(input$table01_rows_selected != "",
            message = "Please select a site in Objective 1.")
@@ -538,24 +531,499 @@ server <- function(input, output, session) {#
       need(!is.null(site_data()$data),
            message = "Please select a site in Objective 1.")
     )
-    validate(
-      need(input$fit_arima > 0,
-           message = "Click 'Fit ARIMA'")
-    )
     
-    row_selected = sites_df[input$table01_rows_selected, ]
-    site_id <- row_selected$SiteID
+    return("Please select up to 3 predictors from the dropdown menu.")
     
-    if(site_id == "cann"){
-      model_df4 <- as_tsibble(cann_model_data) %>%
-        slice_head(prop = .7) %>% # using a 70:30 split here
-        fill_gaps() %>%
-        select(datetime, chla, input$select)
+  })
+  
+  # Update the selectInput with the named list
+  observe({
+    updateSelectInput(session, "select", choices = multi.select$lst)
+  })
+  
+  
+  # Plot of regressors
+  plot.stand <- reactiveValues(main=NULL,
+                               stand.tracker = 0)
+  
+  observe({
+    
+    input$select
+    
+    output$standardize_plot <- renderPlotly({
       
-      my.arima <- model_df4 %>%
-        model(`ARIMA` = fable::ARIMA(formula = chla ~ .)) # get errors if include all variables due to small data size
-    }
+      validate(
+        need(input$table01_rows_selected != "",
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(site_data()$data),
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(input$select),
+             message = "Please select at least 1 predictor from the dropdown menu.")
+      )
+      validate(
+        need(length(input$select) <= 3,
+             message = "Please only select up to 3 regressors to fit your model.")
+      )
+      
+      row_selected = sites_df[input$table01_rows_selected, ]
+      site_id <- row_selected$SiteID
+      
+      if(site_id == "cann"){
+        
+        var_names <- site_vars[,c("variable_id","variable_name","variable_unit")]
+        
+        col_names <- c(input$select)
+        
+        plot_data <- cann_model_data %>%
+          dplyr::slice_head(prop = .7) %>% # using a 70:30 split here
+          select(all_of(col_names)) %>%
+          pivot_longer(cols = everything(), names_to = "variable_id", values_to = "obs") %>%
+          left_join(., site_vars, by = "variable_id") %>%
+          mutate(plot_labels = paste(variable_name, paste0("(",variable_unit,")"), sep = " "))
+        
+        plot_data_stand <- cann_model_data %>%
+          dplyr::slice_head(prop = .7) %>% # using a 70:30 split here
+          select(all_of(col_names)) %>%
+          mutate(across(input$select, list(zscore = ~as.numeric(scale(.))))) %>%
+          pivot_longer(cols = everything(), names_to = "variable_id", values_to = "obs") %>%
+          left_join(., site_vars, by = "variable_id") %>%
+          mutate(plot_labels = paste(variable_name, paste0("(",variable_unit,")"), sep = " "))
+        
+      }
+      
+      p <- ggplot(data = plot_data)+
+        geom_density(aes(x = obs, color = plot_labels, fill = plot_labels), alpha = 0.5)+
+        facet_wrap(facets = vars(plot_labels), nrow = 1)+
+        theme_bw()+
+        theme(legend.position = "none")+
+        xlab("observed value")
+      
+      plot.stand$main <- p
+      
+      return(ggplotly(p, dynamicTicks = TRUE))
+      
+    })
     
+    
+  })
+  
+  observe({
+    
+    input$select
+    
+    output$standardize_plot <- renderPlotly({
+      
+      validate(
+        need(input$table01_rows_selected != "",
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(site_data()$data),
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(input$select),
+             message = "Please select at least 1 predictor from the dropdown menu.")
+      )
+      validate(
+        need(length(input$select) <= 3,
+             message = "Please only select up to 3 regressors to fit your model.")
+      )
+      
+      row_selected = sites_df[input$table01_rows_selected, ]
+      site_id <- row_selected$SiteID
+      
+      if(site_id == "cann"){
+        
+        var_names <- site_vars[,c("variable_id","variable_name","variable_unit")]
+        
+        col_names <- c(input$select)
+        
+        plot_data <- cann_model_data %>%
+          dplyr::slice_head(prop = .7) %>% # using a 70:30 split here
+          select(all_of(col_names)) %>%
+          pivot_longer(cols = everything(), names_to = "variable_id", values_to = "obs") %>%
+          left_join(., site_vars, by = "variable_id") %>%
+          mutate(plot_labels = paste(variable_name, paste0("(",variable_unit,")"), sep = " "))
+        
+      }
+      
+      p <- ggplot(data = plot_data)+
+        geom_density(aes(x = obs, color = plot_labels, fill = plot_labels), alpha = 0.5)+
+        facet_wrap(facets = vars(plot_labels), nrow = 1, scales = "free_x")+
+        theme_bw()+
+        theme(legend.position = "none")+
+        xlab("observed value")
+      
+      plot.stand$main <- p
+      plot.stand$stand.tracker <- 0
+      
+      return(ggplotly(p, dynamicTicks = TRUE))
+      
+    })
+    
+    
+    
+  })
+  
+  observe({
+    
+    input$standardize_data
+    
+    output$standardize_plot <- renderPlotly({
+      
+      validate(
+        need(input$table01_rows_selected != "",
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(site_data()$data),
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(input$select),
+             message = "Please select at least 1 predictor from the dropdown menu.")
+      )
+      validate(
+        need(length(input$select) <= 3,
+             message = "Please only select up to 3 regressors to fit your model.")
+      )
+      
+      row_selected = sites_df[input$table01_rows_selected, ]
+      site_id <- row_selected$SiteID
+      
+      if(site_id == "cann"){
+        
+        var_names <- site_vars[,c("variable_id","variable_name","variable_unit")]
+        
+        col_names <- c(input$select)
+        
+        plot_data_stand <- cann_model_data %>%
+          dplyr::slice_head(prop = .7) %>% # using a 70:30 split here
+          select(all_of(col_names)) %>%
+          pivot_longer(cols = everything(), names_to = "variable_id", values_to = "obs") %>%
+          left_join(., site_vars, by = "variable_id") %>%
+          mutate(plot_labels = paste(variable_name, paste0("(",variable_unit,")"), sep = " ")) %>%
+          group_by(plot_labels) %>%
+          mutate(zscore = as.numeric(scale(obs))) %>%
+          ungroup()
+        
+      }
+      
+      p <- ggplot(data = plot_data_stand)+
+        geom_density(aes(x = zscore, color = plot_labels, fill = plot_labels), alpha = 0.5)+
+        facet_wrap(facets = vars(plot_labels), nrow = 1)+
+        theme_bw()+
+        theme(legend.position = "none")+
+        xlab("standardized value")
+      
+      plot.stand$main <- p
+      plot.stand$stand.tracker = 1
+      
+      return(ggplotly(p, dynamicTicks = TRUE))
+      
+    })
+    
+    
+  })
+  
+  # Download standardized regressors
+  output$save_standardize_plot <- downloadHandler(
+    filename = function() {
+      paste("Q13-plot-", Sys.Date(), ".png", sep="")
+    },
+    content = function(file) {
+      device <- function(..., width, height) {
+        grDevices::png(..., width = 8, height = 4,
+                       res = 200, units = "in")
+      }
+      ggsave(file, plot = plot.stand$main, device = device)
+    }
+  )
+  
+  # Fit ARIMA with selected variables
+  actA.arima <- reactiveValues(arima=NULL)
+  
+  observe({
+    input$fit_arima
+    output$arima_order <- renderText({
+      
+      validate(
+        need(input$table01_rows_selected != "",
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(site_data()$data),
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(input$select),
+             message = "Please select at least 1 predictor from the dropdown menu.")
+      )
+      validate(
+        need(length(input$select) <= 3,
+             message = "Please only select up to 3 regressors to fit your model.")
+      )
+      validate(
+        need(plot.stand$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors.")
+      )
+      
+      row_selected = sites_df[input$table01_rows_selected, ]
+      site_id <- row_selected$SiteID
+      
+      if(site_id == "cann"){
+        
+        col_names <- c("datetime","chla",input$select)
+        
+        model_df4 <- as_tsibble(cann_model_data) %>%
+          dplyr::slice_head(prop = .7) %>% # using a 70:30 split here
+          tsibble::fill_gaps() %>%
+          select(all_of(col_names)) %>%
+          mutate(across(input$select, list(zscore = ~as.numeric(scale(.)))))
+        
+        reg_cols <- paste0(input$select,"_zscore")
+        
+        if(length(input$select) == 0){
+          #my.arima <- model_df4 %>%
+          #model(`ARIMA` = fable::ARIMA("chla"))
+          order_txt <- "Please select at least one predictor to fit the ARIMA."
+        } else if(length(input$select) == 1){
+          my.formula <- formula(paste0("chla ~ ",reg_cols[1]))
+          actA.arima$arima <- model_df4 %>%
+            model(`ARIMA` = fable::ARIMA(formula = my.formula))
+        } else if(length(input$select) == 2){
+          my.formula <- formula(paste0("chla ~ ",reg_cols[1],"+",reg_cols[2]))
+          actA.arima$arima <- model_df4 %>%
+            model(`ARIMA` = fable::ARIMA(formula = my.formula))
+        } else if(length(input$select) == 3){
+          my.formula <- formula(paste0("chla ~ ",reg_cols[1],"+",reg_cols[2],"+",reg_cols[3]))
+          actA.arima$arima <- model_df4 %>%
+            model(`ARIMA` = fable::ARIMA(formula = my.formula))
+        }
+        
+      }
+      
+      if(length(input$select) >= 1 & length(input$select) <= 3){
+        order <- strsplit(as.character(actA.arima$arima$ARIMA), split = " ")[[1]][3]
+        selected_site_vars <- site_vars %>%
+          filter(site_id == "cann")
+        predictors <- selected_site_vars$variable_name[which(selected_site_vars$variable_id %in% input$select)]
+        predictors_list = ""
+        for (i in 1:length(predictors)){
+          if(i == 1){
+            predictors_list <- paste(predictors_list, predictors[i], sep = ": ")
+          } else{
+            predictors_list <- paste(predictors_list, predictors[i], sep = " and ")
+          }
+        }
+        order_txt <- paste0("Fitted an ARIMA model using predictors ",predictors_list," with order ",order,".")
+      } else if(length(input$select) > 3){
+        order_txt <- "Please select no more than three predictors to fit the ARIMA."
+      }
+      
+      return(order_txt)
+      })
+  })
+  
+  # Reset ARIMA order text when change selected variables
+  observe({
+    input$select
+    output$arima_order <- renderText({
+      
+      validate(
+        need(input$table01_rows_selected != "",
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(site_data()$data),
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(input$select),
+             message = "Please select at least 1 predictor from the dropdown menu.")
+      )
+      validate(
+        need(length(input$select) <= 3,
+             message = "Please only select up to 3 regressors to fit your model.")
+      )
+      validate(
+        need(plot.stand$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors.")
+      )
+      
+      return("Please click 'Fit ARIMA'.")
+      
+      })
+  })
+  
+  # ARIMA plot ----
+  plot.arima <- reactiveValues(main=NULL)
+  
+  observe({
+    input$fit_arima
+    
+    output$arima_plot <- renderPlotly({ 
+      
+      validate(
+        need(input$table01_rows_selected != "",
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(site_data()$data),
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(input$select),
+             message = "Please select at least 1 predictor from the dropdown menu.")
+      )
+      validate(
+        need(length(input$select) <= 3,
+             message = "Please only select up to 3 regressors to fit your model.")
+      )
+      validate(
+        need(plot.stand$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors.")
+      )
+      validate(
+        need(input$fit_arima > 0,
+             message = "Click 'Fit ARIMA'")
+      )
+
+    
+      row_selected = sites_df[input$table01_rows_selected, ]
+      site_id <- row_selected$SiteID
+      
+      if(site_id == "cann"){
+        plot_data <- as_tsibble(cann_model_data) %>%
+          dplyr::slice_head(prop = .7) %>% # using a 70:30 split here
+          select(datetime, chla) 
+        colnames(plot_data) <- c("datetime","target")
+        y_lab = "chlorophyll-a (mg/L)"
+      }
+      
+      fitted_values <- fitted(actA.arima$arima)
+      
+      p <- ggplot()+
+        xlab("datetime")+
+        ylab(y_lab)+
+        geom_point(data = plot_data, aes(x = datetime, y = target, color = "obs"))+
+        geom_line(data = fitted_values, aes(x = datetime, y = .fitted, group = .model, color = .model))+
+        labs(color = NULL, fill = NULL)+
+        scale_color_manual(values = c("obs" = "#0d3658",.model = "#446c84"))+
+        theme_classic()
+
+      plot.arima$main <- p
+      
+      return(ggplotly(p, dynamicTicks = TRUE))
+      
+    })
+    
+  })
+  
+  observe({
+    input$select
+    
+    output$arima_plot <- renderPlotly({ 
+      
+      validate(
+        need(input$table01_rows_selected != "",
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(site_data()$data),
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(input$select),
+             message = "Please select at least 1 predictor from the dropdown menu.")
+      )
+      validate(
+        need(length(input$select) <= 3,
+             message = "Please only select up to 3 regressors to fit your model.")
+      )
+      validate(
+        need(plot.stand$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors.")
+      )
+      validate(
+        need(input$fit_arima > 0,
+             message = "Click 'Fit ARIMA'")
+      )
+      
+      p <- ggplot() +
+        annotate("text", x = 10,  y = 10,
+                 size = 6,
+                 label = "Looks like you've chosen new regressors!\nPlease click 'Fit ARIMA' to regenerate this plot.") + 
+        theme_void()+
+        theme(panel.grid = element_blank(),
+              axis.line = element_blank())
+      
+      plot.arima$main <- p
+      
+      return(ggplotly(p, dynamicTicks = TRUE))
+      
+    })
+    
+  })
+  
+  # Download scatterplot of arima
+  output$save_arima_plot <- downloadHandler(
+    filename = function() {
+      paste("Q12-plot-", Sys.Date(), ".png", sep="")
+    },
+    content = function(file) {
+      device <- function(..., width, height) {
+        grDevices::png(..., width = 8, height = 4,
+                       res = 200, units = "in")
+      }
+      ggsave(file, plot = plot.arima$main, device = device)
+    }
+  )
+  
+  # Model coefficient table output
+  coeff.table <- reactiveValues(main=NULL)
+  
+  observe({
+    input$fit_arima
+    
+    output$coeff_table <- renderDT({ 
+      
+      validate(
+        need(input$table01_rows_selected != "",
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(site_data()$data),
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(input$select),
+             message = "Please select at least 1 predictor from the dropdown menu.")
+      )
+      validate(
+        need(input$fit_arima > 0,
+             message = "Click 'Fit ARIMA'")
+      )
+      validate(
+        need(length(input$select) <= 3,
+             message = "Please only select up to 3 regressors to fit your model.")
+      )
+      model_coeffs_info <- model_coeffs_key %>%
+        select(term, coeff_description)
+      t <- coefficients(actA.arima$arima %>% select(`ARIMA`))[,c(2:4)]
+      t[,c(2:3)] <- round(t[,c(2:3)], digits = 3)
+      t <- left_join(t,model_coeffs_info, by = "term")
+      
+      coeff.table$main <- t
+      
+      return(t)
+      
+    },colnames = c("","Model term","Estimate", "Standard error","Term description"))
     
   })
   

@@ -668,16 +668,114 @@ ui <- function(request) {
                                              ),
                                              hr(),
                                              fluidRow(
-                                               column(12,
+                                               column(6,
+                                                      h3("Select exogenous regressors"),
+                                                      p("Optionally, ARIMA models may include ",tags$b("exogenous regressors,")," which are variables other than the target variable that a modeler believes may help explain patterns in the target variable. For example, if your target variable is chlorophyll-a concentrations in a river, you may hypothesize that nutrient concentrations may help explain patterns in chlorophyll-a."),
+                                                      p("Before fitting an ARIMA model to the target variable from your environmental case study, consider whether you would like to include any exogenous regressors in the model. For simplicity, we will limit ourselves to a maximum of 3 regressors."),
+                                                      p(tags$i("Choose your regressors using the dropdown menu on the right and then answer Q. 11"))
+                                                      ),
+                                               column(6,
+                                                      br(),br(),
                                                       selectInput( 
                                                         "select", 
-                                                        "Select options below:", 
+                                                        textOutput("dropdown_txt"), 
                                                         choices = NULL, 
                                                         multiple = TRUE 
                                                       ),
-                                                      p(tags$i("If no choices appear when you click in the dropdown menu, please go back and select a case study in Objective 1.")),
-                                                      textOutput("value")
+                                                      box(id = "box2", width = 12, status = "primary",
+                                                          solidHeader = TRUE,
+                                                          fluidRow(
+                                                            column(10, offset = 1,
+                                                                   h3("Questions"),
+                                                                   p(tags$b(quest["q11", 1])),
+                                                                   p(tags$i("Hint: go back to Objective 2 and see whether there appear to be any relationships between the target variable and other variables in your dataset."))
+                                                            )
+                                                          )
                                                       )
+                                                      )
+                                             ),
+                                             hr(),
+                                             fluidRow(
+                                               column(4,
+                                                      h3("Standardize exogenous regressors"),
+                                                      p("To be able to identify which regressors are most important in explaining patterns in the target varible, we must ",tags$b("standardize")," them."),
+                                                      p(tags$b("Standardizing")," our variables means doing a mathematical transformation to put them on the same scale."),
+                                                      p("There are many methods for standardizing data. Today, we will standardize our regressors by converting them to ",tags$b("z-scores.")),
+                                                      p("The ",tags$b("z-score")," reports the number of standard deviations between a data point and the mean of the data. Converting our regressors to z-scores will put them all on the same scale, allowing us to compare their importance in the fitted ARIMA model later."),
+                                                      br(),
+                                                      p(tags$i("Click 'Standardize data' to standardize the exogenous regressors you have chosen.")),
+                                                      actionButton("standardize_data","Standardize data")
+                                                      ),
+                                               column(8,
+                                                      wellPanel(
+                                                        plotlyOutput("standardize_plot"),
+                                                      ),
+                                                      downloadButton("save_standardize_plot", "Download plot", icon = icon("download"))
+                                                      )
+                                             ),
+                                             hr(),
+                                             fluidRow(
+                                               column(6,
+                                                      h3("Fit ARIMA model"),
+                                                      p("Click the button below to fit an ARIMA model to the target variable from your selected environmental case study, including the regressors you have chosen above."),
+                                                      p(tags$b("Important Note! We are only using 70% of the available data to fit the ARIMA model. This leaves 30% of the data to be used for model assessment in Objective 5.")),
+                                                      actionButton("fit_arima",label = "Fit ARIMA"),
+                                                      br(),br(),
+                                                      wellPanel(textOutput("arima_order")
+                                                      ),
+                                                      br(), br(),
+                                                      box(id = "box2", width = 12, status = "primary",
+                                                          solidHeader = TRUE,
+                                                          fluidRow(
+                                                            column(10, offset = 1,
+                                                                   h3("Questions"),
+                                                                   p(tags$b(quest["q12", 1])),
+                                                                   p(tags$i("Hint: go back to Objective 3 if you need a reminder about how to interpret the ARIMA(p, d, q) order.")),
+                                                                   p(tags$b(quest["q12a", 1])),
+                                                                   p(tags$b(quest["q12b", 1])),
+                                                                   p(tags$b(quest["q12c", 1]))
+                                                            )
+                                                          )
+                                                      )
+                                                      ),
+                                               column(6,
+                                                      wellPanel(
+                                                        plotlyOutput("arima_plot"),
+                                                      ),
+                                                      downloadButton("save_arima_plot", "Download plot", icon = icon("download"))
+                                                      )
+                                             ),
+                                             hr(),
+                                             fluidRow(
+                                               column(6,
+                                                      h3("Interpret model terms"),
+                                                      p("We can look at the estimated values of the coefficients for each model term to determine which model terms are most important for explaining patterns in our target variable"),
+                                                      p("Generally speaking, the greater the absolute value of an estimated coefficient (i.e., the farther the value is from 0), the more important that term is in the model."),
+                                                      p("Because we standardized our exogenous regressors prior to model fitting, we can directly compare the coefficient values on the regressor terms."),
+                                                      p(tags$i("Please use the model coefficient table to answer the questions below.")),
+                                                      DTOutput("coeff_table_key"),
+                                                      box(id = "box2", width = 12, status = "primary",
+                                                          solidHeader = TRUE,
+                                                          fluidRow(
+                                                            column(10, offset = 1,
+                                                                   h3("Questions"),
+                                                                   p(tags$b(quest["q13", 1])),
+                                                                   p(tags$b(quest["q14", 1])),
+                                                                   p(tags$b(quest["q15", 1]))
+                                                            )
+                                                          )
+                                                      )
+                                                      ),
+                                               column(6,
+                                                      DTOutput("coeff_table", width = "100%"),
+                                                      )
+                                             ),
+                                             hr(),
+                                             fluidRow(
+                                               column(10, offset = 1,
+                                                      h3("Next step"),
+                                                      p("We will assess the fit of the ARIMA model by using the model to make predictions on new data.")
+                                               )
                                              )
                                              ),
                                     #* Objective 5 - Run ecological model ----
