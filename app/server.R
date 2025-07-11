@@ -1027,6 +1027,890 @@ server <- function(input, output, session) {#
     
   })
   
+  # Objective 5 ----
+  plot.train.test <- reactiveValues(main=NULL)
+  
+  observe({
+    input$fit_arima
+    
+    output$train_test_plot <- renderPlotly({ 
+      
+      validate(
+        need(input$table01_rows_selected != "",
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(site_data()$data),
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(input$select),
+             message = "Please select at least 1 predictor from the dropdown menu in Objective 4.")
+      )
+      validate(
+        need(length(input$select) <= 3,
+             message = "Please only select up to 3 regressors to fit your model in Objective 4.")
+      )
+      validate(
+        need(plot.stand$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors in Objective 4.")
+      )
+      validate(
+        need(!is.null(actA.arima$arima),
+             message = "Please fit an ARIMA model in Objective 4.")
+      )
+      
+      
+      row_selected = sites_df[input$table01_rows_selected, ]
+      site_id <- row_selected$SiteID
+      
+      if(site_id == "cann"){
+        train_data <- as_tsibble(cann_model_data) %>%
+          dplyr::slice_head(prop = .7) %>% # using a 70:30 split here
+          select(datetime, chla) %>%
+          rename(target = chla) %>%
+          mutate(set = "training data")
+        
+        test_data <- as_tsibble(cann_model_data) %>%
+          dplyr::slice_tail(prop = .3) %>% # using a 70:30 split here
+          select(datetime, chla) %>%
+          rename(target = chla) %>%
+          mutate(set = "testing data")
+        
+        plot_data <- bind_rows(train_data, test_data)
+        
+        y_lab = "chlorophyll-a (mg/L)"
+        
+        train_test_dates <- train_data %>%
+          pull(datetime)
+        train_test_line <- last(train_test_dates)
+      }
+      
+      fitted_values <- fitted(actA.arima$arima)
+      
+      p <- ggplot()+
+        xlab("datetime")+
+        ylab(y_lab)+
+        geom_point(data = plot_data, aes(x = datetime, y = target, color = set))+
+        geom_line(data = fitted_values, aes(x = datetime, y = .fitted, group = .model, color = .model))+
+        geom_vline(xintercept = train_test_line)+
+        labs(color = NULL, fill = NULL)+
+        scale_color_manual(values = c("training data" = "#cee3f1",.model = "#446c84","testing data" = "#0d3658"))+
+        theme_classic()
+      
+      plot.train.test$main <- p
+      
+      return(ggplotly(p, dynamicTicks = TRUE))
+      
+    })
+    
+  })
+  
+  observe({
+    input$select
+    
+    output$train_test_plot <- renderPlotly({ 
+      
+      validate(
+        need(input$table01_rows_selected != "",
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(site_data()$data),
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(input$select),
+             message = "Please select at least 1 predictor from the dropdown menu in Objective 4.")
+      )
+      validate(
+        need(length(input$select) <= 3,
+             message = "Please only select up to 3 regressors to fit your model in Objective 4.")
+      )
+      validate(
+        need(plot.stand$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors in Objective 4.")
+      )
+      validate(
+        need(!is.null(actA.arima$arima),
+             message = "Please fit an ARIMA model in Objective 4.")
+      )
+      
+      p <- ggplot() +
+        annotate("text", x = 10,  y = 10,
+                 size = 6,
+                 label = "Looks like you've chosen new regressors!\nPlease click 'Fit ARIMA' in Objective 4 to regenerate this plot.") + 
+        theme_void()+
+        theme(panel.grid = element_blank(),
+              axis.line = element_blank())
+      
+      plot.train.test$main <- p
+      
+      return(ggplotly(p, dynamicTicks = TRUE))
+      
+    })
+    
+  })
+  
+  # Download scatterplot of arima
+  output$save_train_test_plot <- downloadHandler(
+    filename = function() {
+      paste("QXX-plot-", Sys.Date(), ".png", sep="")
+    },
+    content = function(file) {
+      device <- function(..., width, height) {
+        grDevices::png(..., width = 8, height = 4,
+                       res = 200, units = "in")
+      }
+      ggsave(file, plot = plot.train.test$main, device = device)
+    }
+  )
+  
+  # predictions on testing data plot
+  plot.test.pred <- reactiveValues(main=NULL)
+  
+  observe({
+    input$fit_arima
+    
+    output$test_pred_plot <- renderPlotly({ 
+      
+      validate(
+        need(input$table01_rows_selected != "",
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(site_data()$data),
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(input$select),
+             message = "Please select at least 1 predictor from the dropdown menu in Objective 4.")
+      )
+      validate(
+        need(length(input$select) <= 3,
+             message = "Please only select up to 3 regressors to fit your model in Objective 4.")
+      )
+      validate(
+        need(plot.stand$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors in Objective 4.")
+      )
+      validate(
+        need(!is.null(actA.arima$arima),
+             message = "Please fit an ARIMA model in Objective 4.")
+      )
+      validate(
+        need(input$generate_pred > 0,
+             message = "Click 'Generate predictions'")
+      )
+      
+      
+      row_selected = sites_df[input$table01_rows_selected, ]
+      site_id <- row_selected$SiteID
+      
+      if(site_id == "cann"){
+        
+        test_data <- as_tsibble(cann_model_data) %>%
+          dplyr::slice_tail(prop = .3) %>% # using a 70:30 split here
+          select(datetime, chla) %>%
+          rename(target = chla) %>%
+          mutate(set = "testing data")
+        
+        train_data <- as_tsibble(cann_model_data) %>%
+          dplyr::slice_head(prop = .7) %>% # using a 70:30 split here
+          select(datetime, chla) %>%
+          rename(target = chla) %>%
+          mutate(set = "training data") 
+        
+        plot_data <- bind_rows(train_data, test_data)
+        
+        y_lab = "chlorophyll-a (mg/L)"
+        
+        train_test_dates <- train_data %>%
+          pull(datetime)
+        train_test_line <- last(train_test_dates)
+        
+        col_names <- c("datetime","chla",input$select)
+        
+        new_data <- as_tsibble(cann_model_data) %>%
+          filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
+          tsibble::fill_gaps() %>%
+          select(all_of(col_names)) %>%
+          mutate(across(input$select, list(zscore = ~as.numeric(scale(.)))))
+        
+      }
+      
+      fitted_values <- fitted(actA.arima$arima)
+      pred <- forecast(actA.arima$arima, new_data = new_data)
+      
+      
+      p <- ggplot()+
+        xlab("datetime")+
+        ylab(y_lab)+
+        geom_point(data = plot_data, aes(x = datetime, y = target, color = set))+
+        geom_line(data = pred, aes(x = datetime, y = .mean, group = .model, color = .model))+
+        geom_vline(xintercept = train_test_line)+
+        labs(color = NULL, fill = NULL)+
+        scale_color_manual(values = c("training data" = "#cee3f1",.model = "#446c84","testing data" = "#0d3658"))+
+        theme_classic()
+      
+      plot.test.pred$main <- p
+      
+      return(ggplotly(p, dynamicTicks = TRUE))
+      
+    })
+    
+  })
+  
+  observe({
+    input$select
+    
+    output$test_pred_plot <- renderPlotly({ 
+      
+      validate(
+        need(input$table01_rows_selected != "",
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(site_data()$data),
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(input$select),
+             message = "Please select at least 1 predictor from the dropdown menu in Objective 4.")
+      )
+      validate(
+        need(length(input$select) <= 3,
+             message = "Please only select up to 3 regressors to fit your model in Objective 4.")
+      )
+      validate(
+        need(plot.stand$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors in Objective 4.")
+      )
+      validate(
+        need(!is.null(actA.arima$arima),
+             message = "Please fit an ARIMA model in Objective 4.")
+      )
+      validate(
+        need(input$generate_pred > 0,
+             message = "Click 'Generate predictions'")
+      )
+      
+      p <- ggplot() +
+        annotate("text", x = 10,  y = 10,
+                 size = 6,
+                 label = "Looks like you've chosen new regressors!\nPlease click 'Fit ARIMA' in Objective 4 to regenerate this plot.") + 
+        theme_void()+
+        theme(panel.grid = element_blank(),
+              axis.line = element_blank())
+      
+      plot.test.pred$main <- p
+      
+      return(ggplotly(p, dynamicTicks = TRUE))
+      
+    })
+    
+  })
+  
+  # Download scatterplot of arima
+  output$save_test_pred_plot <- downloadHandler(
+    filename = function() {
+      paste("QXX-plot-", Sys.Date(), ".png", sep="")
+    },
+    content = function(file) {
+      device <- function(..., width, height) {
+        grDevices::png(..., width = 8, height = 4,
+                       res = 200, units = "in")
+      }
+      ggsave(file, plot = plot.test.pred$main, device = device)
+    }
+  )
+  
+  #** Uncertainty slides ----
+  output$uc_slides <- renderSlickR({
+    slickR(uc_slides) + settings(dots = TRUE)
+  })
+  
+  # Residuals plot
+  plot.resid <- reactiveValues(main=NULL)
+  
+  observe({
+    input$fit_arima
+    
+    output$resid_plot <- renderPlotly({ 
+      
+      validate(
+        need(input$table01_rows_selected != "",
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(site_data()$data),
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(input$select),
+             message = "Please select at least 1 predictor from the dropdown menu in Objective 4.")
+      )
+      validate(
+        need(length(input$select) <= 3,
+             message = "Please only select up to 3 regressors to fit your model in Objective 4.")
+      )
+      validate(
+        need(plot.stand$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors in Objective 4.")
+      )
+      validate(
+        need(!is.null(actA.arima$arima),
+             message = "Please fit an ARIMA model in Objective 4.")
+      )
+      validate(
+        need(input$view_resid > 0,
+             message = "Click 'View residuals'")
+      )
+      
+      
+      row_selected = sites_df[input$table01_rows_selected, ]
+      site_id <- row_selected$SiteID
+      
+      if(site_id == "cann"){
+        x_lab = "chlorophyll-a (mg/L)"
+      }
+      resid <- residuals(actA.arima$arima)
+      sd.resid <- round(sd(resid$.resid, na.rm = TRUE),3)
+      
+      p <- ggplot(data = resid)+
+        xlab(x_lab)+
+        geom_histogram(aes(x = .resid), color = "#0d3658", fill = "#cee3f1")+
+        theme_bw()+
+        ggtitle(paste0("Model residuals: Std. Dev. = ",sd.resid))
+      
+      plot.resid$main <- p
+      
+      return(ggplotly(p, dynamicTicks = TRUE))
+      
+    })
+    
+  })
+  
+  observe({
+    input$select
+    
+    output$resid_plot <- renderPlotly({ 
+      
+      validate(
+        need(input$table01_rows_selected != "",
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(site_data()$data),
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(input$select),
+             message = "Please select at least 1 predictor from the dropdown menu in Objective 4.")
+      )
+      validate(
+        need(length(input$select) <= 3,
+             message = "Please only select up to 3 regressors to fit your model in Objective 4.")
+      )
+      validate(
+        need(plot.stand$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors in Objective 4.")
+      )
+      validate(
+        need(!is.null(actA.arima$arima),
+             message = "Please fit an ARIMA model in Objective 4.")
+      )
+      validate(
+        need(input$generate_pred > 0,
+             message = "Click 'Generate predictions'")
+      )
+      
+      p <- ggplot() +
+        annotate("text", x = 10,  y = 10,
+                 size = 4,
+                 label = "You've chosen new regressors!\nClick 'Fit ARIMA' in Obj. 4 \nto regenerate this plot.") + 
+        theme_void()+
+        theme(panel.grid = element_blank(),
+              axis.line = element_blank())
+      
+      plot.resid$main <- p
+      
+      return(ggplotly(p, dynamicTicks = TRUE))
+      
+    })
+    
+  })
+  
+  # Download scatterplot of arima
+  output$save_resid_plot <- downloadHandler(
+    filename = function() {
+      paste("QXX-plot-", Sys.Date(), ".png", sep="")
+    },
+    content = function(file) {
+      device <- function(..., width, height) {
+        grDevices::png(..., width = 8, height = 4,
+                       res = 200, units = "in")
+      }
+      ggsave(file, plot = plot.resid$main, device = device)
+    }
+  )
+  
+  # Predictions with uncertainty plot
+  # Residuals plot
+  plot.uc <- reactiveValues(main=NULL)
+  
+  observe({
+    input$fit_arima
+    
+    output$uc_plot <- renderPlotly({ 
+      
+      validate(
+        need(input$table01_rows_selected != "",
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(site_data()$data),
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(input$select),
+             message = "Please select at least 1 predictor from the dropdown menu in Objective 4.")
+      )
+      validate(
+        need(length(input$select) <= 3,
+             message = "Please only select up to 3 regressors to fit your model in Objective 4.")
+      )
+      validate(
+        need(plot.stand$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors in Objective 4.")
+      )
+      validate(
+        need(!is.null(actA.arima$arima),
+             message = "Please fit an ARIMA model in Objective 4.")
+      )
+      validate(
+        need(input$add_uc > 0,
+             message = "Click 'Add uncertainty'")
+      )
+      
+      row_selected = sites_df[input$table01_rows_selected, ]
+      site_id <- row_selected$SiteID
+      
+      if(site_id == "cann"){
+        
+        test_data <- as_tsibble(cann_model_data) %>%
+          dplyr::slice_tail(prop = .3) %>% # using a 70:30 split here
+          select(datetime, chla) %>%
+          rename(target = chla) %>%
+          mutate(set = "testing data")
+        
+        train_data <- as_tsibble(cann_model_data) %>%
+          dplyr::slice_head(prop = .7) %>% # using a 70:30 split here
+          select(datetime, chla) %>%
+          rename(target = chla) %>%
+          mutate(set = "training data") 
+        
+        plot_data <- bind_rows(train_data, test_data)
+        
+        y_lab = "chlorophyll-a (mg/L)"
+        
+        train_test_dates <- train_data %>%
+          pull(datetime)
+        train_test_line <- last(train_test_dates)
+        
+        col_names <- c("datetime","chla",input$select)
+        
+        new_data <- as_tsibble(cann_model_data) %>%
+          filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
+          tsibble::fill_gaps() %>%
+          select(all_of(col_names)) %>%
+          mutate(across(input$select, list(zscore = ~as.numeric(scale(.)))))
+        
+      }
+      
+      fitted_values <- fitted(actA.arima$arima)
+      pred <- forecast(actA.arima$arima, new_data = new_data) %>%
+        hilo()
+      
+      
+      p <- ggplot()+
+        xlab("datetime")+
+        ylab(y_lab)+
+        geom_point(data = plot_data, aes(x = datetime, y = target, color = set))+
+        geom_ribbon(data = pred, aes(x = datetime, ymin = `95%`$lower, ymax = `95%`$upper), color = "#DDE4E1", fill = "#DDE4E1",
+                    alpha = 0.5)+
+        geom_line(data = pred, aes(x = datetime, y = .mean, group = .model, color = .model))+
+        geom_vline(xintercept = train_test_line)+
+        labs(color = NULL, fill = NULL)+
+        scale_color_manual(values = c("training data" = "#cee3f1",.model = "#446c84","testing data" = "#0d3658"))+
+        theme_classic()
+      
+      plot.uc$main <- p
+      
+      return(ggplotly(p, dynamicTicks = TRUE))
+      
+    })
+    
+  })
+  
+  observe({
+    input$select
+    
+    output$uc_plot <- renderPlotly({ 
+      
+      validate(
+        need(input$table01_rows_selected != "",
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(site_data()$data),
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(input$select),
+             message = "Please select at least 1 predictor from the dropdown menu in Objective 4.")
+      )
+      validate(
+        need(length(input$select) <= 3,
+             message = "Please only select up to 3 regressors to fit your model in Objective 4.")
+      )
+      validate(
+        need(plot.stand$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors in Objective 4.")
+      )
+      validate(
+        need(!is.null(actA.arima$arima),
+             message = "Please fit an ARIMA model in Objective 4.")
+      )
+      validate(
+        need(input$generate_pred > 0,
+             message = "Click 'Generate predictions'")
+      )
+      
+      p <- ggplot() +
+        annotate("text", x = 10,  y = 10,
+                 size = 4,
+                 label = "Looks like you've chosen new regressors!\nPlease click 'Fit ARIMA' in Obj. 4 to regenerate this plot.") + 
+        theme_void()+
+        theme(panel.grid = element_blank(),
+              axis.line = element_blank())
+      
+      plot.uc$main <- p
+      
+      return(ggplotly(p, dynamicTicks = TRUE))
+      
+    })
+    
+  })
+  
+  # Download scatterplot of arima
+  output$save_uc_plot <- downloadHandler(
+    filename = function() {
+      paste("QXX-plot-", Sys.Date(), ".png", sep="")
+    },
+    content = function(file) {
+      device <- function(..., width, height) {
+        grDevices::png(..., width = 8, height = 4,
+                       res = 200, units = "in")
+      }
+      ggsave(file, plot = plot.uc$main, device = device)
+    }
+  )
+  
+  #** Ignorance slides ----
+  output$ign_slides <- renderSlickR({
+    slickR(ign_slides) + settings(dots = TRUE)
+  })
+  
+  # Calculate ignorance
+  ign.text <- reactiveValues(main=NULL)
+  
+  observe({
+    input$fit_arima
+    
+    output$ign_text <- renderText({ 
+      
+      validate(
+        need(input$table01_rows_selected != "",
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(site_data()$data),
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(input$select),
+             message = "Please select at least 1 predictor from the dropdown menu in Objective 4.")
+      )
+      validate(
+        need(length(input$select) <= 3,
+             message = "Please only select up to 3 regressors to fit your model in Objective 4.")
+      )
+      validate(
+        need(plot.stand$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors in Objective 4.")
+      )
+      validate(
+        need(!is.null(actA.arima$arima),
+             message = "Please fit an ARIMA model in Objective 4.")
+      )
+      validate(
+        need(input$calc_ign > 0,
+             message = "Click 'Calculate ignorance score'")
+      )
+      
+      row_selected = sites_df[input$table01_rows_selected, ]
+      site_id <- row_selected$SiteID
+      
+      if(site_id == "cann"){
+        
+        col_names <- c("datetime","chla",input$select)
+        
+        train_data <- as_tsibble(cann_model_data) %>%
+          dplyr::slice_head(prop = .7)
+        
+        new_data <- as_tsibble(cann_model_data) %>%
+          filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
+          tsibble::fill_gaps() %>%
+          select(all_of(col_names)) %>%
+          mutate(across(input$select, list(zscore = ~as.numeric(scale(.)))))
+        
+        pred <- forecast(actA.arima$arima, new_data = new_data) 
+        
+        dist_params <- distributional::parameters(pred$chla)
+        
+        ign <- scoringRules::logs_norm(new_data$chla, dist_params$mu, dist_params$sigma)
+        
+      }
+      
+      ign_out <- paste0("Ignorance score: ",round(mean(ign, na.rm = TRUE), 2))
+      
+      ign.text$main <- ign_out
+      
+      return(ign_out)
+      
+    })
+    
+  })
+  
+  observe({
+    input$select
+    
+    output$ign_text <- renderText({ 
+      
+      validate(
+        need(input$table01_rows_selected != "",
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(site_data()$data),
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(input$select),
+             message = "Please select at least 1 predictor from the dropdown menu in Objective 4.")
+      )
+      validate(
+        need(length(input$select) <= 3,
+             message = "Please only select up to 3 regressors to fit your model in Objective 4.")
+      )
+      validate(
+        need(plot.stand$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors in Objective 4.")
+      )
+      validate(
+        need(!is.null(actA.arima$arima),
+             message = "Please fit an ARIMA model in Objective 4.")
+      )
+      validate(
+        need(input$calc_ign > 0,
+             message = "Click 'Calculate ignorance score'")
+      )
+      
+      ign_out <- paste0("You've selected new regressors! Please click 'Fit ARIMA' in Obj. 4 to recalculate the ignorance score!")
+      
+      ign.text$main <- ign_out
+      
+      return(ign_out)
+      
+    })
+    
+  })
+  
+  # Objective 6
+  
+  # data format table
+  dat.format.table <- reactiveValues(dt = data_format_table) 
+  
+  output$format_table <- DT::renderDT(
+    datatable(data_format_table,
+              rownames = FALSE,
+              colnames = c("","","",""),
+              selection = "none", 
+              class = "cell-border stripe",
+              options = list(searching = FALSE,paging = FALSE, ordering= FALSE, dom = "t"),
+              editable = FALSE
+    ) %>%
+      formatStyle('RowName',fontWeight = "bold")
+  )
+  
+  renderDT(
+    datatable(
+      data,
+      rownames = FALSE, # Hide the default row names
+      options = list(
+        columnDefs = list(
+          list(targets = 0, visible = FALSE) # Hide the dummy column 'RowName'
+        )
+      )
+    ) %>% formatStyle('RowName', fontWeight = 'bold')
+  )
+  
+  # validation toggle
+  valid <- reactiveValues(main = TRUE)
+  
+  # user input data upload and validation
+  stand.data <- reactive({
+    req(input$upload_data)
+    
+    ext <- tools::file_ext(input$upload_data$name)
+    switch(ext,
+           csv = vroom::vroom(input$upload_data$datapath, delim = ","),
+           validate("Invalid file! Please upload a .csv file.")
+    )
+    
+    dat <- readr::read_csv(input$upload_data$datapath, guess_max = 1e6, show_col_types = FALSE) 
+    
+    IsDate <- function(mydate, date.format = "%y-%m-%d") {
+      tryCatch(!is.na(as.Date(x = mydate, format = date.format)),  
+               error = function(err) {FALSE})  
+    }
+    
+    if(!"site_id" %in% names(dat)){
+      valid$main <- FALSE
+      validate("'site_id' column is missing!")
+    } 
+    
+    if(!"datetime" %in% names(dat)){
+      valid$main <- FALSE
+      validate("'datetime' column is missing!")
+    } 
+    
+    if(!"variable" %in% names(dat)){
+      valid$main <- FALSE
+      validate("'variable' column is missing!")
+    } 
+    
+    if(!"observation" %in% names(dat)){
+      valid$main <- FALSE
+      validate("'observation' column is missing!")
+    } 
+    
+    if(!class(dat$site_id) == "character"){
+      valid$main <- FALSE
+      validate("'site_id' column is not in character format!")
+    } 
+    
+    if(!"Date" %in% class(dat$datetime)){
+      valid$main <- FALSE
+      validate("'datetime' column is not in Date format!")
+    } 
+    
+    if(!class(dat$variable) == "character"){
+      valid$main <- FALSE
+      validate("'variable' column is not in character format!")
+    } 
+    
+    if(!class(dat$observation) == "numeric"){
+      valid$main <- FALSE
+      validate("'observation' column is not in numeric format!")
+    } 
+    
+    check_variable_spaces <- sapply(dat$variable, function(x) grepl(" ", x))
+    if(any(check_variable_spaces)){
+      valid$main <- FALSE
+      validate("'variable' column values contain spaces!")
+    }
+    
+    check_date_format <- IsDate(dat$datetime)
+    if(any(!check_date_format)){
+      valid$main <- FALSE
+      validate("'datetime' column cannot be translated to yyyy-mm-dd format!")
+    } 
+    
+    wide_dat <- dat %>%
+      pivot_wider(names_from = "variable", values_from = "observation")
+    
+    diff_dates <- as.numeric(diff(wide_dat$datetime), units = "days")
+    
+    if(any(diff_dates < 1)){
+      valid$main <- FALSE
+      validate("sub-daily dates detected in data!")
+    }
+    
+    return(dat)
+  })
+  
+  # table of head of user data
+  output$stand_data <- renderTable({
+    table_dat <- stand.data() %>%
+      mutate(datetime = format(datetime, "%Y-%m-%d"))
+    head(table_dat, input$n)
+  })
+  
+  # alert user that gaps are being filled
+  output$gap_text <- renderText({
+    
+    validate(
+      need(!is.null(input$upload_data),
+           message = "Please upload your data above.")
+    )
+    validate(
+      need(valid$main == TRUE,
+           message = "Please correct your data format and try again.")
+    )
+    
+    dat <- stand.data()
+    wide_dat <- dat %>%
+      pivot_wider(names_from = "variable", values_from = "observation")
+
+    model_df <- as_tsibble(wide_dat) %>%
+      fill_gaps()
+
+    n_gaps = nrow(model_df) - nrow(wide_dat)
+
+    if(nrow(model_df) > nrow(wide_dat)){
+      return(paste0("Data gaps detected! Filling ",n_gaps," gap(s) with NA values!"))
+    } else {
+      return("No data gaps detected!")
+    }
+  })
+  
+  # plot variables in user data
+  # Site data plot ----
+  output$user_data_plot <- renderPlotly({
+    
+    validate(
+      need(!is.null(input$upload_data),
+           message = "Please upload your data.")
+    )
+    validate(
+      need(valid$main == TRUE,
+           message = "Please correct your data format and try again.")
+    )
+    
+    plot_dat <- stand.data() 
+    
+    p <- ggplot(data = plot_dat) +
+      geom_point(aes(x = datetime, y = observation, color = variable))+
+      facet_wrap(facets = vars(variable), scales = "free_y")+
+      theme_bw(base_size = 10)
+    
+    return(ggplotly(p, dynamicTicks = TRUE))
+    
+  })
+  
+  
 
   # Navigating Tabs ----
   #* Main Tab ====

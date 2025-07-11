@@ -18,6 +18,7 @@ library(fable)
 library(feasts)
 library(urca)
 library(tsibble)
+library(scoringRules)
 ```
 
 Source function from Sherry
@@ -35,7 +36,8 @@ Data wrangling code for profile data from Austin
 sensor_codes <- read_csv("./sensorcode.csv")
 
 # pull BAC site per Matt's recommendation
-cannsites <- c('BAC')
+# trying KEN as a second site
+cannsites <- c('KEN')
 
 profile_data <- profile_data_download %>%  
   dplyr::filter(`Program Site Ref` %in% cannsites) |> 
@@ -64,7 +66,7 @@ profile_data_grouped <- profile_data |>
   mutate(datetime = lubridate::force_tz(lubridate::as_datetime(datetime, format = '%d/%m/%Y %H:%M:%S')), tzone = 'Australia/Perth') |>
   mutate(datetime = lubridate::with_tz(datetime, tzone = "UTC")) |> 
   mutate(datetime = lubridate::round_date(datetime, unit = 'hour')) |> 
-  mutate(site_id = 'BAC') |> 
+  mutate(site_id = 'KEN') |> #mutate(site_id = 'BAC') |> 
   select(datetime, site_id, depth, observation, variable) |> 
   mutate(date = as.Date(datetime)) |> 
   group_by(date, variable) |> 
@@ -251,7 +253,7 @@ module_data <- chla_df %>%
   select(-obs_datetime, -site_id, -depth) %>%
   pivot_wider(names_from = "variable", values_from = "observation")
 
-write.csv(module_data, "/Users/marylofton/RProjects/module11_dev/app/data/cann.csv",row.names = FALSE)
+write.csv(module_data, "/Users/marylofton/RProjects/module11_dev/app/data/kent.csv",row.names = FALSE)
 
 ```
 
@@ -269,13 +271,27 @@ ggplot(data = plot_dat)+
 Format for model fitting
 **this is currently really ugly and manual- might be better to use base arima function which is less picky about time gaps, especially if people will be uploading their own data later**
 ```{r}
+# Data wrangling for BAC
+# model_df <- chla_df %>%
+#   filter(year(datetime) %in% c(2024:2025)) %>%
+#   select(-obs_datetime, -site_id, -depth) %>%
+#   pivot_wider(names_from = "variable", values_from = "observation") %>%
+#   mutate(datetime = ifelse(datetime == "2025-03-05",datetime - 3, #ugly manual fixing of weeks :-/
+#                 ifelse(datetime == "2025-04-23",datetime - 3,
+#                        ifelse(datetime == "2025-01-29",datetime - 3, 
+#                               ifelse(datetime == "2025-06-04", datetime - 3, datetime))))) %>%
+#   mutate(datetime = as.Date(datetime, origin = "1970-01-01")) %>%
+#   mutate(week = week(datetime),
+#          year = year(datetime))
+
+# Data wrangling for KEN
 model_df <- chla_df %>%
   filter(year(datetime) %in% c(2024:2025)) %>%
   select(-obs_datetime, -site_id, -depth) %>%
   pivot_wider(names_from = "variable", values_from = "observation") %>%
   mutate(datetime = ifelse(datetime == "2025-03-05",datetime - 3, #ugly manual fixing of weeks :-/
                 ifelse(datetime == "2025-04-23",datetime - 3,
-                       ifelse(datetime == "2025-01-29",datetime - 3, 
+                       ifelse(datetime == "2025-01-29",datetime - 3,
                               ifelse(datetime == "2025-06-04", datetime - 3, datetime))))) %>%
   mutate(datetime = as.Date(datetime, origin = "1970-01-01")) %>%
   mutate(week = week(datetime),
@@ -290,12 +306,48 @@ model_df2 <- left_join(year_week, model_df, by = c("year","week")) %>%
   slice(-1) %>%
   fill(chla:flow, .direction = "updown") 
 
+
 model_df3 <- model_df2 %>%
   mutate(mod_datetime = c(seq(from = as.Date("2024-01-09"), by = "week", length.out = 51),seq(from = as.Date("2025-01-07"), by = "week", length.out = 24))) %>%
   select(-datetime) %>%
   rename(datetime = mod_datetime)
 
 write.csv(model_df3, "/Users/marylofton/RProjects/module11_dev/app/data/cann_mod.csv", row.names = FALSE)
+
+# additional data wrangling for KEN
+
+test_std_df <- model_df3 %>%
+  select(-year, -week) %>%
+  pivot_longer(chla:flow, names_to = "variable", values_to = "observation") %>%
+  mutate(site_id = "kent") %>%
+  select(site_id, datetime, variable, observation) 
+
+hourly_steps <- seq(as.POSIXct("2024-02-24 23:00:00"), by="hour", length.out = 525)
+
+test_std_df$datetime <- hourly_steps
+
+wid <- test_std_df %>%
+  pivot_wider(names_from = "variable", values_from = "observation")
+
+write.csv(test_std_df, "/Users/marylofton/RProjects/module11_dev/app/data/kent_std.csv", row.names = FALSE)
+class(test_std_df$site_id)
+class(test_std_df$datetime)
+class(test_std_df$variable)
+class(test_std_df$observation)
+check_date_format <- IsDate(test_std_df$datetime)
+any(!check_date_format)
+diff_dates <- as.numeric(diff(wid$datetime), units = "days")
+any(diff_dates < 1)
+names(diff_dates)
+
+# Example vector
+my_vector <- c("hello world", "  spaces  ", " R is fun", "no spaces")
+
+# Check for spaces in each element
+has_spaces <- sapply(my_vector, function(x) grepl(" ", x))
+
+# Print the result
+print(has_spaces)
 
 ```
 
@@ -311,18 +363,23 @@ model_df4 <- as_tsibble(model_df3) %>%
         
 reg_cols <- paste0(c("frp","flow"),"_zscore")
 
-xreg <- c("frp","flow")
 my.formula <- formula(paste0("chla ~ ",reg_cols[1],"+",reg_cols[2]))
 
 my.arima <- model_df4 %>%
-  model(`ARIMA` = fable::ARIMA(formula = "chla ~ flow + frp")) # get errors if include all variables due to small data size
+  model(`ARIMA` = fable::ARIMA(formula = my.formula)) # get errors if include all variables due to small data size
 
 
 params <- coefficients(my.arima %>% select(`ARIMA`))
+resid <- residuals(my.arima %>% select(`ARIMA`))
+
+ggplot(data = resid, aes(x = datetime, y = .resid))+
+  geom_point()+
+  geom_line()
 
 strsplit(as.character(my.arima$ARIMA), split = " ")[[1]][3]
 
 gg_tsresiduals(my.arima %>% select(`ARIMA`))
+p+theme_bw()
 
 fitted_values <- fitted(my.arima)
 
@@ -340,12 +397,32 @@ ARIMA_plot
 Generate predictions for test set data
 ```{r}
 # get test data
-new.data <- as_tsibble(model_df3) %>%
-  filter(!datetime %in% model_df4$datetime) %>%
-  fill_gaps()
+new_data <- as_tsibble(model_df3) %>%
+          filter(!datetime %in% model_df4$datetime) %>% # using a 70:30 split here
+          tsibble::fill_gaps() %>%
+          select(datetime, chla, frp, flow) %>%
+  mutate(across(frp:flow, list(zscore = ~as.numeric(scale(.)))))
 
 # generate predictions on test data
-pred <- forecast(my.arima, new_data = new.data)
+pred <- forecast(my.arima, new_data = new_data) %>%
+  hilo() %>%
+  mutate(sd = distributional::sd(chla))
+pred
+
+all_data <- as_tsibble(model_df3) %>%
+          tsibble::fill_gaps() %>%
+          select(datetime, chla, frp, flow) %>%
+  mutate(across(frp:flow, list(zscore = ~as.numeric(scale(.)))))
+
+acc <- forecast(my.arima, new_data = new_data) %>%
+  accuracy(all_data,
+               measures = list(interval_accuracy_measures, distribution_accuracy_measures)
+)
+
+dist_params <- distributional::parameters(pred$chla)
+
+scoringRules::logs_norm(new_data$chla, dist_params$mu, dist_params$sigma)
+
 
 # plot predictions
 ARIMA_pred_plot <- ggplot()+
@@ -353,6 +430,8 @@ ARIMA_pred_plot <- ggplot()+
   ylab("Chla (mg/L)")+
   geom_point(data = new.data, aes(x = datetime, y = chla, fill = "obs"))+
   geom_line(data = pred, aes(x = datetime, y = .mean, group = .model, color = .model))+
+  geom_ribbon(data = pred, aes(x = datetime, ymin = `95%`$lower, ymax = `95%`$upper), color = "blue",
+              alpha = 0.1)+
   facet_wrap(facets = vars(.model))+
   labs(color = NULL, fill = NULL)+
   theme_classic()

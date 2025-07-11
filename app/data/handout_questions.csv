@@ -27,3 +27,11 @@ q12c,c. How many timesteps of previous errors are included in the model? How do 
 q13,"Q13. Which term is most important in your fitted model (i.e., has the greatest absolute value)?"
 q14,"Q14. If the standard error of a term is bigger than the absolute value of the estimate of a term, we cannot say for sure that the effect of that term is meaningfully different from 0. Are there any terms in your model that are not meaningfully different from 0? Which ones?"
 q15,"Q15. Assess the importance of the exogenous regressors you chose to include in the model. Based on the term estimates and standard errors, were these variables important in your final, fitted model? Explain your reasoning."
+q16,Q16. Inspect the plot on the right. How well do you think the model predictions fit the observations in the test dataset? Explain your reasoning.
+q17,Q17. Briefly describe in your own words how a 95% predictive interval can be estimated using the standard deviation of the model residuals.
+q18,Q18. Record the standard deviation of the model residuals.
+q19,"Q19. Inspect the plot of model predictions with uncertainty. Now that you can see the uncertainty associated with model predictions, how well do you think the model predictions fit the observations in the test dataset? Explain your reasoning."
+q20,Q20. Compare your answers to Q16 and Q19. Were there any differences in your interpretation of model fit when you visualized predictions with and without uncertainty? Why do you think this might be?
+q21,Q21. Briefly (a) define the ignorance score and (b) describe how it is calculated in your own words.
+q22,"Q22. Click ""Calculate ignorance score"" and record the value of the ignorance score for your fitted ARIMA model."
+q23,Q23. Compare the ignorance score for your model to your partner's model. Whose model scored better? How do you know?

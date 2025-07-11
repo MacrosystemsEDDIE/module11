@@ -787,7 +787,156 @@ ui <- function(request) {
                                                                 p(module_text["obj_05", ])
                                                                 )
                                                       )
+                                               ),
+                                             hr(),
+                                             fluidRow(
+                                               column(4,
+                                                      h3("Training vs. testing data"),
+                                                      p("To understand how well our model can predict the dynamics of our target dataset, it is common practice to reserve some data for model testing."),
+                                                      p("In this case, we used 70% of the available data as ",tags$b("training data")," in the previous objective, and reserved 30% as ",tags$b("testing data.")),
+                                                      p("The figure on the right shows both the training and testing data of your target dataset, as well as the fitted values from your ARIMA model, generated using the training dataset only.")
+                                                      ),
+                                               column(8,
+                                                      wellPanel(
+                                                        plotlyOutput("train_test_plot"),
+                                                      ),
+                                                      downloadButton("save_train_test_plot", "Download plot", icon = icon("download"))
+                                                      )
+                                             ),
+                                             hr(),
+                                             fluidRow(
+                                               column(4,
+                                                      h3("Apply model to testing data"),
+                                                      p("Now, we will apply our model to the test data to see how the predictions look."),
+                                                      p("Click 'Generate predictions' to view the model predictions for the test data, and then answer the question below."),
+                                                      actionButton("generate_pred",label = "Generate predictions"),
+                                                      br(),br(),
+                                                      box(id = "box2", width = 12, status = "primary",
+                                                          solidHeader = TRUE,
+                                                          fluidRow(
+                                                            column(10, offset = 1,
+                                                                   h3("Questions"),
+                                                                   p(tags$b(quest["q16", 1]))
+                                                            )
+                                                          )
+                                                      )
+                                               ),
+                                               column(8,
+                                                      wellPanel(
+                                                        plotlyOutput("test_pred_plot"),
+                                                      ),
+                                                      downloadButton("save_test_pred_plot", "Download plot", icon = icon("download"))
                                                )
+                                             ),
+                                             hr(),
+                                             fluidRow(
+                                               column(4,
+                                                      h3("Estimating the uncertainty of model predictions"),
+                                                      p(tags$em("Use the slides and text below to understand the importance of estimating the uncertainty associated with our model predictions.")),
+                                                      p(tags$b("Why is uncertainty important?")),
+                                                      tags$ul(
+                                                        tags$li("So far, you have plotted the mean prediction of your ARIMA model for the test data. However, unless we are 100% confident that the future will be exactly the mean of our model predictions (which is never the case!), we should estimate the uncertainty associated with our model predictions. This will help you to better assess the fit of your model and help people who use your model to make better decisions considering a range of possible outcomes.")
+                                                      ),
+                                                      box(id = "box2", width = 12, status = "primary",
+                                                          solidHeader = TRUE,
+                                                          fluidRow(
+                                                            column(10, offset = 1,
+                                                                   h3("Questions"),
+                                                                   p(tags$b(quest["q17", 1]))
+                                                            )
+                                                          )
+                                                      )
+                                               ),
+                                               column(8,
+                                                      h5("Click the arrows to navigate through the slides", align = "center"),
+                                                      wellPanel(
+                                                        slickROutput("uc_slides", width = "700px", height = "525px")
+                                                      )
+                                               )
+                                             ),
+                                             fluidRow(
+                                               column(4,
+                                                      h4("Use the buttons below to view the residuals from your fitted ARIMA model and add uncertainty to model predictions."),
+                                                      p("Then, use the plots to answer the questions below"),
+                                                      actionButton("view_resid",label = "View residuals"),
+                                                      br(),br(),
+                                                      wellPanel(
+                                                        plotlyOutput("resid_plot"),
+                                                      ),
+                                                      downloadButton("save_resid_plot", "Download plot", icon = icon("download"))
+                                                      ),
+                                               column(8,
+                                                      actionButton("add_uc",label = "Add uncertainty"),
+                                                      br(),br(),
+                                                      wellPanel(
+                                                        plotlyOutput("uc_plot"),
+                                                      ),
+                                                      downloadButton("save_uc_plot", "Download plot", icon = icon("download")),
+                                                      br(),br(),
+                                                      box(id = "box2", width = 12, status = "primary",
+                                                          solidHeader = TRUE,
+                                                          fluidRow(
+                                                            column(10, offset = 1,
+                                                                   h3("Questions"),
+                                                                   p(tags$b(quest["q18", 1])),
+                                                                   p(tags$b(quest["q19", 1])),
+                                                                   p(tags$b(quest["q20", 1])),
+                                                                   p(tags$i("Hint: there is no right or wrong answer to Q20."))
+                                                            )
+                                                          )
+                                                      )
+                                                      )
+                                             ),
+                                             hr(),
+                                             fluidRow(
+                                               column(4,
+                                                      h3("Assessing model predictions using the ignorance score"),
+                                                      p(tags$em("Use the slides and text below to understand the what the ignorance score is and how we can use it to assess model predictions.")),
+                                                      p(tags$b("What is the ignorance score?")),
+                                                      tags$ul(
+                                                        tags$li("The ",tags$b("ignorance score"), " assesses the performance of a prediction based on the probability that a prediction assigns to the eventual outcome. Predictions that place a high probability on the actual outcome score better than predictions that place a low probability on the outcome.")
+                                                      ),
+                                                      p(tags$b("How is the ignorance score interpreted?")),
+                                                      tags$ul(
+                                                        tags$li("The lower the ignorance score, the better the prediction. Ignorance scores can range from positive to negative infinity. The smaller the numeric value of the score, regardless of whether it is positive or negative, the more accurate the prediction. So, a score of 2 beats a score of 3, and a score of -3 beats a score of -2.")
+                                                      ),
+                                                      p(tags$b("Warning!")),
+                                                      tags$ul(
+                                                        tags$li("You should only compare ignorance scores that are computed using the same kind of data (e.g., water temperature scores should only be compared to water temperature scores, net ecosystem exchange scores should only be compared to net ecosystem exchange scores). This is because variables with different units and ranges will result in different ignorance score ranges.")
+                                                      ),
+                                                      box(id = "box2", width = 12, status = "primary",
+                                                          solidHeader = TRUE,
+                                                          fluidRow(
+                                                            column(10, offset = 1,
+                                                                   h3("Questions"),
+                                                                   p(tags$b(quest["q21", 1])),
+                                                                   p(tags$b(quest["q22", 1])),
+                                                                   p(tags$b(quest["q23", 1]))
+                                                            )
+                                                          )
+                                                      )
+                                               ),
+                                               column(8,
+                                                      h5("Click the arrows to navigate through the slides", align = "center"),
+                                                      wellPanel(
+                                                        slickROutput("ign_slides", width = "700px", height = "525px")
+                                                      ),
+                                                      actionButton("calc_ign","Calculate ignorance score"),
+                                                      br(),br(),
+                                                      wellPanel(textOutput("ign_text")
+                                                      )
+                                               )
+                                               
+                                             ),
+                                             hr(),
+                                             fluidRow(
+                                               column(10, offset = 1,
+                                                      h3("Next step"),
+                                                      p("Now that you have learned how to fit and assess an ARIMA model using a case study, you will either:"),
+                                                      p("a. Upload a new dataset provided by your instructor in a standardized format suitable for model fitting, or"),
+                                                      p("b. Upload and fit models to data from a different site using the same environmental case study you chose in Activity A")
+                                               )
+                                             )
                                              )
                                     )
                         ),
@@ -798,20 +947,51 @@ ui <- function(request) {
                                  wellPanel(style = paste0("background: ", obj_bg),
                                  h2("Activity B: Generate and assess your first forecast"),
                                  h4("Forecast!"),
-                                 p("Complete objectives 6-11 to complete the steps involved with the forecast.")
+                                 p("Complete objectives 6-8 to complete the steps involved with the forecast.")
                                  )
                           )
                           ),
                         tabsetPanel(id = "tabseries2",
-                                    #* Objective 6 - Examine uncertainty ----
-                                    tabPanel(title = "Objective 6 - Examine uncertainty", value = "obj6",
+                                    #* Objective 6 - Upload standardized data ----
+                                    tabPanel(title = "Objective 6 - Upload standardized data", value = "obj6",
                                              #** Forecasting text ----
                                              fluidRow(
                                                column(12,
                                                       wellPanel(style = paste0("background: ", obj_bg),
-                                                                h3("Objective 6 - Understand uncertainty and explore a weather forecast"),
+                                                                h3("Objective 6 - Upload standardized data"),
                                                                 p(style="text-align: justify;", module_text["obj_06", ])
                                                       ))
+                                             ),
+                                             hr(),
+                                             fluidRow(
+                                               column(12,
+                                                      h3("Placeholder for info on why data standards are important")
+                                                      )
+                                             ),
+                                             hr(),
+                                             fluidRow(
+                                               column(6,
+                                                      ),
+                                               column(6,
+                                                      DTOutput("format_table")
+                                                      )
+                                             ),
+                                             hr(),
+                                             fluidRow(
+                                               column(4,
+                                                      h3("Upload your data!"),
+                                                      fileInput("upload_data", "Upload standardized data"),
+                                                      numericInput("n", "Number of rows of uploaded data to display:", value = 5, min = 1, step = 1),
+                                                      wellPanel(
+                                                      tableOutput("stand_data")
+                                                      ),
+                                                      textOutput("gap_text")
+                                                      ),
+                                               column(8,
+                                                      wellPanel(
+                                                        plotlyOutput("user_data_plot"),
+                                                      )
+                                                      )
                                              )
                                              ),
                                     #* Objective 7 - Prepare inputs ----

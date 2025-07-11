@@ -15,7 +15,8 @@ library(slickR); library(tinytex); library(rvest, quietly = TRUE, warn.conflicts
 library(rLakeAnalyzer)
 library(DT, quietly = TRUE, warn.conflicts = FALSE); library(rintrojs); library(hover)
 library(stringr); library(tidyr, quietly = TRUE, warn.conflicts = FALSE)
-library(RColorBrewer); library(ggpubr); library(readr); library(shinyBS); library(httr)
+library(RColorBrewer); library(ggpubr); library(readr); library(shinyBS); library(httr);
+library(tidyverse)
 
 # colors for theme
 obj_bg <- "#ccd9e0"
@@ -24,6 +25,9 @@ nav_bg <- "#DDE4E1"
 nav_butt <- "#0d3658"
 nav_txt <- "#fff" # white = #fff; black = #000000
 slider_col <- "#446c84"
+
+# Source required functions
+source("./R/data_input_validator.R")
 
 # Load module text
 module_text <- read.csv("data/module_text.csv", row.names = 1, header = FALSE)
@@ -39,6 +43,8 @@ help_text <- read.csv("data/help_text.csv", row.names = 1)
 # Slides for slickR
 recap_slides <- list.files("www/shiny_slides", full.names = TRUE)
 arima_slides <- list.files("www/arima_slides", full.names = TRUE)
+uc_slides <- list.files("www/prediction_uncertainty", full.names = TRUE)
+ign_slides <- list.files("www/ignorance_score", full.names = TRUE)
 
 # Create case study site dataframe
 sites_df <- tibble(SiteID = c("cann"),
@@ -83,6 +89,16 @@ rel_table <- data.frame(
 
 # Model coefficients key
 model_coeffs_key <- read_csv("./data/model_coeffs_key.csv")
+
+# Data format table
+data_format_table <- data.frame(
+  a = c("site_id","character","name or abbreviated name of site where data were collected","cann"),
+  b = c("datetime","Date","date of data collection in YYYY-MM-DD format","2023-01-23"),
+  c = c("variable","character","name of variable with no spaces; recommended to include units","temp_degC"),
+  d = c("observation","numeric","observed value of variable","4")
+) %>%
+  tibble::rownames_to_column("RowName") %>%
+  mutate(RowName = c("Column Name","Format","Description","Example"))
 
 # Tab names for updating buttons
 tab_names <- read.csv("data/tab_names.csv", fileEncoding = "UTF-8-BOM")

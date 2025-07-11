@@ -24,8 +24,8 @@ obj_01,"Select a case study from the table, then read the text in the 'About Cas
 obj_02,"Explore the data measured at the selected site, including how each variable changes over time and how the variables relate to each other."
 obj_03,"We will use the environmental data from your case study to fit an ARIMA model that will predict future values of the target variable. But first, we will learn about how ARIMA models are used for time series prediction."
 obj_04,Fit a ARIMA time series model to the data from your chosen environmental case study.
-obj_05,Test different scenarios with your model to understand how it will respond under different environmental conditions. Use observed data to calibrate the model (i.e. make your model better match observed data).
-obj_06,Gain an understanding of what uncertainty is in the context of an ecological forecast and explore weather forecast data. Demonstrate how uncertainty can be quantified.
+obj_05,Assess the fit of the ARIMA model using out-of-sample test data from your chosen environmental case study.
+obj_06,"In this objective, you will learn about the importance of data standards for reproducible scientific analyses, as well as wrangle and upload a new environmental dataset of your choosing."
 obj_07,"Using observed data from your lake site, you will build a linear model to convert air temperature to surface water temperature and shortwave radiation (SWR) to underwater photosynthetic active radiation (uPAR), which are the inputs required for your primary productivity model. "
 obj_08,Use forecasted water temperature and uPAR and up-to-date initial conditions to drive your calibrated model into the future and forecast primary productivity.
 obj_09,Forecasts that are effectively communicated to the public and managers will be most useful for aiding decision-making. Here you will think about how to communicate your forecast to an end-user.
