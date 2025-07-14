@@ -585,71 +585,6 @@ server <- function(input, output, session) {#
           left_join(., site_vars, by = "variable_id") %>%
           mutate(plot_labels = paste(variable_name, paste0("(",variable_unit,")"), sep = " "))
         
-        plot_data_stand <- cann_model_data %>%
-          dplyr::slice_head(prop = .7) %>% # using a 70:30 split here
-          select(all_of(col_names)) %>%
-          mutate(across(input$select, list(zscore = ~as.numeric(scale(.))))) %>%
-          pivot_longer(cols = everything(), names_to = "variable_id", values_to = "obs") %>%
-          left_join(., site_vars, by = "variable_id") %>%
-          mutate(plot_labels = paste(variable_name, paste0("(",variable_unit,")"), sep = " "))
-        
-      }
-      
-      p <- ggplot(data = plot_data)+
-        geom_density(aes(x = obs, color = plot_labels, fill = plot_labels), alpha = 0.5)+
-        facet_wrap(facets = vars(plot_labels), nrow = 1)+
-        theme_bw()+
-        theme(legend.position = "none")+
-        xlab("observed value")
-      
-      plot.stand$main <- p
-      
-      return(ggplotly(p, dynamicTicks = TRUE))
-      
-    })
-    
-    
-  })
-  
-  observe({
-    
-    input$select
-    
-    output$standardize_plot <- renderPlotly({
-      
-      validate(
-        need(input$table01_rows_selected != "",
-             message = "Please select a site in Objective 1.")
-      )
-      validate(
-        need(!is.null(site_data()$data),
-             message = "Please select a site in Objective 1.")
-      )
-      validate(
-        need(!is.null(input$select),
-             message = "Please select at least 1 predictor from the dropdown menu.")
-      )
-      validate(
-        need(length(input$select) <= 3,
-             message = "Please only select up to 3 regressors to fit your model.")
-      )
-      
-      row_selected = sites_df[input$table01_rows_selected, ]
-      site_id <- row_selected$SiteID
-      
-      if(site_id == "cann"){
-        
-        var_names <- site_vars[,c("variable_id","variable_name","variable_unit")]
-        
-        col_names <- c(input$select)
-        
-        plot_data <- cann_model_data %>%
-          dplyr::slice_head(prop = .7) %>% # using a 70:30 split here
-          select(all_of(col_names)) %>%
-          pivot_longer(cols = everything(), names_to = "variable_id", values_to = "obs") %>%
-          left_join(., site_vars, by = "variable_id") %>%
-          mutate(plot_labels = paste(variable_name, paste0("(",variable_unit,")"), sep = " "))
-        
       }
       
       p <- ggplot(data = plot_data)+
@@ -665,8 +600,6 @@ server <- function(input, output, session) {#
       return(ggplotly(p, dynamicTicks = TRUE))
       
     })
-    
-    
     
   })
   
@@ -1959,6 +1892,539 @@ server <- function(input, output, session) {#
       theme_bw(base_size = 10)
     
     return(ggplotly(p, dynamicTicks = TRUE))
+    
+  })
+  
+  # Objective 7
+  
+  # make multi-select list
+  multi.select2 <- reactiveValues(lst=NULL)
+  
+  observe({
+    
+    validate(
+      need(!is.null(input$upload_data),
+           message = "Please upload your data in Objective 6.")
+    )
+    validate(
+      need(valid$main == TRUE,
+           message = "Please correct your data format in Objective 6.")
+    )
+    
+    dat <- stand.data()
+    
+    select_list <- unique(dat$variable)
+    names(select_list) = unique(dat$variable)
+    
+    multi.select2$lst <- select_list
+    
+  })
+  
+  # made header text for multi-select lists
+  output$tar_dropdown_actB <- renderText({
+    
+    validate(
+      need(!is.null(input$upload_data),
+           message = "Please upload your data in Objective 6.")
+    )
+    validate(
+      need(valid$main == TRUE,
+           message = "Please correct your data format in Objective 6.")
+    )
+    
+    return("Please select your target variable from the dropdown menu.")
+    
+  })
+  
+  output$reg_dropdown_actB <- renderText({
+    
+    validate(
+      need(!is.null(input$upload_data),
+           message = "Please upload your data in Objective 6.")
+    )
+    validate(
+      need(valid$main == TRUE,
+           message = "Please correct your data format in Objective 6.")
+    )
+    
+    return("Please select predictors from the dropdown menu.")
+    
+  })
+  
+  # Update the selectInput with the named list
+  observe({
+    updateSelectInput(session, "select_tar_actB", choices = multi.select2$lst)
+  })
+  
+  observe({
+    updateSelectInput(session, "select_reg_actB", choices = multi.select2$lst)
+  })
+  
+  
+  # Plot of regressors
+  plot.stand2 <- reactiveValues(main=NULL,
+                               stand.tracker = 0)
+  
+  observe({
+    
+    input$select_reg_actB
+    
+    output$standardize_plot2 <- renderPlotly({
+      
+      validate(
+        need(!is.null(input$upload_data),
+             message = "Please upload your data in Objective 6.")
+      )
+      validate(
+        need(valid$main == TRUE,
+             message = "Please correct your data format in Objective 6.")
+      )
+      validate(
+        need(!is.null(input$select_reg_actB),
+             message = "Please select at least 1 predictor from the dropdown menu.")
+      )
+      validate(
+        need(length(input$select_reg_actB) <= 3,
+             message = "Please only select up to 3 regressors to fit your model.")
+      )
+      
+      dat <- stand.data()
+      wide_dat <- dat %>%
+        pivot_wider(names_from = "variable", values_from = "observation")
+      
+      col_names <- c(input$select_reg_actB)
+        
+      plot_data <- wide_dat %>%
+        dplyr::slice_head(prop = .7) %>% # using a 70:30 split here
+        select(all_of(col_names)) %>%
+        pivot_longer(cols = everything(), names_to = "variable_id", values_to = "obs") 
+        
+      p <- ggplot(data = plot_data)+
+        geom_density(aes(x = obs, color = variable_id, fill = variable_id), alpha = 0.5)+
+        facet_wrap(facets = vars(variable_id), nrow = 1, scales = "free_x")+
+        theme_bw()+
+        theme(legend.position = "none")+
+        xlab("observed value")
+      
+      plot.stand2$main <- p
+      plot.stand2$stand.tracker <- 0
+      
+      
+      return(ggplotly(p, dynamicTicks = TRUE))
+      
+    })
+    
+    
+  })
+  
+  observe({
+    
+    input$standardize_data2
+    
+    output$standardize_plot2 <- renderPlotly({
+      
+      validate(
+        need(!is.null(input$upload_data),
+             message = "Please upload your data in Objective 6.")
+      )
+      validate(
+        need(valid$main == TRUE,
+             message = "Please correct your data format in Objective 6.")
+      )
+      validate(
+        need(!is.null(input$select_reg_actB),
+             message = "Please select at least 1 predictor from the dropdown menu.")
+      )
+      validate(
+        need(length(input$select_reg_actB) <= 3,
+             message = "Please only select up to 3 regressors to fit your model.")
+      )
+      
+      dat <- stand.data()
+      wide_dat <- dat %>%
+        pivot_wider(names_from = "variable", values_from = "observation")
+      
+      col_names <- c(input$select_reg_actB)
+      
+      plot_data_stand <- wide_dat %>%
+        dplyr::slice_head(prop = .7) %>% # using a 70:30 split here
+        select(all_of(col_names)) %>%
+        pivot_longer(cols = everything(), names_to = "variable_id", values_to = "obs") %>%
+        group_by(variable_id) %>%
+        mutate(zscore = as.numeric(scale(obs))) %>%
+        ungroup()
+      
+      p <- ggplot(data = plot_data_stand)+
+        geom_density(aes(x = zscore, color = variable_id, fill = variable_id), alpha = 0.5)+
+        facet_wrap(facets = vars(variable_id), nrow = 1)+
+        theme_bw()+
+        theme(legend.position = "none")+
+        xlab("standardized value")
+      
+      plot.stand2$main <- p
+      plot.stand2$stand.tracker = 1
+      
+      return(ggplotly(p, dynamicTicks = TRUE))
+      
+    })
+    
+    
+  })
+  
+  # Download standardized regressors
+  output$save_standardize_plot2 <- downloadHandler(
+    filename = function() {
+      paste("QXX-plot-", Sys.Date(), ".png", sep="")
+    },
+    content = function(file) {
+      device <- function(..., width, height) {
+        grDevices::png(..., width = 8, height = 4,
+                       res = 200, units = "in")
+      }
+      ggsave(file, plot = plot.stand2$main, device = device)
+    }
+  )
+  
+  # Fit ARIMA with selected variables
+  actB.arima <- reactiveValues(arima=NULL)
+  
+  observe({
+    input$fit_arima2
+    output$arima_order2 <- renderText({
+      
+      validate(
+        need(!is.null(input$upload_data),
+             message = "Please upload your data in Objective 6.")
+      )
+      validate(
+        need(valid$main == TRUE,
+             message = "Please correct your data format in Objective 6.")
+      )
+      validate(
+        need(!is.null(input$select_tar_actB),
+             message = "Please select a target variable from the dropdown menu.")
+      )
+      validate(
+        need(!is.null(input$select_reg_actB),
+             message = "Please select at least 1 predictor from the dropdown menu.")
+      )
+      validate(
+        need(length(input$select_reg_actB) <= 3,
+             message = "Please only select up to 3 regressors to fit your model.")
+      )
+      validate(
+        need(plot.stand2$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors.")
+      )
+      
+      dat <- stand.data()
+      wide_dat <- dat %>%
+        pivot_wider(names_from = "variable", values_from = "observation")
+      
+      col_names <- c("datetime",input$select_tar_actB,input$select_reg_actB)
+        
+        model_df4 <- as_tsibble(wide_dat) %>%
+          dplyr::slice_head(prop = .7) %>% # using a 70:30 split here
+          tsibble::fill_gaps() %>%
+          select(all_of(col_names)) %>%
+          mutate(across(input$select_reg_actB, list(zscore = ~as.numeric(scale(.)))))
+        
+        reg_cols <- paste0(input$select_reg_actB,"_zscore")
+        
+        if(length(input$select_reg_actB) == 0){
+          #my.arima <- model_df4 %>%
+          #model(`ARIMA` = fable::ARIMA("chla"))
+          order_txt <- "Please select at least one predictor to fit the ARIMA."
+        } else if(length(input$select_reg_actB) == 1){
+          my.formula <- formula(paste0(input$select_tar_actB," ~ ",reg_cols[1]))
+          actB.arima$arima <- model_df4 %>%
+            model(`ARIMA` = fable::ARIMA(formula = my.formula))
+        } else if(length(input$select_reg_actB) == 2){ 
+          my.formula <- formula(paste0(input$select_tar_actB," ~ ",reg_cols[1],"+",reg_cols[2]))
+          actB.arima$arima <- model_df4 %>%
+            model(`ARIMA` = fable::ARIMA(formula = my.formula))
+        } else if(length(input$select_reg_actB) == 3){
+          my.formula <- formula(paste0(input$select_tar_actB," ~ ",reg_cols[1],"+",reg_cols[2],"+",reg_cols[3]))
+          actB.arima$arima <- model_df4 %>%
+            model(`ARIMA` = fable::ARIMA(formula = my.formula))
+        }
+      
+      if(length(input$select_reg_actB) >= 1 & length(input$select_reg_actB) <= 3){
+        order <- strsplit(as.character(actB.arima$arima$ARIMA), split = " ")[[1]][3]
+        predictors <- unique(dat$variable[which(dat$variable %in% input$select_reg_actB)])
+        predictors_list = ""
+        for (i in 1:length(predictors)){
+          if(i == 1){
+            predictors_list <- paste(predictors_list, predictors[i], sep = ": ")
+          } else{
+            predictors_list <- paste(predictors_list, predictors[i], sep = " and ")
+          }
+        }
+        order_txt <- paste0("Fitted an ARIMA model to predict ",input$select_tar_actB," using predictors ",predictors_list," with order ",order,".")
+      } else if(length(input$select) > 3){
+        order_txt <- "Please select no more than three predictors to fit the ARIMA."
+      }
+      
+      return(order_txt)
+    })
+  })
+  
+  # Reset ARIMA order text when change selected variables
+  observe({
+    input$select_reg_actB
+    output$arima_order2 <- renderText({
+      
+      validate(
+        need(!is.null(input$upload_data),
+             message = "Please upload your data in Objective 6.")
+      )
+      validate(
+        need(valid$main == TRUE,
+             message = "Please correct your data format in Objective 6.")
+      )
+      validate(
+        need(!is.null(input$select_tar_actB),
+             message = "Please select a target variable from the dropdown menu.")
+      )
+      validate(
+        need(!is.null(input$select_reg_actB),
+             message = "Please select at least 1 predictor from the dropdown menu.")
+      )
+      validate(
+        need(length(input$select_reg_actB) <= 3,
+             message = "Please only select up to 3 regressors to fit your model.")
+      )
+      validate(
+        need(plot.stand2$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors.")
+      )
+      
+      return("Please click 'Fit ARIMA'.")
+      
+    })
+  })
+  
+  # ARIMA plot ----
+  plot.arima2 <- reactiveValues(main=NULL)
+  
+  observe({
+    input$fit_arima2
+    
+    output$arima_plot2 <- renderPlotly({ 
+      
+      validate(
+        need(!is.null(input$upload_data),
+             message = "Please upload your data in Objective 6.")
+      )
+      validate(
+        need(valid$main == TRUE,
+             message = "Please correct your data format in Objective 6.")
+      )
+      validate(
+        need(!is.null(input$select_tar_actB),
+             message = "Please select a target variable from the dropdown menu.")
+      )
+      validate(
+        need(!is.null(input$select_reg_actB),
+             message = "Please select at least 1 predictor from the dropdown menu.")
+      )
+      validate(
+        need(length(input$select_reg_actB) <= 3,
+             message = "Please only select up to 3 regressors to fit your model.")
+      )
+      validate(
+        need(plot.stand2$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors.")
+      )
+      validate(
+        need(input$fit_arima2 > 0,
+             message = "Click 'Fit ARIMA'")
+      )
+      
+      
+      dat <- stand.data()
+      wide_dat <- dat %>%
+        pivot_wider(names_from = "variable", values_from = "observation")
+    
+      plot_data <- as_tsibble(wide_dat) %>%
+        dplyr::slice_head(prop = .7) %>% # using a 70:30 split here
+        select(datetime, input$select_tar_actB) 
+      
+      colnames(plot_data) <- c("datetime","target")
+      y_lab = input$select_tar_actB
+      
+      fitted_values <- fitted(actB.arima$arima)
+      
+      p <- ggplot()+
+        xlab("datetime")+
+        ylab(y_lab)+
+        geom_point(data = plot_data, aes(x = datetime, y = target, color = "obs"))+
+        geom_line(data = fitted_values, aes(x = datetime, y = .fitted, group = .model, color = .model))+
+        labs(color = NULL, fill = NULL)+
+        scale_color_manual(values = c("obs" = "#0d3658",.model = "#446c84"))+
+        theme_classic()
+      
+      plot.arima2$main <- p
+      
+      return(ggplotly(p, dynamicTicks = TRUE))
+      
+    })
+    
+  })
+  
+  observe({
+    input$select_reg_actB
+    
+    output$arima_plot2 <- renderPlotly({ 
+      
+      validate(
+        need(!is.null(input$upload_data),
+             message = "Please upload your data in Objective 6.")
+      )
+      validate(
+        need(valid$main == TRUE,
+             message = "Please correct your data format in Objective 6.")
+      )
+      validate(
+        need(!is.null(input$select_tar_actB),
+             message = "Please select a target variable from the dropdown menu.")
+      )
+      validate(
+        need(!is.null(input$select_reg_actB),
+             message = "Please select at least 1 predictor from the dropdown menu.")
+      )
+      validate(
+        need(length(input$select_reg_actB) <= 3,
+             message = "Please only select up to 3 regressors to fit your model.")
+      )
+      validate(
+        need(plot.stand2$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors.")
+      )
+      validate(
+        need(input$fit_arima2 > 0,
+             message = "Click 'Fit ARIMA'")
+      )
+      
+      p <- ggplot() +
+        annotate("text", x = 10,  y = 10,
+                 size = 6,
+                 label = "Looks like you've chosen new regressors!\nPlease click 'Fit ARIMA' to regenerate this plot.") + 
+        theme_void()+
+        theme(panel.grid = element_blank(),
+              axis.line = element_blank())
+      
+      plot.arima2$main <- p
+      
+      return(ggplotly(p, dynamicTicks = TRUE))
+      
+    })
+    
+  })
+  
+  # Download scatterplot of arima
+  output$save_arima_plot2 <- downloadHandler(
+    filename = function() {
+      paste("QXX-plot-", Sys.Date(), ".png", sep="")
+    },
+    content = function(file) {
+      device <- function(..., width, height) {
+        grDevices::png(..., width = 8, height = 4,
+                       res = 200, units = "in")
+      }
+      ggsave(file, plot = plot.arima2$main, device = device)
+    }
+  )
+  
+  # Model coefficient table output
+  coeff.table2 <- reactiveValues(main=NULL)
+  
+  observe({
+    input$fit_arima2
+    
+    output$coeff_table2 <- renderDT({ 
+      
+      validate(
+        need(!is.null(input$upload_data),
+             message = "Please upload your data in Objective 6.")
+      )
+      validate(
+        need(valid$main == TRUE,
+             message = "Please correct your data format in Objective 6.")
+      )
+      validate(
+        need(!is.null(input$select_tar_actB),
+             message = "Please select a target variable from the dropdown menu.")
+      )
+      validate(
+        need(!is.null(input$select_reg_actB),
+             message = "Please select at least 1 predictor from the dropdown menu.")
+      )
+      validate(
+        need(length(input$select_reg_actB) <= 3,
+             message = "Please only select up to 3 regressors to fit your model.")
+      )
+      validate(
+        need(plot.stand2$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors.")
+      )
+      validate(
+        need(input$fit_arima2 > 0,
+             message = "Click 'Fit ARIMA'")
+      )
+      
+      t <- coefficients(actB.arima$arima %>% select(`ARIMA`))[,c(2:4)]
+      t[,c(2:3)] <- round(t[,c(2:3)], digits = 3)
+
+      coeff.table2$main <- t
+      
+      return(t)
+      
+    },colnames = c("","Model term","Estimate", "Standard error"))
+    
+  })
+  
+  observe({
+    input$select_reg_actB
+    
+    output$coeff_table2 <- renderDT({ 
+      
+      validate(
+        need(!is.null(input$upload_data),
+             message = "Please upload your data in Objective 6.")
+      )
+      validate(
+        need(valid$main == TRUE,
+             message = "Please correct your data format in Objective 6.")
+      )
+      validate(
+        need(!is.null(input$select_tar_actB),
+             message = "Please select a target variable from the dropdown menu.")
+      )
+      validate(
+        need(!is.null(input$select_reg_actB),
+             message = "Please select at least 1 predictor from the dropdown menu.")
+      )
+      validate(
+        need(length(input$select_reg_actB) <= 3,
+             message = "Please only select up to 3 regressors to fit your model.")
+      )
+      validate(
+        need(plot.stand2$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors.")
+      )
+      validate(
+        need(input$fit_arima2 > 0,
+             message = "Click 'Fit ARIMA'")
+      )
+      
+      t <- data.frame(msg = c("Please click 'Fit ARIMA'"))
+      
+      coeff.table2$main <- t
+      
+      return(t)
+      
+    },colnames = c(""))
     
   })
   

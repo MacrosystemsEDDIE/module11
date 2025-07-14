@@ -26,7 +26,7 @@ obj_03,"We will use the environmental data from your case study to fit an ARIMA 
 obj_04,Fit a ARIMA time series model to the data from your chosen environmental case study.
 obj_05,Assess the fit of the ARIMA model using out-of-sample test data from your chosen environmental case study.
 obj_06,"In this objective, you will learn about the importance of data standards for reproducible scientific analyses, as well as wrangle and upload a new environmental dataset of your choosing."
-obj_07,"Using observed data from your lake site, you will build a linear model to convert air temperature to surface water temperature and shortwave radiation (SWR) to underwater photosynthetic active radiation (uPAR), which are the inputs required for your primary productivity model. "
+obj_07,Fit a ARIMA time series model to the data you uploaded in Objective 6.
 obj_08,Use forecasted water temperature and uPAR and up-to-date initial conditions to drive your calibrated model into the future and forecast primary productivity.
 obj_09,Forecasts that are effectively communicated to the public and managers will be most useful for aiding decision-making. Here you will think about how to communicate your forecast to an end-user.
 obj_10,A fundamental part of the forecast cycle is assessing how well your forecast performed relative to observations. Here we will use a simple assessment of plotting forecast results against observations.

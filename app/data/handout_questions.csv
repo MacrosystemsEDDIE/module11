@@ -42,3 +42,5 @@ q26a,a. Minimum number of timesteps required for dataset
 q26b,b. Maximum number of allowed unique values for 'site_id'.
 q26c,c. Maximum number of allowed unique values for 'variable'.
 q26d,"d. Required format of 'date' column, using Y for year, M for month, and D for day."
+q27,Q27. What is the target variable for your dataset?
+q28,"Q28. List the three exogenous regressors that you would like to include in your ARIMA model. For each regressor, explain why you chose to include it in the model. If you choose not to include any regressors, explain your reasoning."
