@@ -45,6 +45,7 @@ recap_slides <- list.files("www/shiny_slides", full.names = TRUE)
 arima_slides <- list.files("www/arima_slides", full.names = TRUE)
 uc_slides <- list.files("www/prediction_uncertainty", full.names = TRUE)
 ign_slides <- list.files("www/ignorance_score", full.names = TRUE)
+data_slides <- list.files("www/data_standards", full.names = TRUE)
 
 # Create case study site dataframe
 sites_df <- tibble(SiteID = c("cann"),
@@ -99,6 +100,10 @@ data_format_table <- data.frame(
 ) %>%
   tibble::rownames_to_column("RowName") %>%
   mutate(RowName = c("Column Name","Format","Description","Example"))
+
+# Datasets provided for Activities B/C
+actB_choices <- c("CanningRiverKentStWeir")
+CanningRiverKentStWeir <- read_csv("./data/kent_download.csv")
 
 # Tab names for updating buttons
 tab_names <- read.csv("data/tab_names.csv", fileEncoding = "UTF-8-BOM")

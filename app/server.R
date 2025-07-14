@@ -1739,6 +1739,11 @@ server <- function(input, output, session) {#
   
   # Objective 6
   
+  #** data standards slides ----
+  output$data_std_slides <- renderSlickR({
+    slickR(data_slides) + settings(dots = TRUE)
+  })
+  
   # data format table
   dat.format.table <- reactiveValues(dt = data_format_table) 
   
@@ -1764,6 +1769,33 @@ server <- function(input, output, session) {#
         )
       )
     ) %>% formatStyle('RowName', fontWeight = 'bold')
+  )
+  
+  # download datasets provided with module
+  actB_data <- reactive({
+    out <- get(input$actB_dataset)
+    if (!is.data.frame(out)) {
+      validate(paste0("'", input$actB_dataset, "' is not a data frame"))
+    }
+    out
+  })
+  
+  output$preview_actB_dataset <- renderTable({
+    if(input$actB_dataset == "CanningRiverKentStWeir"){
+      head(actB_data()) 
+    } else {
+      head(actB_data()) %>%
+        mutate(datetime = format(datetime, "%Y-%m-%d"))
+    }
+  })
+  
+  output$download_actB_dataset <- downloadHandler(
+    filename = function() {
+      paste0(input$actB_dataset, ".csv")
+    },
+    content = function(file) {
+      vroom::vroom_write(actB_data(), file, delim = ",")
+    }
   )
   
   # validation toggle
@@ -1826,10 +1858,28 @@ server <- function(input, output, session) {#
       validate("'observation' column is not in numeric format!")
     } 
     
+    check_num_sites <- length(unique(dat$site_id))
+    if(check_num_sites > 1){
+      valid$main <- FALSE
+      validate("only one unique value of 'site_id' is supported at this time!")
+    }
+    
+    check_num_variables <- length(unique(dat$variable))
+    if(check_num_variables > 10){
+      valid$main <- FALSE
+      validate("more than 10 unique values of 'variable' detected in data!")
+    }
+    
     check_variable_spaces <- sapply(dat$variable, function(x) grepl(" ", x))
     if(any(check_variable_spaces)){
       valid$main <- FALSE
       validate("'variable' column values contain spaces!")
+    }
+    
+    check_num_timesteps <- length(unique(dat$datetime))
+    if(check_num_timesteps < 50){
+      valid$main <- FALSE
+      validate("at least 50 timesteps are required to fit and assess models!")
     }
     
     check_date_format <- IsDate(dat$datetime)
@@ -1847,6 +1897,8 @@ server <- function(input, output, session) {#
       valid$main <- FALSE
       validate("sub-daily dates detected in data!")
     }
+    
+    valid$main <- TRUE
     
     return(dat)
   })

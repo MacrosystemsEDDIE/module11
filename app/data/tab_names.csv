@@ -9,9 +9,9 @@ obj3,Objective 3 - Learn about ARIMA model
 obj4,Objective 4 - Fit model
 obj5,Objective 5 - Assess model fit
 mtab5,Activity B
-obj6,Objective 6 - Examine uncertainty
-obj7,Objective 7 - Prepare inputs
-obj8,Objective 8 - Forecast
+obj6,Objective 6 - Upload data
+obj7,Objective 7 - Fit model
+obj8,Objective 8 - Assess model fit
 obj9,Objective 9 - Communicate forecast
 obj10,Objective 10 -  Assess forecast
 mtab6,Activity C

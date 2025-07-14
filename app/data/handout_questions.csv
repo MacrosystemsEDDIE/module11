@@ -35,3 +35,10 @@ q20,Q20. Compare your answers to Q16 and Q19. Were there any differences in your
 q21,Q21. Briefly (a) define the ignorance score and (b) describe how it is calculated in your own words.
 q22,"Q22. Click ""Calculate ignorance score"" and record the value of the ignorance score for your fitted ARIMA model."
 q23,Q23. Compare the ignorance score for your model to your partner's model. Whose model scored better? How do you know?
+q24,"Q24. Describe one example of a benefit of using data standards in ecology and environmental science, as well as one example of a risk if data standards are not followed."
+q25,Q25. Is the standardized data format for this module a long or a wide format? Explain how you know.
+q26,Q26. Fill out the following information:
+q26a,a. Minimum number of timesteps required for dataset
+q26b,b. Maximum number of allowed unique values for 'site_id'.
+q26c,c. Maximum number of allowed unique values for 'variable'.
+q26d,"d. Required format of 'date' column, using Y for year, M for month, and D for day."

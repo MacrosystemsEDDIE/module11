@@ -63,12 +63,12 @@ ui <- function(request) {
                introjsUI(), # must include in UI
 
                tags$style(".btn-file {
-             background-color:#98CAB2;
-             border-color: #579277;
+             background-color:#cee3f1;
+             border-color: #0d3658;
              }
 
              .progress-bar {
-             background-color: #579277;
+             background-color: #446c84;
              }"),
                # Change progress bar color
                tags$style(paste0("
@@ -964,16 +964,95 @@ ui <- function(request) {
                                              ),
                                              hr(),
                                              fluidRow(
-                                               column(12,
-                                                      h3("Placeholder for info on why data standards are important")
+                                               column(4,
+                                                      h3("Why data standards are important"),
+                                                      p(tags$em("Use the slides and text below to understand what data standards are and why they are important for robust, reproducible scientific analyses.")),
+                                                      p(tags$b("What are data standards?")),
+                                                      tags$ul(
+                                                        tags$li(tags$b("Data standards")," are documented, agreed-upon guidelines about how to manage, transmit, store, format, manipulate, or otherwise handle or interact with data.")
+                                                      ),
+                                                      p(tags$b("Why are data standards important?")),
+                                                      tags$ul(
+                                                        tags$li("Data standards can help improve the reliability and reproducibility of scientific analyses because following standards ensures that data are accessible, well-documented, and that data users understand key features of the data. This makes it easier to select and execute appropriate data analyses and reproduce previous data analyses.")
+                                                      ),
+                                                      box(id = "box2", width = 12, status = "primary",
+                                                          solidHeader = TRUE,
+                                                          fluidRow(
+                                                            column(10, offset = 1,
+                                                                   h3("Questions"),
+                                                                   p(tags$b(quest["q24", 1]))
+                                                            )
+                                                          )
+                                                      )
+                                                      ),
+                                               column(8,
+                                                      h5("Click the arrows to navigate through the slides", align = "center"),
+                                                      wellPanel(
+                                                        slickROutput("data_std_slides", width = "700px", height = "525px")
+                                                      )
                                                       )
                                              ),
                                              hr(),
                                              fluidRow(
                                                column(6,
+                                                      h3("Our standardized data format for this module"),
+                                                      p(tags$i("Below, you will be asked to upload a dataset of your choosing in a standardized format. The format we are using in this module will allow us to easily fit several predictive models to your dataset.")),
+                                                      p(tags$b("Be sure to follow these guidelines when uploading your data:")),
+                                                      tags$ul(
+                                                        tags$li("Your dataset should have four columns: site_id, datetime, variable, and observation. You can find more information about the required contents of these columns in the table on the right.")
+                                                      ),
+                                                      tags$ul(
+                                                        tags$li("At this time, we only support datasets that include a single unique value for 'site_id' (e.g., multi-site datasets are not permitted).")
+                                                      ),
+                                                      tags$ul(
+                                                        tags$li("We do not currently support sub-daily datasets. If your data are sub-daily, you will need to aggregate them to daily values prior to upload.")
+                                                      ),
+                                                      tags$ul(
+                                                        tags$li("If you would like to interpolate values to fill gaps in your dataset, this should be done before uploading your data to the module. Missing timesteps can be handled by our model fitting procedure but uneven or duplicated timesteps will cause an error.")
+                                                      ),
+                                                      tags$ul(
+                                                        tags$li("We require a minimum of 50 timesteps in your dataset. This will allow for adequate training data for model fitting as well as adequate testing data for model assessment.")
+                                                      ),
+                                                      tags$ul(
+                                                        tags$li("To avoid overfitting and to facilitate model interpretation, we currently limit the number of variables in a dataset to 10 (limit of 10 unique values in 'variable' column).")
+                                                      ),
+                                                      tags$ul(
+                                                        tags$li("At this time, the file size limit for uploaded datasets is 5 MB.")
+                                                      )
                                                       ),
                                                column(6,
-                                                      DTOutput("format_table")
+                                                      h4("Data format information table"),
+                                                      DTOutput("format_table"),
+                                                      br(),br(),
+                                                      box(id = "box2", width = 12, status = "primary",
+                                                          solidHeader = TRUE,
+                                                          fluidRow(
+                                                            column(10, offset = 1,
+                                                                   h3("Questions"),
+                                                                   p(tags$b(quest["q25", 1])),
+                                                                   p(tags$b(quest["q26", 1])),
+                                                                   p(tags$b(quest["q26a", 1])),
+                                                                   p(tags$b(quest["q26b", 1])),
+                                                                   p(tags$b(quest["q26c", 1])),
+                                                                   p(tags$b(quest["q26d", 1]))
+                                                            )
+                                                          )
+                                                      )
+                                                      )
+                                             ),
+                                             hr(),
+                                             fluidRow(
+                                               column(8,
+                                                      h3("Choose your own adventure: select your dataset!"),
+                                                      h4("Option 1"),
+                                                      p("Your instructor will provide you with datasets or other resources which you can use to find datasets to upload to the module. In this case, you will be responsible for 'wrangling' your own data into the correct format for the module, with assistance from your instructor."),
+                                                      h4("Option 2"),
+                                                      p("You may select one of the datasets provided with the module to upload. We currently provide one dataset for each case study in the module, typically from a different site than is used in Activity A. ",tags$b("Be warned! Each of the provided datasets has a formatting flaw which you will need to fix before you will be able to successfully re-upload the dataset to the module.")," This is to provide you with practice in 'wrangling' data to meet data standards.")
+                                                      ),
+                                               column(4,
+                                                      selectInput("actB_dataset", "Pick a dataset", choices = actB_choices),
+                                                      tableOutput("preview_actB_dataset"),
+                                                      downloadButton("download_actB_dataset", "Download .csv")
                                                       )
                                              ),
                                              hr(),
@@ -981,6 +1060,11 @@ ui <- function(request) {
                                                column(4,
                                                       h3("Upload your data!"),
                                                       fileInput("upload_data", "Upload standardized data"),
+                                                      tags$script(
+                                                        HTML(
+                                                          'setTimeout(() => $(".shiny-bound-input[type=\'file\']").css("all","unset").css("display", "none"), 750);'
+                                                        )
+                                                      ),
                                                       numericInput("n", "Number of rows of uploaded data to display:", value = 5, min = 1, step = 1),
                                                       wellPanel(
                                                       tableOutput("stand_data")
