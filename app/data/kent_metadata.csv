@@ -1,0 +1,8 @@
+﻿site_id,variable_id,variable_unit,variable_name,variable_description
+kent,chla,mg/L,chlorophyll-a,Chlorophyll-a (mg/L) is a proxy for measuring the biomass of phytoplankton in water. It is collected by measuring the fluorescence response of the chlorophyll-a pigment to a particular wavelength of light that is emitted by an underwater sensor. 
+kent,amm,ug/L,ammonia (NH4-N),Ammonia (ug/L) is a form of dissolved nitrogen that is taken up as a nutrient and used for growth by phytoplankton.
+kent,don,ug/L,dissolved organic nitrogen,"Dissolved organic nitrogen (ug/L) is the sum of many different forms of dissolved nitrogen in the water, and can also indicate the level of nutrients that are available for uptake and growth by phytoplankton."
+kent,frp,ug/L,filterable reactive phosphorus,Free reduced phosphorus (ug/L) is a measure of the dissolved phosphorus that is available for uptake by phytoplankton for growth. 
+kent,oxygen,mg/L,bottom water dissolved oxygen,Dissolved oxygen (mg/L) is a measure of how much oxygen gas (O2) is dissolved in the water. Low dissolved oxygen in the bottom waters of a water body can lead to the release of additional nutrients in the sediments and therefore exacerbation of harmful phytoplankton blooms.
+kent,temperature,degrees C,water temperature,Water temperature is measured in degrees Celsius.
+kent,flow,m3/s,discharge,Discharge (m3/s) is the measure of the volume of water flowing down the river per unit time.

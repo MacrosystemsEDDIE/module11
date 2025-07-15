@@ -103,7 +103,8 @@ data_format_table <- data.frame(
 
 # Datasets provided for Activities B/C
 actB_choices <- c("CanningRiverKentStWeir")
-CanningRiverKentStWeir <- read_csv("./data/kent_download.csv")
+CanningRiverKentStWeirData <- read_csv("./data/kent_download.csv")
+CanningRiverKentStWeirMetadata <- read_csv("./data/kent_metadata.csv")
 
 # Tab names for updating buttons
 tab_names <- read.csv("data/tab_names.csv", fileEncoding = "UTF-8-BOM")

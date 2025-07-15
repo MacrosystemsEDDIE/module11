@@ -1706,10 +1706,7 @@ server <- function(input, output, session) {#
   
   # download datasets provided with module
   actB_data <- reactive({
-    out <- get(input$actB_dataset)
-    if (!is.data.frame(out)) {
-      validate(paste0("'", input$actB_dataset, "' is not a data frame"))
-    }
+    out <- get(paste0(input$actB_dataset,"Data"))
     out
   })
   
@@ -1724,12 +1721,33 @@ server <- function(input, output, session) {#
   
   output$download_actB_dataset <- downloadHandler(
     filename = function() {
-      paste0(input$actB_dataset, ".csv")
+      paste0(input$actB_dataset, "Data.csv")
     },
     content = function(file) {
       vroom::vroom_write(actB_data(), file, delim = ",")
     }
   )
+  
+  # download metadata provided with module
+  actB_metadata <- reactive({
+    out <- get(paste0(input$actB_dataset,"Metadata"))
+    out
+  })
+  
+  output$download_actB_metadata <- downloadHandler(
+    filename = function() {
+      paste0(input$actB_dataset, "Metadata.csv")
+    },
+    content = function(file) {
+      vroom::vroom_write(actB_metadata(), file, delim = ",")
+    }
+  )
+  
+  # display site info if user chooses data provided within module
+  #show site info
+  output$actB_site_info <- renderText({
+    module_text[input$actB_dataset, ]
+  })
   
   # validation toggle
   valid <- reactiveValues(main = TRUE)
@@ -1899,6 +1917,7 @@ server <- function(input, output, session) {#
   
   # make multi-select list
   multi.select2 <- reactiveValues(lst=NULL)
+  multi.select3 <- reactiveValues(lst=NULL)
   
   observe({
     
@@ -1913,10 +1932,36 @@ server <- function(input, output, session) {#
     
     dat <- stand.data()
     
-    select_list <- unique(dat$variable)
-    names(select_list) = unique(dat$variable)
+    tar_select_list <- unique(dat$variable)
+    names(tar_select_list) = unique(dat$variable)
     
-    multi.select2$lst <- select_list
+    multi.select2$lst <- tar_select_list
+
+  })
+  
+  observe({
+    
+    validate(
+      need(!is.null(input$upload_data),
+           message = "Please upload your data in Objective 6.")
+    )
+    validate(
+      need(valid$main == TRUE,
+           message = "Please correct your data format in Objective 6.")
+    )
+    validate(
+      need(!is.null(input$select_tar_actB),
+           message = "Please select your target variable from the dropdown menu.")
+    )
+    
+    dat <- stand.data()
+    
+    reg_dat <- dat %>%
+      filter(!variable == input$select_tar_actB)
+    reg_select_list <- unique(reg_dat$variable)
+    names(reg_select_list) = unique(reg_dat$variable)
+    
+    multi.select3$lst <- reg_select_list
     
   })
   
@@ -1946,6 +1991,10 @@ server <- function(input, output, session) {#
       need(valid$main == TRUE,
            message = "Please correct your data format in Objective 6.")
     )
+    validate(
+      need(!is.null(input$select_tar_actB),
+           message = "Before selecting predictors, please select your target variable from the dropdown menu.")
+    )
     
     return("Please select predictors from the dropdown menu.")
     
@@ -1957,7 +2006,7 @@ server <- function(input, output, session) {#
   })
   
   observe({
-    updateSelectInput(session, "select_reg_actB", choices = multi.select2$lst)
+    updateSelectInput(session, "select_reg_actB", choices = multi.select3$lst)
   })
   
   
@@ -2086,12 +2135,12 @@ server <- function(input, output, session) {#
   )
   
   # Fit ARIMA with selected variables
-  actB.arima <- reactiveValues(arima=NULL)
+  actB.arima <- reactiveValues(arima=NULL,
+                               nrow_model_df = 31)
   
   observe({
-    input$fit_arima2
-    output$arima_order2 <- renderText({
-      
+    input$prop
+
       validate(
         need(!is.null(input$upload_data),
              message = "Please upload your data in Objective 6.")
@@ -2122,9 +2171,66 @@ server <- function(input, output, session) {#
         pivot_wider(names_from = "variable", values_from = "observation")
       
       col_names <- c("datetime",input$select_tar_actB,input$select_reg_actB)
+      
+      model_df4 <- as_tsibble(wide_dat) %>%
+        dplyr::slice_head(prop = input$prop) %>% # using a 70:30 split here
+        tsibble::fill_gaps() %>%
+        select(all_of(col_names)) %>%
+        mutate(across(input$select_reg_actB, list(zscore = ~as.numeric(scale(.)))))
+      
+      actB.arima$nrow_model_df <- nrow(model_df4)
+      
+  })
+  
+  observe({
+    input$fit_arima2
+    output$arima_order2 <- renderText({
+      
+      validate(
+        need(!is.null(input$upload_data),
+             message = "Please upload your data in Objective 6.")
+      )
+      validate(
+        need(valid$main == TRUE,
+             message = "Please correct your data format in Objective 6.")
+      )
+      validate(
+        need(!is.null(input$select_tar_actB),
+             message = "Please select a target variable from the dropdown menu.")
+      )
+      validate(
+        need(!is.null(input$select_reg_actB),
+             message = "Please select at least 1 predictor from the dropdown menu.")
+      )
+      validate(
+        need(length(input$select_reg_actB) <= 3,
+             message = "Please only select up to 3 regressors to fit your model.")
+      )
+      validate(
+        need(plot.stand2$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors.")
+      )
+      validate(
+        need(input$prop <= 0.9,
+             message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less).")
+      )
+      validate(
+        need(actB.arima$nrow_model_df >= 30,
+             message = "You are using fewer than 30 data points for model training. Please select a larger proportion of your data for training.")
+      )
+      validate(
+        need(input$fit_arima2 > 0,
+             message = "Please click 'Fit ARIMA'")
+      )
+      
+      dat <- stand.data()
+      wide_dat <- dat %>%
+        pivot_wider(names_from = "variable", values_from = "observation")
+      
+      col_names <- c("datetime",input$select_tar_actB,input$select_reg_actB)
         
         model_df4 <- as_tsibble(wide_dat) %>%
-          dplyr::slice_head(prop = .7) %>% # using a 70:30 split here
+          dplyr::slice_head(prop = input$prop) %>% # using a 70:30 split here
           tsibble::fill_gaps() %>%
           select(all_of(col_names)) %>%
           mutate(across(input$select_reg_actB, list(zscore = ~as.numeric(scale(.)))))
@@ -2198,6 +2304,14 @@ server <- function(input, output, session) {#
         need(plot.stand2$stand.tracker == 1,
              message = "Please standardize your exogenous regressors.")
       )
+      validate(
+        need(input$prop <= 0.9,
+             message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less).")
+      )
+      validate(
+        need(actB.arima$nrow_model_df >= 30,
+             message = "You are using fewer than 30 data points for model training. Please select a larger proportion of your data for training.")
+      )
       
       return("Please click 'Fit ARIMA'.")
       
@@ -2237,6 +2351,14 @@ server <- function(input, output, session) {#
              message = "Please standardize your exogenous regressors.")
       )
       validate(
+        need(input$prop <= 0.9,
+             message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less).")
+      )
+      validate(
+        need(actB.arima$nrow_model_df >= 30,
+             message = "You are using fewer than 30 data points for model training. Please select a larger proportion of your data for training.")
+      )
+      validate(
         need(input$fit_arima2 > 0,
              message = "Click 'Fit ARIMA'")
       )
@@ -2247,7 +2369,7 @@ server <- function(input, output, session) {#
         pivot_wider(names_from = "variable", values_from = "observation")
     
       plot_data <- as_tsibble(wide_dat) %>%
-        dplyr::slice_head(prop = .7) %>% # using a 70:30 split here
+        dplyr::slice_head(prop = input$prop) %>% # using a 70:30 split here
         select(datetime, input$select_tar_actB) 
       
       colnames(plot_data) <- c("datetime","target")
@@ -2300,6 +2422,14 @@ server <- function(input, output, session) {#
       validate(
         need(plot.stand2$stand.tracker == 1,
              message = "Please standardize your exogenous regressors.")
+      )
+      validate(
+        need(input$prop <= 0.9,
+             message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less).")
+      )
+      validate(
+        need(actB.arima$nrow_model_df >= 30,
+             message = "You are using fewer than 30 data points for model training. Please select a larger proportion of your data for training.")
       )
       validate(
         need(input$fit_arima2 > 0,
@@ -2369,6 +2499,14 @@ server <- function(input, output, session) {#
              message = "Please standardize your exogenous regressors.")
       )
       validate(
+        need(input$prop <= 0.9,
+             message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less).")
+      )
+      validate(
+        need(actB.arima$nrow_model_df >= 30,
+             message = "You are using fewer than 30 data points for model training. Please select a larger proportion of your data for training.")
+      )
+      validate(
         need(input$fit_arima2 > 0,
              message = "Click 'Fit ARIMA'")
       )
@@ -2414,6 +2552,14 @@ server <- function(input, output, session) {#
              message = "Please standardize your exogenous regressors.")
       )
       validate(
+        need(input$prop <= 0.9,
+             message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less).")
+      )
+      validate(
+        need(actB.arima$nrow_model_df >= 30,
+             message = "You are using fewer than 30 data points for model training. Please select a larger proportion of your data for training.")
+      )
+      validate(
         need(input$fit_arima2 > 0,
              message = "Click 'Fit ARIMA'")
       )
@@ -2428,7 +2574,819 @@ server <- function(input, output, session) {#
     
   })
   
+  # Objective 8
+  plot.train.test2 <- reactiveValues(main=NULL)
   
+  observe({
+    input$fit_arima2
+    
+    output$train_test_plot2 <- renderPlotly({ 
+      
+      validate(
+        need(!is.null(input$upload_data),
+             message = "Please upload your data in Objective 6.")
+      )
+      validate(
+        need(valid$main == TRUE,
+             message = "Please correct your data format in Objective 6.")
+      )
+      validate(
+        need(!is.null(input$select_tar_actB),
+             message = "Please select a target variable from the dropdown menu in Objective 7.")
+      )
+      validate(
+        need(!is.null(input$select_reg_actB),
+             message = "Please select at least 1 predictor from the dropdown menu in Objective 7.")
+      )
+      validate(
+        need(length(input$select_reg_actB) <= 3,
+             message = "Please only select up to 3 regressors to fit your model in Objective 7.")
+      )
+      validate(
+        need(plot.stand2$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors in Objective 7.")
+      )
+      validate(
+        need(input$prop <= 0.9,
+             message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
+      )
+      validate(
+        need(actB.arima$nrow_model_df >= 30,
+             message = "You are using fewer than 30 data points for model training. Please select a larger proportion of your data for training in Objective 7.")
+      )
+      validate(
+        need(!is.null(actB.arima$arima),
+             message = "Please fit an ARIMA model in Objective 7.")
+      )
+      
+      
+      dat <- stand.data() 
+      
+      wide_dat <- dat %>%
+        pivot_wider(names_from = "variable", values_from = "observation")
+      
+        train_data <- as_tsibble(wide_dat) %>%
+          dplyr::slice_head(prop = input$prop) %>% # using a 70:30 split here
+          select(datetime, input$select_tar_actB) %>%
+          rename(target = input$select_tar_actB) %>%
+          mutate(set = "training data")
+        
+        test_data <- as_tsibble(wide_dat) %>%
+          dplyr::slice_tail(prop = 1-input$prop) %>% # using a 70:30 split here
+          select(datetime, input$select_tar_actB) %>%
+          rename(target = input$select_tar_actB) %>%
+          mutate(set = "testing data")
+        
+        plot_data <- bind_rows(train_data, test_data)
+        
+        train_test_dates <- train_data %>%
+          pull(datetime)
+        train_test_line <- last(train_test_dates)
+      
+      fitted_values <- fitted(actB.arima$arima)
+      
+      p <- ggplot()+
+        xlab("datetime")+
+        ylab(input$select_tar_actB)+
+        geom_point(data = plot_data, aes(x = datetime, y = target, color = set))+
+        geom_line(data = fitted_values, aes(x = datetime, y = .fitted, group = .model, color = .model))+
+        geom_vline(xintercept = train_test_line)+
+        labs(color = NULL, fill = NULL)+
+        scale_color_manual(values = c("training data" = "#cee3f1",.model = "#446c84","testing data" = "#0d3658"))+
+        theme_classic()
+      
+      plot.train.test2$main <- p
+      
+      return(ggplotly(p, dynamicTicks = TRUE))
+      
+    })
+    
+  })
+  
+  observe({
+    input$select_tar_actB
+    input$select_reg_actB
+    
+    output$train_test_plot2 <- renderPlotly({ 
+      
+      validate(
+        need(!is.null(input$upload_data),
+             message = "Please upload your data in Objective 6.")
+      )
+      validate(
+        need(valid$main == TRUE,
+             message = "Please correct your data format in Objective 6.")
+      )
+      validate(
+        need(!is.null(input$select_tar_actB),
+             message = "Please select a target variable from the dropdown menu in Objective 7.")
+      )
+      validate(
+        need(!is.null(input$select_reg_actB),
+             message = "Please select at least 1 predictor from the dropdown menu in Objective 7.")
+      )
+      validate(
+        need(length(input$select_reg_actB) <= 3,
+             message = "Please only select up to 3 regressors to fit your model in Objective 7.")
+      )
+      validate(
+        need(plot.stand2$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors in Objective 7.")
+      )
+      validate(
+        need(input$prop <= 0.9,
+             message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
+      )
+      validate(
+        need(actB.arima$nrow_model_df >= 30,
+             message = "You are using fewer than 30 data points for model training. Please select a larger proportion of your data for training in Objective 7.")
+      )
+      validate(
+        need(!is.null(actB.arima$arima),
+             message = "Please fit an ARIMA model in Objective 7.")
+      )
+      
+      p <- ggplot() +
+        annotate("text", x = 10,  y = 10,
+                 size = 6,
+                 label = "Looks like you've chosen new regressors!\nPlease click 'Fit ARIMA' in Objective 7 to regenerate this plot.") + 
+        theme_void()+
+        theme(panel.grid = element_blank(),
+              axis.line = element_blank())
+      
+      plot.train.test2$main <- p
+      
+      return(ggplotly(p, dynamicTicks = TRUE))
+      
+    })
+    
+  })
+  
+  # Download train test plot
+  output$save_train_test_plot2 <- downloadHandler(
+    filename = function() {
+      paste("QXX-plot-", Sys.Date(), ".png", sep="")
+    },
+    content = function(file) {
+      device <- function(..., width, height) {
+        grDevices::png(..., width = 8, height = 4,
+                       res = 200, units = "in")
+      }
+      ggsave(file, plot = plot.train.test2$main, device = device)
+    }
+  )
+  
+  # predictions on testing data plot
+  plot.test.pred2 <- reactiveValues(main=NULL)
+  
+  observe({
+    input$fit_arima2
+    
+    output$test_pred_plot2 <- renderPlotly({ 
+      
+      validate(
+        need(!is.null(input$upload_data),
+             message = "Please upload your data in Objective 6.")
+      )
+      validate(
+        need(valid$main == TRUE,
+             message = "Please correct your data format in Objective 6.")
+      )
+      validate(
+        need(!is.null(input$select_tar_actB),
+             message = "Please select a target variable from the dropdown menu in Objective 7.")
+      )
+      validate(
+        need(!is.null(input$select_reg_actB),
+             message = "Please select at least 1 predictor from the dropdown menu in Objective 7.")
+      )
+      validate(
+        need(length(input$select_reg_actB) <= 3,
+             message = "Please only select up to 3 regressors to fit your model in Objective 7.")
+      )
+      validate(
+        need(plot.stand2$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors in Objective 7.")
+      )
+      validate(
+        need(input$prop <= 0.9,
+             message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
+      )
+      validate(
+        need(actB.arima$nrow_model_df >= 30,
+             message = "You are using fewer than 30 data points for model training. Please select a larger proportion of your data for training in Objective 7.")
+      )
+      validate(
+        need(!is.null(actB.arima$arima),
+             message = "Please fit an ARIMA model in Objective 7.")
+      )
+      validate(
+        need(input$generate_pred2 > 0,
+             message = "Click 'Generate predictions'")
+      )
+      
+      dat <- stand.data()
+      
+      wide_dat <- dat %>%
+        pivot_wider(names_from = "variable", values_from = "observation")
+      
+      train_data <- as_tsibble(wide_dat) %>%
+        dplyr::slice_head(prop = input$prop) %>% # using a 70:30 split here
+        select(datetime, input$select_tar_actB) %>%
+        rename(target = input$select_tar_actB) %>%
+        mutate(set = "training data")
+      
+      test_data <- as_tsibble(wide_dat) %>%
+        dplyr::slice_tail(prop = 1-input$prop) %>% # using a 70:30 split here
+        select(datetime, input$select_tar_actB) %>%
+        rename(target = input$select_tar_actB) %>%
+        mutate(set = "testing data")
+      
+      plot_data <- bind_rows(train_data, test_data)
+      
+      train_test_dates <- train_data %>%
+        pull(datetime)
+      train_test_line <- last(train_test_dates)
+      
+      fitted_values <- fitted(actB.arima$arima)
+      
+        col_names <- c("datetime",input$select_tar_actB,input$select_reg_actB)
+        
+        new_data <- as_tsibble(wide_dat) %>%
+          filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
+          tsibble::fill_gaps() %>%
+          select(all_of(col_names)) %>%
+          mutate(across(input$select_reg_actB, list(zscore = ~as.numeric(scale(.)))))
+      
+      fitted_values <- fitted(actB.arima$arima)
+      pred <- forecast(actB.arima$arima, new_data = new_data)
+      
+      
+      p <- ggplot()+
+        xlab("datetime")+
+        ylab(input$select_tar_actB)+
+        geom_point(data = plot_data, aes(x = datetime, y = target, color = set))+
+        geom_line(data = pred, aes(x = datetime, y = .mean, group = .model, color = .model))+
+        geom_vline(xintercept = train_test_line)+
+        labs(color = NULL, fill = NULL)+
+        scale_color_manual(values = c("training data" = "#cee3f1",.model = "#446c84","testing data" = "#0d3658"))+
+        theme_classic()
+      
+      plot.test.pred2$main <- p
+      
+      return(ggplotly(p, dynamicTicks = TRUE))
+      
+    })
+    
+  })
+  
+  observe({
+    input$select_tar_actB
+    input$select_reg_actB
+    
+    output$test_pred_plot2 <- renderPlotly({ 
+      
+      validate(
+        need(!is.null(input$upload_data),
+             message = "Please upload your data in Objective 6.")
+      )
+      validate(
+        need(valid$main == TRUE,
+             message = "Please correct your data format in Objective 6.")
+      )
+      validate(
+        need(!is.null(input$select_tar_actB),
+             message = "Please select a target variable from the dropdown menu in Objective 7.")
+      )
+      validate(
+        need(!is.null(input$select_reg_actB),
+             message = "Please select at least 1 predictor from the dropdown menu in Objective 7.")
+      )
+      validate(
+        need(length(input$select_reg_actB) <= 3,
+             message = "Please only select up to 3 regressors to fit your model in Objective 7.")
+      )
+      validate(
+        need(plot.stand2$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors in Objective 7.")
+      )
+      validate(
+        need(input$prop <= 0.9,
+             message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
+      )
+      validate(
+        need(actB.arima$nrow_model_df >= 30,
+             message = "You are using fewer than 30 data points for model training. Please select a larger proportion of your data for training in Objective 7.")
+      )
+      validate(
+        need(!is.null(actB.arima$arima),
+             message = "Please fit an ARIMA model in Objective 7.")
+      )
+      validate(
+        need(input$generate_pred2 > 0,
+             message = "Click 'Generate predictions'")
+      )
+      
+      p <- ggplot() +
+        annotate("text", x = 10,  y = 10,
+                 size = 6,
+                 label = "Looks like you've chosen new regressors!\nPlease click 'Fit ARIMA' in Objective 7 to regenerate this plot.") + 
+        theme_void()+
+        theme(panel.grid = element_blank(),
+              axis.line = element_blank())
+      
+      plot.test.pred2$main <- p
+      
+      return(ggplotly(p, dynamicTicks = TRUE))
+      
+    })
+    
+  })
+  
+  # Download scatterplot of arima
+  output$save_test_pred_plot2 <- downloadHandler(
+    filename = function() {
+      paste("QXX-plot-", Sys.Date(), ".png", sep="")
+    },
+    content = function(file) {
+      device <- function(..., width, height) {
+        grDevices::png(..., width = 8, height = 4,
+                       res = 200, units = "in")
+      }
+      ggsave(file, plot = plot.test.pred2$main, device = device)
+    }
+  )
+  
+  
+  # Residuals plot
+  plot.resid2 <- reactiveValues(main=NULL)
+  
+  observe({
+    input$fit_arima2
+    
+    output$resid_plot2 <- renderPlotly({ 
+      
+      validate(
+        need(!is.null(input$upload_data),
+             message = "Please upload your data in Objective 6.")
+      )
+      validate(
+        need(valid$main == TRUE,
+             message = "Please correct your data format in Objective 6.")
+      )
+      validate(
+        need(!is.null(input$select_tar_actB),
+             message = "Please select a target variable from the dropdown menu in Objective 7.")
+      )
+      validate(
+        need(!is.null(input$select_reg_actB),
+             message = "Please select at least 1 predictor from the dropdown menu in Objective 7.")
+      )
+      validate(
+        need(length(input$select_reg_actB) <= 3,
+             message = "Please only select up to 3 regressors to fit your model in Objective 7.")
+      )
+      validate(
+        need(plot.stand2$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors in Objective 7.")
+      )
+      validate(
+        need(input$prop <= 0.9,
+             message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
+      )
+      validate(
+        need(actB.arima$nrow_model_df >= 30,
+             message = "You are using fewer than 30 data points for model training. Please select a larger proportion of your data for training in Objective 7.")
+      )
+      validate(
+        need(!is.null(actB.arima$arima),
+             message = "Please fit an ARIMA model in Objective 7.")
+      )
+      validate(
+        need(input$view_resid2 > 0,
+             message = "Click 'View residuals'")
+      )
+      
+      resid <- residuals(actB.arima$arima)
+      sd.resid <- round(sd(resid$.resid, na.rm = TRUE),3)
+      
+      p <- ggplot(data = resid)+
+        geom_histogram(aes(x = .resid), color = "#0d3658", fill = "#cee3f1")+
+        xlab(input$select_tar_actB)+
+        theme_bw()+
+        ggtitle(paste0("Model residuals: Std. Dev. = ",sd.resid))
+      
+      plot.resid2$main <- p
+      
+      return(ggplotly(p, dynamicTicks = TRUE))
+      
+    })
+    
+  })
+  
+  observe({
+    input$select_tar_actB
+    input$select_reg_actB
+    
+    output$resid_plot2 <- renderPlotly({ 
+      
+      validate(
+        need(!is.null(input$upload_data),
+             message = "Please upload your data in Objective 6.")
+      )
+      validate(
+        need(valid$main == TRUE,
+             message = "Please correct your data format in Objective 6.")
+      )
+      validate(
+        need(!is.null(input$select_tar_actB),
+             message = "Please select a target variable from the dropdown menu in Objective 7.")
+      )
+      validate(
+        need(!is.null(input$select_reg_actB),
+             message = "Please select at least 1 predictor from the dropdown menu in Objective 7.")
+      )
+      validate(
+        need(length(input$select_reg_actB) <= 3,
+             message = "Please only select up to 3 regressors to fit your model in Objective 7.")
+      )
+      validate(
+        need(plot.stand2$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors in Objective 7.")
+      )
+      validate(
+        need(input$prop <= 0.9,
+             message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
+      )
+      validate(
+        need(actB.arima$nrow_model_df >= 30,
+             message = "You are using fewer than 30 data points for model training. Please select a larger proportion of your data for training in Objective 7.")
+      )
+      validate(
+        need(!is.null(actB.arima$arima),
+             message = "Please fit an ARIMA model in Objective 7.")
+      )
+      validate(
+        need(input$view_resid2 > 0,
+             message = "Click 'View residuals'")
+      )
+      
+      p <- ggplot() +
+        annotate("text", x = 10,  y = 10,
+                 size = 4,
+                 label = "You've chosen new regressors!\nClick 'Fit ARIMA' in Obj. 7 \nto regenerate this plot.") + 
+        theme_void()+
+        theme(panel.grid = element_blank(),
+              axis.line = element_blank())
+      
+      plot.resid2$main <- p
+      
+      return(ggplotly(p, dynamicTicks = TRUE))
+      
+    })
+    
+  })
+  
+  # Download scatterplot of arima
+  output$save_resid_plot2 <- downloadHandler(
+    filename = function() {
+      paste("QXX-plot-", Sys.Date(), ".png", sep="")
+    },
+    content = function(file) {
+      device <- function(..., width, height) {
+        grDevices::png(..., width = 8, height = 4,
+                       res = 200, units = "in")
+      }
+      ggsave(file, plot = plot.resid2$main, device = device)
+    }
+  )
+  
+  # Predictions with uncertainty plot
+  # Residuals plot
+  plot.uc2 <- reactiveValues(main=NULL)
+  
+  observe({
+    input$fit_arima2
+    
+    output$uc_plot2 <- renderPlotly({ 
+      
+      validate(
+        need(!is.null(input$upload_data),
+             message = "Please upload your data in Objective 6.")
+      )
+      validate(
+        need(valid$main == TRUE,
+             message = "Please correct your data format in Objective 6.")
+      )
+      validate(
+        need(!is.null(input$select_tar_actB),
+             message = "Please select a target variable from the dropdown menu in Objective 7.")
+      )
+      validate(
+        need(!is.null(input$select_reg_actB),
+             message = "Please select at least 1 predictor from the dropdown menu in Objective 7.")
+      )
+      validate(
+        need(length(input$select_reg_actB) <= 3,
+             message = "Please only select up to 3 regressors to fit your model in Objective 7.")
+      )
+      validate(
+        need(plot.stand2$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors in Objective 7.")
+      )
+      validate(
+        need(input$prop <= 0.9,
+             message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
+      )
+      validate(
+        need(actB.arima$nrow_model_df >= 30,
+             message = "You are using fewer than 30 data points for model training. Please select a larger proportion of your data for training in Objective 7.")
+      )
+      validate(
+        need(!is.null(actB.arima$arima),
+             message = "Please fit an ARIMA model in Objective 7.")
+      )
+      validate(
+        need(input$add_uc2 > 0,
+             message = "Click 'Add uncertainty'")
+      )
+      
+      dat <- stand.data()
+      
+      wide_dat <- dat %>%
+        pivot_wider(names_from = "variable", values_from = "observation")
+      
+      train_data <- as_tsibble(wide_dat) %>%
+        dplyr::slice_head(prop = input$prop) %>% # using a 70:30 split here
+        select(datetime, input$select_tar_actB) %>%
+        rename(target = input$select_tar_actB) %>%
+        mutate(set = "training data")
+      
+      test_data <- as_tsibble(wide_dat) %>%
+        dplyr::slice_tail(prop = 1-input$prop) %>% # using a 70:30 split here
+        select(datetime, input$select_tar_actB) %>%
+        rename(target = input$select_tar_actB) %>%
+        mutate(set = "testing data")
+      
+      plot_data <- bind_rows(train_data, test_data)
+      
+      train_test_dates <- train_data %>%
+        pull(datetime)
+      train_test_line <- last(train_test_dates)
+      
+      fitted_values <- fitted(actB.arima$arima)
+      
+      col_names <- c("datetime",input$select_tar_actB,input$select_reg_actB)
+      
+      new_data <- as_tsibble(wide_dat) %>%
+        filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
+        tsibble::fill_gaps() %>%
+        select(all_of(col_names)) %>%
+        mutate(across(input$select_reg_actB, list(zscore = ~as.numeric(scale(.)))))
+      
+      fitted_values <- fitted(actB.arima$arima)
+      pred <- forecast(actB.arima$arima, new_data = new_data) %>%
+        hilo()
+      
+      p <- ggplot()+
+        xlab("datetime")+
+        ylab(input$select_tar_actB)+
+        geom_point(data = plot_data, aes(x = datetime, y = target, color = set))+
+        geom_ribbon(data = pred, aes(x = datetime, ymin = `95%`$lower, ymax = `95%`$upper), color = "#DDE4E1", fill = "#DDE4E1",
+                    alpha = 0.5)+
+        geom_line(data = pred, aes(x = datetime, y = .mean, group = .model, color = .model))+
+        geom_vline(xintercept = train_test_line)+
+        labs(color = NULL, fill = NULL)+
+        scale_color_manual(values = c("training data" = "#cee3f1",.model = "#446c84","testing data" = "#0d3658"))+
+        theme_classic()
+      
+      plot.uc2$main <- p
+      
+      return(ggplotly(p, dynamicTicks = TRUE))
+      
+    })
+    
+  })
+  
+  observe({
+    input$select_tar_actB
+    input$select_reg_actB
+    
+    output$uc_plot2 <- renderPlotly({ 
+      
+      validate(
+        need(!is.null(input$upload_data),
+             message = "Please upload your data in Objective 6.")
+      )
+      validate(
+        need(valid$main == TRUE,
+             message = "Please correct your data format in Objective 6.")
+      )
+      validate(
+        need(!is.null(input$select_tar_actB),
+             message = "Please select a target variable from the dropdown menu in Objective 7.")
+      )
+      validate(
+        need(!is.null(input$select_reg_actB),
+             message = "Please select at least 1 predictor from the dropdown menu in Objective 7.")
+      )
+      validate(
+        need(length(input$select_reg_actB) <= 3,
+             message = "Please only select up to 3 regressors to fit your model in Objective 7.")
+      )
+      validate(
+        need(plot.stand2$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors in Objective 7.")
+      )
+      validate(
+        need(input$prop <= 0.9,
+             message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
+      )
+      validate(
+        need(actB.arima$nrow_model_df >= 30,
+             message = "You are using fewer than 30 data points for model training. Please select a larger proportion of your data for training in Objective 7.")
+      )
+      validate(
+        need(!is.null(actB.arima$arima),
+             message = "Please fit an ARIMA model in Objective 7.")
+      )
+      validate(
+        need(input$add_uc2 > 0,
+             message = "Click 'Add uncertainty'")
+      )
+      
+      p <- ggplot() +
+        annotate("text", x = 10,  y = 10,
+                 size = 4,
+                 label = "Looks like you've chosen new regressors!\nPlease click 'Fit ARIMA' in Obj. 7 to regenerate this plot.") + 
+        theme_void()+
+        theme(panel.grid = element_blank(),
+              axis.line = element_blank())
+      
+      plot.uc2$main <- p
+      
+      return(ggplotly(p, dynamicTicks = TRUE))
+      
+    })
+    
+  })
+  
+  # Download scatterplot of arima
+  output$save_uc_plot2 <- downloadHandler(
+    filename = function() {
+      paste("QXX-plot-", Sys.Date(), ".png", sep="")
+    },
+    content = function(file) {
+      device <- function(..., width, height) {
+        grDevices::png(..., width = 8, height = 4,
+                       res = 200, units = "in")
+      }
+      ggsave(file, plot = plot.uc2$main, device = device)
+    }
+  )
+  
+  
+  # Calculate ignorance
+  ign.text2 <- reactiveValues(main=NULL)
+  
+  observe({
+    input$fit_arima2
+    
+    output$ign_text2 <- renderText({ 
+      
+      validate(
+        need(!is.null(input$upload_data),
+             message = "Please upload your data in Objective 6.")
+      )
+      validate(
+        need(valid$main == TRUE,
+             message = "Please correct your data format in Objective 6.")
+      )
+      validate(
+        need(!is.null(input$select_tar_actB),
+             message = "Please select a target variable from the dropdown menu in Objective 7.")
+      )
+      validate(
+        need(!is.null(input$select_reg_actB),
+             message = "Please select at least 1 predictor from the dropdown menu in Objective 7.")
+      )
+      validate(
+        need(length(input$select_reg_actB) <= 3,
+             message = "Please only select up to 3 regressors to fit your model in Objective 7.")
+      )
+      validate(
+        need(plot.stand2$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors in Objective 7.")
+      )
+      validate(
+        need(input$prop <= 0.9,
+             message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
+      )
+      validate(
+        need(actB.arima$nrow_model_df >= 30,
+             message = "You are using fewer than 30 data points for model training. Please select a larger proportion of your data for training in Objective 7.")
+      )
+      validate(
+        need(!is.null(actB.arima$arima),
+             message = "Please fit an ARIMA model in Objective 7.")
+      )
+      validate(
+        need(input$calc_ign2 > 0,
+             message = "Click 'Calculate ignorance score'")
+      )
+      
+      dat <- stand.data()
+      
+      wide_dat <- dat %>%
+        pivot_wider(names_from = "variable", values_from = "observation")
+      
+      train_data <- as_tsibble(wide_dat) %>%
+        dplyr::slice_head(prop = input$prop) 
+
+      col_names <- c("datetime",input$select_tar_actB,input$select_reg_actB)
+      
+      new_data <- as_tsibble(wide_dat) %>%
+        filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
+        tsibble::fill_gaps() %>%
+        select(all_of(col_names)) %>%
+        mutate(across(input$select_reg_actB, list(zscore = ~as.numeric(scale(.)))))
+      
+        pred <- forecast(actB.arima$arima, new_data = new_data) %>%
+          pull(input$select_tar_actB)
+        
+        dist_params <- distributional::parameters(pred)
+        
+        new_obs <- new_data %>%
+          pull(input$select_tar_actB)
+        
+        ign <- scoringRules::logs_norm(new_obs, dist_params$mu, dist_params$sigma)
+      
+      ign_out <- paste0("Ignorance score: ",round(mean(ign, na.rm = TRUE), 2))
+      
+      ign.text2$main <- ign_out
+      
+      return(ign_out)
+      
+    })
+    
+  })
+  
+  observe({
+    input$select_tar_actB
+    input$select_reg_actB
+    
+    output$ign_text2 <- renderText({ 
+      
+      validate(
+        need(!is.null(input$upload_data),
+             message = "Please upload your data in Objective 6.")
+      )
+      validate(
+        need(valid$main == TRUE,
+             message = "Please correct your data format in Objective 6.")
+      )
+      validate(
+        need(!is.null(input$select_tar_actB),
+             message = "Please select a target variable from the dropdown menu in Objective 7.")
+      )
+      validate(
+        need(!is.null(input$select_reg_actB),
+             message = "Please select at least 1 predictor from the dropdown menu in Objective 7.")
+      )
+      validate(
+        need(length(input$select_reg_actB) <= 3,
+             message = "Please only select up to 3 regressors to fit your model in Objective 7.")
+      )
+      validate(
+        need(plot.stand2$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors in Objective 7.")
+      )
+      validate(
+        need(input$prop <= 0.9,
+             message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
+      )
+      validate(
+        need(actB.arima$nrow_model_df >= 30,
+             message = "You are using fewer than 30 data points for model training. Please select a larger proportion of your data for training in Objective 7.")
+      )
+      validate(
+        need(!is.null(actB.arima$arima),
+             message = "Please fit an ARIMA model in Objective 7.")
+      )
+      validate(
+        need(input$calc_ign2 > 0,
+             message = "Click 'Calculate ignorance score'")
+      )
+      
+      ign_out <- paste0("You've selected new regressors! Please click 'Fit ARIMA' in Obj. 7 to recalculate the ignorance score!")
+      
+      ign.text2$main <- ign_out
+      
+      return(ign_out)
+      
+    })
+    
+  })
 
   # Navigating Tabs ----
   #* Main Tab ====

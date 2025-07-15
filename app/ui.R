@@ -1013,7 +1013,7 @@ ui <- function(request) {
                                                         tags$li("We require a minimum of 50 timesteps in your dataset. This will allow for adequate training data for model fitting as well as adequate testing data for model assessment.")
                                                       ),
                                                       tags$ul(
-                                                        tags$li("To avoid overfitting and to facilitate model interpretation, we currently limit the number of variables in a dataset to 10 (limit of 10 unique values in 'variable' column).")
+                                                        tags$li("To facilitate model interpretation, we currently limit the number of variables in a dataset to 10 (limit of 10 unique values in 'variable' column). In the next objective, you will be asked to select a target variable and no more than three exogenous regressors to fit your model.")
                                                       ),
                                                       tags$ul(
                                                         tags$li("At this time, the file size limit for uploaded datasets is 5 MB.")
@@ -1046,12 +1046,21 @@ ui <- function(request) {
                                                       h4("Option 1"),
                                                       p("Your instructor will provide you with datasets or other resources which you can use to find datasets to upload to the module. In this case, you will be responsible for 'wrangling' your own data into the correct format for the module, with assistance from your instructor."),
                                                       h4("Option 2"),
-                                                      p("You may select one of the datasets provided with the module to upload. We currently provide one dataset for each case study in the module, typically from a different site than is used in Activity A. ",tags$b("Be warned! Each of the provided datasets has a formatting flaw which you will need to fix before you will be able to successfully re-upload the dataset to the module.")," This is to provide you with practice in 'wrangling' data to meet data standards.")
+                                                      p("You may select one of the datasets provided with the module to upload. We currently provide one dataset for each case study in the module, typically from a different site than is used in Activity A. ",tags$b("Be warned! Each of the provided datasets has a formatting flaw which you will need to fix before you will be able to successfully re-upload the dataset to the module.")," This is to provide you with practice in 'wrangling' data to meet data standards."),
+                                                      wellPanel(
+                                                        h4(tags$b("Option 2 Only: About Site")),
+                                                        textOutput("actB_site_info")
+                                                      )
                                                       ),
                                                column(4,
-                                                      selectInput("actB_dataset", "Pick a dataset", choices = actB_choices),
+                                                      selectInput("actB_dataset", "Option 2 only: Pick a dataset", choices = actB_choices),
                                                       tableOutput("preview_actB_dataset"),
-                                                      downloadButton("download_actB_dataset", "Download .csv")
+                                                      column(6,
+                                                             downloadButton("download_actB_dataset", "Download .csv")
+                                                             ),
+                                                      column(6,
+                                                             downloadButton("download_actB_metadata", "Download metadata")
+                                                             )
                                                       )
                                              ),
                                              hr(),
@@ -1093,6 +1102,7 @@ ui <- function(request) {
                                                       h3("Identify target variable and select exogenous regressors"),
                                                       p("You will need to identify your target variable (the variable you wish to predict) before fitting the model."),
                                                       p("In addition, consider whether you would like to include any exogenous regressors in the model."),
+                                                      p(tags$b("For simplicity and ease of model interpretation, you are limited to selecting no more than three exogenous regressors at a time for fitting your model")),
                                                       p(tags$i("Choose your target variable and regressors using the dropdown menus on the right and then answer Q27 and Q28."))
                                                ),
                                                column(6,
@@ -1139,7 +1149,10 @@ ui <- function(request) {
                                              hr(),
                                              fluidRow(
                                                column(6,
-                                                      h3("Fit ARIMA model"),
+                                                      h3("Select train/test proportion and fit ARIMA model"),
+                                                      p("Recall that in Activity A, we used 70% of your data for model training and reserved 30% of your data for the testing set to assess model performance. Now, you may choose what proportion of your data to use for training. Too low a proportion can lead to a poor model fit due to lack of data. Too high a proportion can lead to poor model assessment due to lack of data on which to calculate the ignorance score."),
+                                                      p(tags$b("For these reasons, we require that you select a proportion that includes at least 30 data points for model training and reserves at least 10% of your data for model testing.")),
+                                                      numericInput("prop", "Proportion of data to use for training:", value = 0.7, min = 0, max = 1, step = 0.1),
                                                       p("Click the button below to fit an ARIMA model to the target variable from your selected environmental case study, including the regressors you have chosen above."),
                                                       p(tags$b("Important Note! We are only using the training data (based on the train/test split you chose above) to fit the ARIMA model. This leaves the testing data to be used for model assessment in Objective 8.")),
                                                       actionButton("fit_arima2",label = "Fit ARIMA"),
@@ -1195,16 +1208,111 @@ ui <- function(request) {
                                              )
                                              ),
                                     #* Objective 8 - Run Forecast ----
-                                    tabPanel(title = "Objective 8 - Forecast", value = "obj8",
+                                    tabPanel(title = "Objective 8 - Assess model", value = "obj8",
                                              #** Input Uncertainty ----
                                              fluidRow(
                                                column(12,
                                                       wellPanel(style = paste0("background: ", obj_bg),
-                                                                h3("Objective 8 - Generate an Ecological Forecast"),
+                                                                h3("Objective 8 - Assess model"),
                                                                 p(style="text-align: justify;", module_text["obj_08", ])
                                                                 )
                                                       )
+                                               ),
+                                             hr(),
+                                             fluidRow(
+                                               column(4,
+                                                      h3("Training vs. testing data"),
+                                                      p("The figure on the right shows both the training and testing data of your target dataset, as well as the fitted values from your ARIMA model, generated using the training dataset only."),
+                                                      p("Recall that you chose the proportion of your data to use for training vs. testing in Objective 7")
+                                               ),
+                                               column(8,
+                                                      wellPanel(
+                                                        plotlyOutput("train_test_plot2"),
+                                                      ),
+                                                      downloadButton("save_train_test_plot2", "Download plot", icon = icon("download"))
                                                )
+                                             ),
+                                             hr(),
+                                             fluidRow(
+                                               column(4,
+                                                      h3("Apply model to testing data"),
+                                                      p("Now, we will apply our model to the test data to see how the predictions look."),
+                                                      p("Click 'Generate predictions' to view the model predictions for the test data, and then answer the question below."),
+                                                      actionButton("generate_pred2",label = "Generate predictions"),
+                                                      br(),br(),
+                                                      box(id = "box2", width = 12, status = "primary",
+                                                          solidHeader = TRUE,
+                                                          fluidRow(
+                                                            column(10, offset = 1,
+                                                                   h3("Questions"),
+                                                                   p(tags$b(quest["q16", 1]))
+                                                            )
+                                                          )
+                                                      )
+                                               ),
+                                               column(8,
+                                                      wellPanel(
+                                                        plotlyOutput("test_pred_plot2"),
+                                                      ),
+                                                      downloadButton("save_test_pred_plot2", "Download plot", icon = icon("download"))
+                                               )
+                                             ),
+                                             hr(),
+                                             fluidRow(
+                                               column(4,
+                                                      h3("Estimating the uncertainty of model predictions"),
+                                                      h4("Use the buttons below to view the residuals from your fitted ARIMA model and add uncertainty to model predictions."),
+                                                      p("Then, use the plots to answer the questions below"),
+                                                      actionButton("view_resid2",label = "View residuals"),
+                                                      br(),br(),
+                                                      wellPanel(
+                                                        plotlyOutput("resid_plot2"),
+                                                      ),
+                                                      downloadButton("save_resid_plot2", "Download plot", icon = icon("download"))
+                                               ),
+                                               column(8,
+                                                      actionButton("add_uc2",label = "Add uncertainty"),
+                                                      br(),br(),
+                                                      wellPanel(
+                                                        plotlyOutput("uc_plot2"),
+                                                      ),
+                                                      downloadButton("save_uc_plot2", "Download plot", icon = icon("download")),
+                                                      br(),br(),
+                                                      box(id = "box2", width = 12, status = "primary",
+                                                          solidHeader = TRUE,
+                                                          fluidRow(
+                                                            column(10, offset = 1,
+                                                                   h3("Questions"),
+                                                                   p(tags$b(quest["q18", 1])),
+                                                                   p(tags$b(quest["q19", 1])),
+                                                                   p(tags$b(quest["q20", 1])),
+                                                                   p(tags$i("Hint: there is no right or wrong answer to Q20."))
+                                                            )
+                                                          )
+                                                      )
+                                               )
+                                             ),
+                                             hr(),
+                                             fluidRow(
+                                               column(4,
+                                                      h3("Assessing model predictions using the ignorance score"),
+                                                      actionButton("calc_ign2","Calculate ignorance score"),
+                                                      br(),br(),
+                                                      wellPanel(textOutput("ign_text2"))
+                                               ),
+                                               column(8,
+                                               )
+                                               
+                                             ),
+                                             hr(),
+                                             fluidRow(
+                                               column(10, offset = 1,
+                                                      h3("Next step"),
+                                                      p("Now that you have learned how to fit and assess an ARIMA model using a case study, you will either:"),
+                                                      p("a. Upload a new dataset provided by your instructor in a standardized format suitable for model fitting, or"),
+                                                      p("b. Upload and fit models to data from a different site using the same environmental case study you chose in Activity A")
+                                               )
+                                             )
                                              ),
                                     #* Objective 9 - Communicate Forecast ----
                                     tabPanel(title = "Objective 9 - Communicate forecast",  value = "obj9",
