@@ -27,11 +27,8 @@ obj_05,Assess the fit of the ARIMA model using out-of-sample test data from your
 obj_06,"In this objective, you will learn about the importance of data standards for reproducible scientific analyses, as well as wrangle and upload a new environmental dataset of your choosing."
 obj_07,Fit a ARIMA time series model to the data you uploaded in Objective 6.
 obj_08,Assess the fit of the ARIMA model from Objective 7 using out-of-sample test data from the dataset you uploaded in Objective 6.
-obj_09,Forecasts that are effectively communicated to the public and managers will be most useful for aiding decision-making. Here you will think about how to communicate your forecast to an end-user.
-obj_10,A fundamental part of the forecast cycle is assessing how well your forecast performed relative to observations. Here we will use a simple assessment of plotting forecast results against observations.
-obj_11,Update our model to improve our forecasts based on the recent observations that have been collected. 
-obj_12,"The forecast cycle is an iterative process. Now after communicating and assessing our forecast and updating our model parameters, we will update our driver forecasts and initial conditions to generate the next forecast. "
-obj_13, Make a hypothesis about how you expect your model to forecast primary productivitiy at a different NEON site. Then test your hypothesis by repeating Activity A Objectives 1 & 5 and Activity B with the other NEON site.
+obj_09,"Fit three additional models to the data you uploaded in Objective 6. You will fit an autoregressive neural network model, a persistence model, and a day-of-year model."
+obj_10,Compare predictive performance across models on the testing data from the dataset you uploaded in Objective 6.
 privacy_policy,This Shiny App does not collect or store any of your data.
 acknowledgement,"This module was developed by: Lofton, M.E., Hipsey, M.H., Kurucz, K., and C.C. Carey. 27 June 2025. Macrosystems EDDIE: Time Series Modeling and Prediction of Environmental Data. Macrosystems EDDIE Module 11, Version 1. http://module11.macrosystemseddie.org. Module development was supported by NSF grants XX."
 cann,Important information students should know about the Canning River

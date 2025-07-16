@@ -46,6 +46,7 @@ arima_slides <- list.files("www/arima_slides", full.names = TRUE)
 uc_slides <- list.files("www/prediction_uncertainty", full.names = TRUE)
 ign_slides <- list.files("www/ignorance_score", full.names = TRUE)
 data_slides <- list.files("www/data_standards", full.names = TRUE)
+model_slides <- list.files("www/additional_models", full.names = TRUE)
 
 # Create case study site dataframe
 sites_df <- tibble(SiteID = c("cann"),

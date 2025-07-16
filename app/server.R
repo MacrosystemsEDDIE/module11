@@ -2628,14 +2628,14 @@ server <- function(input, output, session) {#
         train_data <- as_tsibble(wide_dat) %>%
           dplyr::slice_head(prop = input$prop) %>% # using a 70:30 split here
           select(datetime, input$select_tar_actB) %>%
-          rename(target = input$select_tar_actB) %>%
           mutate(set = "training data")
+        colnames(train_data) <- c("datetime","target","set")
         
         test_data <- as_tsibble(wide_dat) %>%
           dplyr::slice_tail(prop = 1-input$prop) %>% # using a 70:30 split here
           select(datetime, input$select_tar_actB) %>%
-          rename(target = input$select_tar_actB) %>%
           mutate(set = "testing data")
+        colnames(test_data) <- c("datetime","target","set")
         
         plot_data <- bind_rows(train_data, test_data)
         
@@ -2793,14 +2793,14 @@ server <- function(input, output, session) {#
       train_data <- as_tsibble(wide_dat) %>%
         dplyr::slice_head(prop = input$prop) %>% # using a 70:30 split here
         select(datetime, input$select_tar_actB) %>%
-        rename(target = input$select_tar_actB) %>%
         mutate(set = "training data")
+      colnames(train_data) <- c("datetime","target","set")
       
       test_data <- as_tsibble(wide_dat) %>%
         dplyr::slice_tail(prop = 1-input$prop) %>% # using a 70:30 split here
         select(datetime, input$select_tar_actB) %>%
-        rename(target = input$select_tar_actB) %>%
         mutate(set = "testing data")
+      colnames(test_data) <- c("datetime","target","set")
       
       plot_data <- bind_rows(train_data, test_data)
       
@@ -3119,14 +3119,14 @@ server <- function(input, output, session) {#
       train_data <- as_tsibble(wide_dat) %>%
         dplyr::slice_head(prop = input$prop) %>% # using a 70:30 split here
         select(datetime, input$select_tar_actB) %>%
-        rename(target = input$select_tar_actB) %>%
         mutate(set = "training data")
+      colnames(train_data) <- c("datetime","target","set")
       
       test_data <- as_tsibble(wide_dat) %>%
         dplyr::slice_tail(prop = 1-input$prop) %>% # using a 70:30 split here
         select(datetime, input$select_tar_actB) %>%
-        rename(target = input$select_tar_actB) %>%
         mutate(set = "testing data")
+      colnames(test_data) <- c("datetime","target","set")
       
       plot_data <- bind_rows(train_data, test_data)
       
@@ -3399,12 +3399,18 @@ server <- function(input, output, session) {#
   
   observe({
     toggleState(id = "prevBtn1", condition = rv1$prev > 0)
-    if(rv1$nxt > 6 & rv3a$nxt > 12) {
+    if(rv1$nxt > 6 & rv3a$nxt > 10) {
       shinyjs::disable("nextBtn1")
     } else {
       shinyjs::enable("nextBtn1")
     }
     hide(selector = ".page")
+  })
+  
+  # Objective 9
+  #** additional models slides ----
+  output$addn_model_slides <- renderSlickR({
+    slickR(model_slides) + settings(dots = TRUE)
   })
 
 
@@ -3427,7 +3433,7 @@ server <- function(input, output, session) {#
       curr_obj <- input$tabseries3
       idx2 <- which(tab_names$tab_id == curr_obj)
       new_nam <- tab_names$name[idx2 + 1]    } 
-    if(curr_tab1 == "mtab6" & rv3a$nxt > 12) {
+    if(curr_tab1 == "mtab6" & rv3a$nxt > 10) {
       updateActionButton(session, inputId = "nextBtn1", label = paste("End of module"))
     } else {
       # shinyjs::show(id = "nextBtn1")
@@ -3456,7 +3462,7 @@ server <- function(input, output, session) {#
     if (curr_tab1 == "mtab6") {
       curr_obj <- input$tabseries3
       idx2 <- which(tab_names$tab_id == curr_obj)
-      if(curr_obj == "obj11") idx2 <- idx2 - 1 # Move off Activty C label
+      if(curr_obj == "obj9") idx2 <- idx2 - 1 # Move off Activty C label
       new_nam <- tab_names$name[idx2 - 1]
     }
     if(curr_tab1 == "mtab1") {
@@ -3479,7 +3485,7 @@ server <- function(input, output, session) {#
           "Don't forget to save your progress as you go just in case you lose your internet connection. Click 'Bookmark my progress' at the top of the page and copy-paste the link into your report.")
       )
       save_prompt$times <- save_prompt$times+1
-    } else if(input$maintab == "mtab5" & input$tabseries2 == "obj10" & save_prompt$times < 2) {
+    } else if(input$maintab == "mtab5" & input$tabseries2 == "obj8" & save_prompt$times < 2) {
       showModal(
         modalDialog(
           title = "Save Progress",
@@ -3496,11 +3502,11 @@ server <- function(input, output, session) {#
       updateTabsetPanel(session, "tabseries1",
                         selected = paste0("obj", rv1a$nxt))
 
-    } else if (curr_tab1 == "mtab5" & rv2a$nxt < 11) {
+    } else if (curr_tab1 == "mtab5" & rv2a$nxt < 9) {
       curr_obj <- input$tabseries2
       updateTabsetPanel(session, "tabseries2",
                         selected = paste0("obj", rv2a$nxt))
-    } else if (curr_tab1 == "mtab6" & rv3a$nxt < 13) {
+    } else if (curr_tab1 == "mtab6" & rv3a$nxt < 12) {
       curr_obj <- input$tabseries3
       updateTabsetPanel(session, "tabseries3",
                         selected = paste0("obj", rv3a$nxt))
@@ -3510,7 +3516,7 @@ server <- function(input, output, session) {#
       updateTabsetPanel(session, "tabseries2",
                         selected = "obj6")
       updateTabsetPanel(session, "tabseries3",
-                        selected = "obj11")
+                        selected = "obj9")
       updateTabsetPanel(session, "maintab",
                         selected = paste0("mtab", rv1$nxt))
     }
@@ -3532,7 +3538,7 @@ server <- function(input, output, session) {#
       curr_obj <- input$tabseries2
       updateTabsetPanel(session, "tabseries2",
                         selected = paste0("obj", rv2a$prev))
-    } else if (curr_tab1 == "mtab6" & rv3a$prev > 10) {
+    } else if (curr_tab1 == "mtab6" & rv3a$prev > 8) {
       curr_obj <- input$tabseries3
       updateTabsetPanel(session, "tabseries3",
                         selected = paste0("obj", rv3a$prev))
@@ -3540,9 +3546,9 @@ server <- function(input, output, session) {#
       updateTabsetPanel(session, "tabseries1",
                         selected = "obj5")
       updateTabsetPanel(session, "tabseries2",
-                        selected = "obj10")
+                        selected = "obj8")
       updateTabsetPanel(session, "tabseries3",
-                        selected = "obj12")
+                        selected = "obj10")
       updateTabsetPanel(session, "maintab",
                         selected = paste0("mtab", rv1$prev))
     }

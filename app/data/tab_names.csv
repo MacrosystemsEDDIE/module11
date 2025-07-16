@@ -12,8 +12,6 @@ mtab5,Activity B
 obj6,Objective 6 - Upload data
 obj7,Objective 7 - Fit model
 obj8,Objective 8 - Assess model fit
-obj9,Objective 9 - Communicate forecast
-obj10,Objective 10 -  Assess forecast
 mtab6,Activity C
-obj11,Objective 11 - Update model
-obj12,Objective 12 - Next forecast
+obj9,Objective 9 - Fit additional models
+obj10,Objective 10 -  Compare model performance

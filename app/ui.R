@@ -1165,7 +1165,11 @@ ui <- function(request) {
                                                           fluidRow(
                                                             column(10, offset = 1,
                                                                    h3("Questions"),
-                                                                   p(tags$b(quest["q12", 1]))
+                                                                   p(tags$b(quest["q29", 1])),
+                                                                   p(tags$b(quest["q30", 1])),
+                                                                   p(tags$b(quest["q30a", 1])),
+                                                                   p(tags$b(quest["q30b", 1])),
+                                                                   p(tags$b(quest["q30c", 1]))
                                                             )
                                                           )
                                                       )
@@ -1190,7 +1194,7 @@ ui <- function(request) {
                                                           fluidRow(
                                                             column(10, offset = 1,
                                                                    h3("Questions"),
-                                                                   p(tags$b(quest["q13", 1]))
+                                                                   p(tags$b(quest["q31", 1]))
                                                             )
                                                           )
                                                       )
@@ -1245,7 +1249,7 @@ ui <- function(request) {
                                                           fluidRow(
                                                             column(10, offset = 1,
                                                                    h3("Questions"),
-                                                                   p(tags$b(quest["q16", 1]))
+                                                                   p(tags$b(quest["q32", 1]))
                                                             )
                                                           )
                                                       )
@@ -1296,47 +1300,36 @@ ui <- function(request) {
                                              fluidRow(
                                                column(4,
                                                       h3("Assessing model predictions using the ignorance score"),
+                                                      p("It will likely be difficult to assess the performance of your model on the basis of a single score, so in Activity C we will fit additional models and compare predictive performance across models.")
+                                               ),
+                                               column(4,
+                                                      br(),br(),br(),br(),
                                                       actionButton("calc_ign2","Calculate ignorance score"),
                                                       br(),br(),
                                                       wellPanel(textOutput("ign_text2"))
                                                ),
-                                               column(8,
-                                               )
+                                               column(4,
+                                                      br(),br(),br(),br(),
+                                                      box(id = "box2", width = 12, status = "primary",
+                                                          solidHeader = TRUE,
+                                                          fluidRow(
+                                                            column(10, offset = 1,
+                                                                   h3("Questions"),
+                                                                   p(tags$b(quest["q33", 1]))
+                                                            )
+                                                          )
+                                                      )
+                                                      )
                                                
                                              ),
                                              hr(),
                                              fluidRow(
                                                column(10, offset = 1,
                                                       h3("Next step"),
-                                                      p("Now that you have learned how to fit and assess an ARIMA model using a case study, you will either:"),
-                                                      p("a. Upload a new dataset provided by your instructor in a standardized format suitable for model fitting, or"),
-                                                      p("b. Upload and fit models to data from a different site using the same environmental case study you chose in Activity A")
+                                                      p("In Activity C, you will fit additional models to your dataset and compare predictive performance across models."),
                                                )
                                              )
-                                             ),
-                                    #* Objective 9 - Communicate Forecast ----
-                                    tabPanel(title = "Objective 9 - Communicate forecast",  value = "obj9",
-                                             fluidRow(
-                                               column(12,
-                                                      wellPanel(style = paste0("background: ", obj_bg),
-                                                                h3("Objective 9 - Communicate an Ecological Forecast"),
-                                                                p(style="text-align: justify;", module_text["obj_09", ])
-                                                                )
-                                                      )
-                                               )
-                                             ),
-                                    #* Objective 10 - Assess Forecast ----
-                                    tabPanel(title = "Objective 10 -  Assess forecast",  value = "obj10",
-                                             fluidRow(
-                                               column(12,
-                                                      wellPanel(style = paste0("background: ", obj_bg),
-                                                                h3("Objective 10 - Assess an Ecological Forecast"),
-                                                                p(style="text-align: justify;", module_text["obj_10", ])
-                                                                )
-                                                      )
-                                               )
                                              )
-
                         )
                ),
                # 6. Activity C ----
@@ -1344,32 +1337,74 @@ ui <- function(request) {
                         fluidRow(
                           column(12,
                                  wellPanel(style = paste0("background: ", obj_bg),
-                                 h2("Activity C: Complete the forecast cycle"),
-                                 h4("Update model and make new forecast"),
-                                 p("For Activity C, you will complete the forecast cycle (and begin it again!) by updating your model and generating a second forecast.")
+                                 h2("Activity C: Compare predictive performance across models"),
+                                 h4("Fit additional models and compare their predictive performance on testing data."),
+                                 p("For Activity C, you will fit three additional models to the data you uploaded in Objective 6: an autoregressive neural network model, a persistence model, and a day-of-year model. Then, you will generate predictions using each of these models on testing data and compare them to the ARIMA model you fit in Activity B.")
                           )
                           )
                         ),
                         tabsetPanel(id = "tabseries3",
                                     
-                                    #* Objective 11 - Update Model ----
-                                    tabPanel(title = "Objective 11 - Update model",  value = "obj11",
+                                    #* Objective 9 - Fit additional models ----
+                                    tabPanel(title = "Objective 9 - Fit additional models",  value = "obj9",
                                              fluidRow(
                                                column(12,
                                                       wellPanel(style = paste0("background: ", obj_bg),
-                                                                h3("Objective 11 - Update Model"),
-                                                                p(style="text-align: justify;", module_text["obj_11", ])
+                                                                h3("Objective 9 - Fit additional models"),
+                                                                p(style="text-align: justify;", module_text["obj_09", ])
                                                       )
                                                )
+                                             ),
+                                             hr(),
+                                             fluidRow(
+                                               column(4,
+                                                      h3("Learn about additional models"),
+                                                      p(tags$em("Use the slides and text below to understand the three additional models that you will be fitting to your data.")),
+                                                      p(tags$b("Why is model comparison useful?")),
+                                                      tags$ul(
+                                                        tags$li("As we saw in Objective 8, simply calculating a single number (such as the ignorance score) to assess your model performance is not very meaningful. As we saw in Objective 8, simply calculating a single number (such as the ignorance score) to assess your model performance is not very meaningful. Comparing across models allows you to better assess model performance; your model can be considered to perform “better” or “worse” than another model.")
+                                                      ),
+                                                      p(tags$b("What is a baseline or 'null' model?")),
+                                                      tags$ul(
+                                                        tags$li(tags$b("Baseline or 'null' models")," are very simple models against which to compare complex models. These are very simple models against which to compare complex modelsIf the more complex models do not outperform the null model, the additional complexity is not adding value!")
+                                                      ),
+                                                      box(id = "box2", width = 12, status = "primary",
+                                                          solidHeader = TRUE,
+                                                          fluidRow(
+                                                            column(10, offset = 1,
+                                                                   h3("Questions"),
+                                                                   p(tags$b(quest["q34", 1])),
+                                                                   p(tags$b(quest["q34a", 1])),
+                                                                   p(tags$b(quest["q34b", 1])),
+                                                                   p(tags$b(quest["q34c", 1])),
+                                                                   p(tags$b(quest["q35", 1]))
+                                                            )
+                                                          )
+                                                      )
+                                               ),
+                                               column(8,
+                                                      h5("Click the arrows to navigate through the slides", align = "center"),
+                                                      wellPanel(
+                                                        slickROutput("addn_model_slides", width = "700px", height = "525px")
+                                                      )
+                                               )
+                                             ),
+                                             hr(),
+                                             fluidRow(
+                                               column(6,
+                                                      h3("Fit additional models")
+                                                      ),
+                                               column(6,
+                                                      )
                                              )
                                     ),
-                                    #* Objective 12 - New Forecast ----
-                                    tabPanel(title = "Objective 12 - Next forecast",  value = "obj12",
+                                    #* Objective 10 - Compare across models ----
+                                    tabPanel(title = "Objective 10 - Compare model performance",  value = "obj10",
                                              fluidRow(
                                                column(12,
                                                       wellPanel(style = paste0("background: ", obj_bg),
-                                                                h3("Objective 12 - Next Forecast"),
-                                                                p(style="text-align: justify;", module_text["obj_12", ])
+                                                                h3("Objective 10 - Compare model performance"),
+                                                                p(style="text-align: justify;", module_text["obj_10", ])
                                                       )
                                                )
                                              )

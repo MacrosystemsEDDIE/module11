@@ -20,7 +20,7 @@ q8,Q8. Observe the plot on the right. Does the target variable exhibit autocorre
 q9,"Q9. Observe the PACF plot on the right. Based on this figure, how many lags of the target variable do you anticipate being included in the fitted ARIMA model? Explain your reasoning."
 q10,"Q10. Observe the plot on the right. Based on visual inspection, does differencing substantially improve the stationarity of the target variable data? Explain your reasoning."
 q11,"Q11. List up to three exogenous regressors that you would like to include in your fitted ARIMA model. For each regressor, explain why you chose to include it in the model. If you choose not to include any regressors, explain your reasoning."
-q12,"Q12. Examine the (p, d, q) order of your ARIMA model printed above. Interpret the order of your ARIMA."
+q12,"Q12. Examine the (p, d, q) order of your ARIMA model printed above. Interpret the order of your ARIMA. "
 q12a,a. How many lags are included in the model? How do you know?
 q12b,b. Are the data differenced to fit the model? How do you know?
 q12c,c. How many timesteps of previous errors are included in the model? How do you know?
@@ -44,3 +44,16 @@ q26c,c. Maximum number of allowed unique values for 'variable'.
 q26d,"d. Required format of 'date' column, using Y for year, M for month, and D for day."
 q27,Q27. What is the target variable for your dataset?
 q28,"Q28. List the three exogenous regressors that you would like to include in your ARIMA model. For each regressor, explain why you chose to include it in the model. If you choose not to include any regressors, explain your reasoning."
+q29,Q29. Record the proportion of data you chose to use for model training.
+q30,"Q30. Examine the (p, d, q) order of your ARIMA model printed above. Interpret the order of your ARIMA."
+q30a,a. How many lags are included in the model? How do you know?
+q30b,b. Are the data differenced to fit the model? How do you know?
+q30c,c. How many timesteps of previous errors are included in the model? How do you know?
+q31,"Q31. Which term is most important in your fitted model (i.e., has the greatest absolute value)?"
+q32,Q32. Inspect the plot on the right. How well do you think the model predictions fit the observations in the test dataset? Explain your reasoning.
+q33,Q33. Record the ignorance score for your model.
+q34,"Q34. Briefly describe, in your own words, each of the three additional models you will be fitting to your data."
+q34a,a. autoregressive neural network model (NNETAR)
+q34b,b. persistence model
+q34c,c. day-of-year model (DOY)
+q35,"Q35. Why are baseline or ""null"" models useful when conducting model comparisons?"
