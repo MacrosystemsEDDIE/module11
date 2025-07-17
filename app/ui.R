@@ -1010,7 +1010,7 @@ ui <- function(request) {
                                                         tags$li("If you would like to interpolate values to fill gaps in your dataset, this should be done before uploading your data to the module. Missing timesteps can be handled by our model fitting procedure but uneven or duplicated timesteps will cause an error.")
                                                       ),
                                                       tags$ul(
-                                                        tags$li("We require a minimum of 50 timesteps in your dataset. This will allow for adequate training data for model fitting as well as adequate testing data for model assessment.")
+                                                        tags$li("We require a minimum of 100 timesteps in your dataset. This will allow for adequate training data for model fitting as well as adequate testing data for model assessment.")
                                                       ),
                                                       tags$ul(
                                                         tags$li("To facilitate model interpretation, we currently limit the number of variables in a dataset to 10 (limit of 10 unique values in 'variable' column). In the next objective, you will be asked to select a target variable and no more than three exogenous regressors to fit your model.")
@@ -1111,7 +1111,7 @@ ui <- function(request) {
                                                         "select_tar_actB", 
                                                         textOutput("tar_dropdown_actB"), 
                                                         choices = NULL, 
-                                                        multiple = TRUE 
+                                                        multiple = FALSE 
                                                       ),
                                                       selectInput( 
                                                         "select_reg_actB", 
@@ -1151,7 +1151,7 @@ ui <- function(request) {
                                                column(6,
                                                       h3("Select train/test proportion and fit ARIMA model"),
                                                       p("Recall that in Activity A, we used 70% of your data for model training and reserved 30% of your data for the testing set to assess model performance. Now, you may choose what proportion of your data to use for training. Too low a proportion can lead to a poor model fit due to lack of data. Too high a proportion can lead to poor model assessment due to lack of data on which to calculate the ignorance score."),
-                                                      p(tags$b("For these reasons, we require that you select a proportion that includes at least 30 data points for model training and reserves at least 10% of your data for model testing.")),
+                                                      p(tags$b("For these reasons, we require that you select a proportion that includes at least 60 data points for model training and reserves at least 10% of your data for model testing.")),
                                                       numericInput("prop", "Proportion of data to use for training:", value = 0.7, min = 0, max = 1, step = 0.1),
                                                       p("Click the button below to fit an ARIMA model to the target variable from your selected environmental case study, including the regressors you have chosen above."),
                                                       p(tags$b("Important Note! We are only using the training data (based on the train/test split you chose above) to fit the ARIMA model. This leaves the testing data to be used for model assessment in Objective 8.")),
@@ -1391,10 +1391,15 @@ ui <- function(request) {
                                              ),
                                              hr(),
                                              fluidRow(
-                                               column(6,
-                                                      h3("Fit additional models")
+                                               column(4,
+                                                      h3("Fit additional models"),
+                                                      actionButton("fit_addn_mod","Fit additional models")
                                                       ),
-                                               column(6,
+                                               column(8,
+                                                      wellPanel(
+                                                        plotlyOutput("plot_models"),
+                                                      ),
+                                                      downloadButton("save_plot_models", "Download plot", icon = icon("download"))
                                                       )
                                              )
                                     ),
@@ -1407,7 +1412,31 @@ ui <- function(request) {
                                                                 p(style="text-align: justify;", module_text["obj_10", ])
                                                       )
                                                )
+                                             ),
+                                             hr(),
+                                             fluidRow(
+                                               column(4,
+                                                      h3("Plot model predictions with uncertainty"),
+                                                      actionButton("plot_pred_models","Generate predictions with uncertainty")
+                                               ),
+                                               column(8,
+                                                      wellPanel(
+                                                        plotlyOutput("pred_all_plot"),
+                                                      ),
+                                                      downloadButton("save_pred_all_plot", "Download plot", icon = icon("download"))
+                                               )
+                                             ),
+                                             hr(),
+                                             fluidRow(
+                                               column(4,
+                                                      h3("Compare ignorance scores"),
+                                                      actionButton("calc_ign3","Calculate ignorance scores")
+                                                      ),
+                                               column(8,
+                                                      DTOutput("ign_table")
+                                                      )
                                              )
+                                             
                                     ) #end Obj 12 
                                     ) # end tabset Panel
                ), #end Act C
