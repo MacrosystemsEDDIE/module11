@@ -3731,14 +3731,15 @@ server <- function(input, output, session) {#
       dist_params$rw <- distributional::parameters(pred_r)
       
       progress$set(value = 0.5)
-      pred_nnetar0 <- forecast(actC.models$nnetar, new_data = new_data) %>%
+      pred_nnetar0 <- forecast(actC.models$nnetar, new_data = new_data, times = 500) %>%
         hilo() 
       pred_nnetar <- pred_nnetar0 %>%
         mutate(lower = `95%`$lower,
                upper = `95%`$upper) %>%
         select(.model, datetime, .mean, lower, upper)
       pred_n <- pred_nnetar0 %>% pull(input$select_tar_actB)
-      dist_params$nnetar <- distributional::parameters(pred_n)
+      dist_params$nnetar <- data.frame(mu = mean(pred_n, na.rm = TRUE),
+                                    sigma = sd(pred_n, na.rm = TRUE))
       
       # and for gam
       doy_cols <- c("doy",input$select_tar_actB)

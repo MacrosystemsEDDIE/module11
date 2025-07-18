@@ -16,7 +16,7 @@ library(rLakeAnalyzer)
 library(DT, quietly = TRUE, warn.conflicts = FALSE); library(rintrojs); library(hover)
 library(stringr); library(tidyr, quietly = TRUE, warn.conflicts = FALSE)
 library(RColorBrewer); library(ggpubr); library(readr); library(shinyBS); library(httr);
-library(tidyverse)
+library(tidyverse); library(feasts); library(urca); library(scoringRules)
 
 # colors for theme
 obj_bg <- "#ccd9e0"
