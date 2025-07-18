@@ -889,8 +889,16 @@ ui <- function(request) {
                                              hr(),
                                              fluidRow(
                                                column(4,
-                                                      h3("Assessing model predictions using the ignorance score"),
+                                                      h3("Assessing model predictions using RMSE and the ignorance score"),
                                                       p(tags$em("Use the slides and text below to understand the what the ignorance score is and how we can use it to assess model predictions.")),
+                                                      p(tags$b("What is RMSE?")),
+                                                      tags$ul(
+                                                        tags$li(tags$b("Root mean square error (RMSE)"), " assesses the performance of a prediction by giving a sense of, on average, how far your predictions are from observed values.")
+                                                      ),
+                                                      p(tags$b("How is RMSE interpreted?")),
+                                                      tags$ul(
+                                                        tags$li("The lower the RMSE, the better the prediction. RMSE has the same units as the target variable. Importantly, RMSE does not account for uncertainty in model predictions.")
+                                                      ),
                                                       p(tags$b("What is the ignorance score?")),
                                                       tags$ul(
                                                         tags$li("The ",tags$b("ignorance score"), " assesses the performance of a prediction based on the probability that a prediction assigns to the eventual outcome. Predictions that place a high probability on the actual outcome score better than predictions that place a low probability on the outcome.")
@@ -898,10 +906,6 @@ ui <- function(request) {
                                                       p(tags$b("How is the ignorance score interpreted?")),
                                                       tags$ul(
                                                         tags$li("The lower the ignorance score, the better the prediction. Ignorance scores can range from positive to negative infinity. The smaller the numeric value of the score, regardless of whether it is positive or negative, the more accurate the prediction. So, a score of 2 beats a score of 3, and a score of -3 beats a score of -2.")
-                                                      ),
-                                                      p(tags$b("Warning!")),
-                                                      tags$ul(
-                                                        tags$li("You should only compare ignorance scores that are computed using the same kind of data (e.g., water temperature scores should only be compared to water temperature scores, net ecosystem exchange scores should only be compared to net ecosystem exchange scores). This is because variables with different units and ranges will result in different ignorance score ranges.")
                                                       ),
                                                       box(id = "box2", width = 12, status = "primary",
                                                           solidHeader = TRUE,
@@ -920,8 +924,12 @@ ui <- function(request) {
                                                       wellPanel(
                                                         slickROutput("ign_slides", width = "700px", height = "525px")
                                                       ),
-                                                      actionButton("calc_ign","Calculate ignorance score"),
+                                                      actionButton("assess_mod","Calculate RMSE and ignorance score"),
                                                       br(),br(),
+                                                      p(tags$b("RMSE")),
+                                                      wellPanel(textOutput("rmse_text")
+                                                      ),
+                                                      p(tags$b("Ignorance score")),
                                                       wellPanel(textOutput("ign_text")
                                                       )
                                                )
@@ -1303,10 +1311,15 @@ ui <- function(request) {
                                                       p("It will likely be difficult to assess the performance of your model on the basis of a single score, so in Activity C we will fit additional models and compare predictive performance across models.")
                                                ),
                                                column(4,
-                                                      br(),br(),br(),br(),
-                                                      actionButton("calc_ign2","Calculate ignorance score"),
                                                       br(),br(),
-                                                      wellPanel(textOutput("ign_text2"))
+                                                      actionButton("assess_mod2","Calculate RMSE and ignorance score"),
+                                                      br(),br(),
+                                                      p(tags$b("RMSE")),
+                                                      wellPanel(textOutput("rmse_text2")
+                                                      ),
+                                                      p(tags$b("Ignorance score")),
+                                                      wellPanel(textOutput("ign_text2")
+                                                      )
                                                ),
                                                column(4,
                                                       br(),br(),br(),br(),
@@ -1393,7 +1406,21 @@ ui <- function(request) {
                                              fluidRow(
                                                column(4,
                                                       h3("Fit additional models"),
-                                                      actionButton("fit_addn_mod","Fit additional models")
+                                                      actionButton("fit_addn_mod","Fit additional models"),
+                                                      br(),br(),
+                                                      box(id = "box2", width = 12, status = "primary",
+                                                          solidHeader = TRUE,
+                                                          fluidRow(
+                                                            column(10, offset = 1,
+                                                                   h3("Questions"),
+                                                                   p(tags$i("Hint: use the slide deck above to help you answer the questions.")),
+                                                                   p(tags$b(quest["q36", 1])),
+                                                                   wellPanel(textOutput("nnetar_order")
+                                                                   ),
+                                                                   p(tags$b(quest["q37", 1]))
+                                                            )
+                                                          )
+                                                      )
                                                       ),
                                                column(8,
                                                       wellPanel(

@@ -32,9 +32,9 @@ q17,Q17. Briefly describe in your own words how a 95% predictive interval can be
 q18,Q18. Record the standard deviation of the model residuals.
 q19,"Q19. Inspect the plot of model predictions with uncertainty. Now that you can see the uncertainty associated with model predictions, how well do you think the model predictions fit the observations in the test dataset? Explain your reasoning."
 q20,Q20. Compare your answers to Q16 and Q19. Were there any differences in your interpretation of model fit when you visualized predictions with and without uncertainty? Why do you think this might be?
-q21,Q21. Briefly (a) define the ignorance score and (b) describe how it is calculated in your own words.
-q22,"Q22. Click ""Calculate ignorance score"" and record the value of the ignorance score for your fitted ARIMA model."
-q23,Q23. Compare the ignorance score for your model to your partner's model. Whose model scored better? How do you know?
+q21,Q21. Briefly define (a) RMSE and (b) ignorance score in your own words.
+q22,"Q22. Click ""Assess model"" and record the value of the RMSE and ignorance score for your fitted ARIMA model."
+q23,Q23. Compare the RMSE and ignorance score for your model to your partner's model. Whose model scored better? Explain your reasoning.
 q24,"Q24. Describe one example of a benefit of using data standards in ecology and environmental science, as well as one example of a risk if data standards are not followed."
 q25,Q25. Is the standardized data format for this module a long or a wide format? Explain how you know.
 q26,Q26. Fill out the following information:
@@ -51,9 +51,11 @@ q30b,b. Are the data differenced to fit the model? How do you know?
 q30c,c. How many timesteps of previous errors are included in the model? How do you know?
 q31,"Q31. Which term is most important in your fitted model (i.e., has the greatest absolute value)?"
 q32,Q32. Inspect the plot on the right. How well do you think the model predictions fit the observations in the test dataset? Explain your reasoning.
-q33,Q33. Record the ignorance score for your model.
+q33,Q33. Record the RMSE and ignorance score for your model.
 q34,"Q34. Briefly describe, in your own words, each of the three additional models you will be fitting to your data."
 q34a,a. autoregressive neural network model (NNETAR)
 q34b,b. persistence model
 q34c,c. day-of-year model (DOY)
 q35,"Q35. Why are baseline or ""null"" models useful when conducting model comparisons?"
+q36,"Q36. How many lags are used as inputs in your fitted NNETAR model, and how many neurons are in the hidden layer? Explain how you know."
+q37,"Q37. Examine the fit of the persistence model and the DOY model. Typically, the fit of the DOY model is much smoother than the persistence model. Use your understanding of the structure of these two models to explain why."

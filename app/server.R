@@ -1550,9 +1550,123 @@ server <- function(input, output, session) {#
     }
   )
   
-  #** Ignorance slides ----
+  #** Model assessment slides ----
   output$ign_slides <- renderSlickR({
     slickR(ign_slides) + settings(dots = TRUE)
+  })
+  
+  # Calculate RMSE
+  rmse.text <- reactiveValues(main=NULL)
+  
+  observe({
+    input$fit_arima
+    
+    output$rmse_text <- renderText({ 
+      
+      validate(
+        need(input$table01_rows_selected != "",
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(site_data()$data),
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(input$select),
+             message = "Please select at least 1 predictor from the dropdown menu in Objective 4.")
+      )
+      validate(
+        need(length(input$select) <= 3,
+             message = "Please only select up to 3 regressors to fit your model in Objective 4.")
+      )
+      validate(
+        need(plot.stand$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors in Objective 4.")
+      )
+      validate(
+        need(!is.null(actA.arima$arima),
+             message = "Please fit an ARIMA model in Objective 4.")
+      )
+      validate(
+        need(input$assess_mod > 0,
+             message = "Click 'Calculate RMSE and ignorance score'")
+      )
+      
+      row_selected = sites_df[input$table01_rows_selected, ]
+      site_id <- row_selected$SiteID
+      
+      if(site_id == "cann"){
+        
+        col_names <- c("datetime","chla",input$select)
+        
+        train_data <- as_tsibble(cann_model_data) %>%
+          dplyr::slice_head(prop = .7)
+        
+        new_data <- as_tsibble(cann_model_data) %>%
+          filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
+          tsibble::fill_gaps() %>%
+          select(all_of(col_names)) %>%
+          mutate(across(input$select, list(zscore = ~as.numeric(scale(.)))))
+        
+        acc <- forecast(actA.arima$arima, new_data = new_data) %>%
+          accuracy(data = new_data)
+        
+        rmse <- acc$RMSE
+      
+      }
+      
+      rmse_out <- paste0("RMSE: ",round(mean(rmse, na.rm = TRUE), 2))
+      
+      rmse.text$main <- rmse_out
+      
+      return(rmse_out)
+      
+    })
+    
+  })
+  
+  observe({
+    input$select
+    
+    output$rmse_text <- renderText({ 
+      
+      validate(
+        need(input$table01_rows_selected != "",
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(site_data()$data),
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(input$select),
+             message = "Please select at least 1 predictor from the dropdown menu in Objective 4.")
+      )
+      validate(
+        need(length(input$select) <= 3,
+             message = "Please only select up to 3 regressors to fit your model in Objective 4.")
+      )
+      validate(
+        need(plot.stand$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors in Objective 4.")
+      )
+      validate(
+        need(!is.null(actA.arima$arima),
+             message = "Please fit an ARIMA model in Objective 4.")
+      )
+      validate(
+        need(input$assess_mod > 0,
+             message = "Click 'Calculate RMSE and ignorance score'")
+      )
+      
+      rmse_out <- paste0("You've selected new regressors! Please click 'Fit ARIMA' in Obj. 4 to recalculate the ignorance score!")
+      
+      rmse.text$main <- rmse_out
+      
+      return(rmse_out)
+      
+    })
+    
   })
   
   # Calculate ignorance
@@ -1588,8 +1702,8 @@ server <- function(input, output, session) {#
              message = "Please fit an ARIMA model in Objective 4.")
       )
       validate(
-        need(input$calc_ign > 0,
-             message = "Click 'Calculate ignorance score'")
+        need(input$assess_mod > 0,
+             message = "Click 'Calculate RMSE and ignorance score'")
       )
       
       row_selected = sites_df[input$table01_rows_selected, ]
@@ -1656,8 +1770,8 @@ server <- function(input, output, session) {#
              message = "Please fit an ARIMA model in Objective 4.")
       )
       validate(
-        need(input$calc_ign > 0,
-             message = "Click 'Calculate ignorance score'")
+        need(input$assess_mod > 0,
+             message = "Click 'Calculate RMSE and ignorance score'")
       )
       
       ign_out <- paste0("You've selected new regressors! Please click 'Fit ARIMA' in Obj. 4 to recalculate the ignorance score!")
@@ -3244,6 +3358,142 @@ server <- function(input, output, session) {#
     }
   )
   
+  # Calculate RMSE
+  rmse.text2 <- reactiveValues(main=NULL)
+  
+  observe({
+    input$fit_arima2
+    
+    output$rmse_text2 <- renderText({ 
+      
+      validate(
+        need(!is.null(input$upload_data),
+             message = "Please upload your data in Objective 6.")
+      )
+      validate(
+        need(valid$main == TRUE,
+             message = "Please correct your data format in Objective 6.")
+      )
+      validate(
+        need(!is.null(input$select_tar_actB),
+             message = "Please select a target variable from the dropdown menu in Objective 7.")
+      )
+      validate(
+        need(!is.null(input$select_reg_actB),
+             message = "Please select at least 1 predictor from the dropdown menu in Objective 7.")
+      )
+      validate(
+        need(length(input$select_reg_actB) <= 3,
+             message = "Please only select up to 3 regressors to fit your model in Objective 7.")
+      )
+      validate(
+        need(plot.stand2$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors in Objective 7.")
+      )
+      validate(
+        need(input$prop <= 0.9,
+             message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
+      )
+      validate(
+        need(actB.arima$nrow_model_df >= 60,
+             message = "You are using fewer than 60 data points for model training. Please select a larger proportion of your data for training in Objective 7.")
+      )
+      validate(
+        need(!is.null(actB.arima$arima),
+             message = "Please fit an ARIMA model in Objective 7.")
+      )
+      validate(
+        need(input$assess_mod2 > 0,
+             message = "Click 'Calculate RMSE and ignorance score'")
+      )
+      
+      dat <- stand.data()
+      
+      wide_dat <- dat %>%
+        pivot_wider(names_from = "variable", values_from = "observation")
+      
+      train_data <- as_tsibble(wide_dat) %>%
+        dplyr::slice_head(prop = input$prop) 
+      
+      col_names <- c("datetime",input$select_tar_actB,input$select_reg_actB)
+      
+      new_data <- as_tsibble(wide_dat) %>%
+        filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
+        tsibble::fill_gaps() %>%
+        select(all_of(col_names)) %>%
+        mutate(across(input$select_reg_actB, list(zscore = ~as.numeric(scale(.)))))
+      
+      acc <- forecast(actB.arima$arima, new_data = new_data) %>%
+        accuracy(data = new_data)
+        
+        rmse <- acc$RMSE
+      
+      rmse_out2 <- paste0("RMSE: ",round(mean(rmse, na.rm = TRUE), 2))
+      
+      rmse.text2$main <- rmse_out
+      
+      return(rmse_out2)
+      
+    })
+    
+  })
+  
+  observe({
+    input$select_reg_actB
+    
+    output$rmse_text2 <- renderText({ 
+      
+      validate(
+        need(!is.null(input$upload_data),
+             message = "Please upload your data in Objective 6.")
+      )
+      validate(
+        need(valid$main == TRUE,
+             message = "Please correct your data format in Objective 6.")
+      )
+      validate(
+        need(!is.null(input$select_tar_actB),
+             message = "Please select a target variable from the dropdown menu in Objective 7.")
+      )
+      validate(
+        need(!is.null(input$select_reg_actB),
+             message = "Please select at least 1 predictor from the dropdown menu in Objective 7.")
+      )
+      validate(
+        need(length(input$select_reg_actB) <= 3,
+             message = "Please only select up to 3 regressors to fit your model in Objective 7.")
+      )
+      validate(
+        need(plot.stand2$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors in Objective 7.")
+      )
+      validate(
+        need(input$prop <= 0.9,
+             message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
+      )
+      validate(
+        need(actB.arima$nrow_model_df >= 60,
+             message = "You are using fewer than 60 data points for model training. Please select a larger proportion of your data for training in Objective 7.")
+      )
+      validate(
+        need(!is.null(actB.arima$arima),
+             message = "Please fit an ARIMA model in Objective 7.")
+      )
+      validate(
+        need(input$assess_mod2 > 0,
+             message = "Click 'Calculate RMSE and ignorance score'")
+      )
+      
+      rmse_out2 <- paste0("You've selected new regressors! Please click 'Fit ARIMA' in Obj. 4 to recalculate the ignorance score!")
+      
+      rmse.text2$main <- rmse_out2
+      
+      return(rmse_out2)
+      
+    })
+    
+  })
+  
   
   # Calculate ignorance
   ign.text2 <- reactiveValues(main=NULL)
@@ -3464,7 +3714,7 @@ server <- function(input, output, session) {#
         select(all_of(rw_cols))
       colnames(rw_data) <- c("datetime","target")
       actC.models$rw = rw_data %>%
-        model(`RW` = fable::RW(target))
+        model(`persistence` = fable::RW(target))
       
       # get DOY model
       doy_cols <- c("doy",input$select_tar_actB)
@@ -3521,7 +3771,7 @@ server <- function(input, output, session) {#
         geom_line(data = plot_fitted, aes(x = datetime, y = .fitted, group = .model, color = .model))+
         labs(color = NULL, fill = NULL)+
         scale_color_manual(values = c("obs" = "black","ARIMA" = "#E69F00","NNETAR" = "#56B4E9",
-                                      "RW" = "#009E73","DOY" = "#CC79A7"))+
+                                      "persistence" = "#009E73","DOY" = "#CC79A7"))+
         theme_classic()
       
       plot.models$main <- p
@@ -3608,6 +3858,110 @@ server <- function(input, output, session) {#
     }
   )
   
+  observe({
+    input$fit_arima2
+    output$nnetar_order <- renderText({
+      
+      validate(
+        need(!is.null(input$upload_data),
+             message = "Please upload your data in Objective 6.")
+      )
+      validate(
+        need(valid$main == TRUE,
+             message = "Please correct your data format in Objective 6.")
+      )
+      validate(
+        need(!is.null(input$select_tar_actB),
+             message = "Please select a target variable from the dropdown menu.")
+      )
+      validate(
+        need(!is.null(input$select_reg_actB),
+             message = "Please select at least 1 predictor from the dropdown menu.")
+      )
+      validate(
+        need(length(input$select_reg_actB) <= 3,
+             message = "Please only select up to 3 regressors to fit your model.")
+      )
+      validate(
+        need(plot.stand2$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors.")
+      )
+      validate(
+        need(input$prop <= 0.9,
+             message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less).")
+      )
+      validate(
+        need(actB.arima$nrow_model_df >= 60,
+             message = "You are using fewer than 60 data points for model training. Please select a larger proportion of your data for training.")
+      )
+      validate(
+        need(input$fit_arima2 > 0,
+             message = "Click 'Fit ARIMA'")
+      )
+      validate(
+        need(!is.null(actC.models$nnetar),
+             message = "Click 'Fit additional models'")
+      )
+      
+      
+      order <- as.character(actC.models$nnetar$NNETAR)
+      order_txt <- paste0("Fitted a ",order, " model.")
+      
+      return(order_txt)
+    })
+  })
+  
+  # Reset ARIMA order text when change selected variables
+  observe({
+    input$select_reg_actB
+    output$nnetar_order <- renderText({
+      
+      validate(
+        need(!is.null(input$upload_data),
+             message = "Please upload your data in Objective 6.")
+      )
+      validate(
+        need(valid$main == TRUE,
+             message = "Please correct your data format in Objective 6.")
+      )
+      validate(
+        need(!is.null(input$select_tar_actB),
+             message = "Please select a target variable from the dropdown menu.")
+      )
+      validate(
+        need(!is.null(input$select_reg_actB),
+             message = "Please select at least 1 predictor from the dropdown menu.")
+      )
+      validate(
+        need(length(input$select_reg_actB) <= 3,
+             message = "Please only select up to 3 regressors to fit your model.")
+      )
+      validate(
+        need(plot.stand2$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors.")
+      )
+      validate(
+        need(input$prop <= 0.9,
+             message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less).")
+      )
+      validate(
+        need(actB.arima$nrow_model_df >= 60,
+             message = "You are using fewer than 60 data points for model training. Please select a larger proportion of your data for training.")
+      )
+      validate(
+        need(input$fit_arima2 > 0,
+             message = "Click 'Fit ARIMA'")
+      )
+      validate(
+        need(!is.null(actC.models$nnetar),
+             message = "Click 'Fit additional models'")
+      )
+      
+      return("Please click 'Fit additional models'.")
+      
+    })
+  })
+  
   # Objective 10
   
   # Predictions with uncertainty plot
@@ -3683,8 +4037,11 @@ server <- function(input, output, session) {#
       train_data <- as_tsibble(wide_dat) %>%
         dplyr::slice_head(prop = input$prop) %>% # using a 70:30 split here
         select(datetime, input$select_tar_actB) %>%
-        mutate(set = "training data")
+        mutate(set = "training data") 
       colnames(train_data) <- c("datetime","target","set")
+      
+      plot_train_data <- train_data %>%
+        dplyr::slice_tail(n=10)
       
       test_data <- as_tsibble(wide_dat) %>%
         dplyr::slice_tail(prop = 1-input$prop) %>% # using a 70:30 split here
@@ -3692,7 +4049,7 @@ server <- function(input, output, session) {#
         mutate(set = "testing data")
       colnames(test_data) <- c("datetime","target","set")
       
-      plot_data <- bind_rows(train_data, test_data)
+      plot_data <- bind_rows(plot_train_data, test_data)
       
       train_test_dates <- train_data %>%
         pull(datetime)
@@ -3739,7 +4096,7 @@ server <- function(input, output, session) {#
         select(.model, datetime, .mean, lower, upper)
       pred_n <- pred_nnetar0 %>% pull(input$select_tar_actB)
       dist_params$nnetar <- data.frame(mu = mean(pred_n, na.rm = TRUE),
-                                    sigma = sd(pred_n, na.rm = TRUE))
+                                    sigma = sqrt(distributional::variance(pred_n, na.rm = TRUE)))
       
       # and for gam
       doy_cols <- c("doy",input$select_tar_actB)
@@ -3770,15 +4127,24 @@ server <- function(input, output, session) {#
         geom_vline(xintercept = train_test_line)+
         labs(color = NULL, fill = NULL)+
         scale_color_manual(values = c("training data" = "gray","testing data" = "black","ARIMA" = "#E69F00","NNETAR" = "#56B4E9",
-                                      "RW" = "#009E73","DOY" = "#CC79A7"))+
-        scale_fill_manual(values = c("obs" = "black","ARIMA" = "#E69F00","NNETAR" = "#56B4E9",
-                                      "RW" = "#009E73","DOY" = "#CC79A7"), guide = "none")+
+                                      "persistence" = "#009E73","DOY" = "#CC79A7"))+
+        scale_fill_manual(values = c("training data" = "gray","testing data" = "black","ARIMA" = "#E69F00","NNETAR" = "#56B4E9",
+                                      "persistence" = "#009E73","DOY" = "#CC79A7"), guide = "none")+
         theme_classic()
       
       plot.pred.all$main <- p
       progress$set(value = 1)
       
-      return(ggplotly(p, dynamicTicks = TRUE))
+      p1 <- ggplotly(p, dynamicTicks = TRUE) 
+      p2 <- style(p1, showlegend = FALSE, traces = 3:6)
+      
+      for (i in 1:length(p2$x$data)){
+        if (!is.null(p2$x$data[[i]]$name)){
+          p2$x$data[[i]]$name =  gsub("\\(","",str_split(p2$x$data[[i]]$name,",")[[1]][1])
+        }
+      }
+      
+      return(p2)
       
     })
     
@@ -3953,7 +4319,7 @@ server <- function(input, output, session) {#
       ign_doy <- scoringRules::logs_norm(new_obs, dist_params$doy$mu, dist_params$doy$sigma)
       ign.values$doy <- round(mean(ign_doy, na.rm = TRUE),2)
       
-      ign.table <- data.frame(Model = c("ARIMA","NNETAR","RW","DOY"),
+      ign.table <- data.frame(Model = c("ARIMA","NNETAR","persistence","DOY"),
                               Ignorance = c(ign.values$arima, ign.values$nnetar, ign.values$rw, ign.values$doy))
       
       return(ign.table)

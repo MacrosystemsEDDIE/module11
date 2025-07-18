@@ -487,18 +487,36 @@ model_df4 <- wide_dat %>%
         mutate(across(amm:flow, list(zscore = ~as.numeric(scale(.)))))
 
 my.nnetar <- model_df4 %>%
-  model(`NNETAR` = NNETAR(chla))
+  model(`NNETAR` = NNETAR(chla ~ temperature))
 new.data <- wide_dat %>%
         filter(!datetime %in% model_df4$datetime) %>% # using a 70:30 split here
         mutate(across(amm:flow, list(zscore = ~as.numeric(scale(.)))))
 pred_nnetar0 <- forecast(my.nnetar, new_data = new.data, times = 500) %>%
-        hilo() 
+        hilo(level = c(40, 80)) 
 pred_nnetar <- pred_nnetar0 %>%
     mutate(lower = `95%`$lower,
             upper = `95%`$upper) %>%
     select(.model, datetime, .mean, lower, upper)
 pred_n <- pred_nnetar0 %>% pull(chla)
-check <- mean(pred_n, na.rm = TRUE)
-      
+check <- data.frame(check = mean(pred_n, na.rm = TRUE))
+check <- sqrt(distributional::variance(pred_n, na.rm = TRUE))
+
+check <- unlist(lapply(pred_n, mean, na.rm = TRUE), use.names = FALSE)
+
+acc <- forecast(my.nnetar, new_data = new.data, times = 100) %>%
+        accuracy(data = new.data)
+rmse <- acc$RMSE
+
+NNETAR_pred_plot <- ggplot()+
+  xlab("")+
+  ylab("Chla (mg/L)")+
+  geom_point(data = new.data, aes(x = datetime, y = chla, fill = "obs"))+
+  geom_line(data = pred_nnetar0, aes(x = datetime, y = .mean, group = .model, color = .model))+
+  geom_ribbon(data = pred_nnetar0, aes(x = datetime, ymin = `80%`$lower, ymax = `80%`$upper), color = "blue",
+              alpha = 0.1)+
+  facet_wrap(facets = vars(.model))+
+  labs(color = NULL, fill = NULL)+
+  theme_classic()
+NNETAR_pred_plot
 ```
 
