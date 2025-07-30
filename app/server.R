@@ -579,7 +579,7 @@ server <- function(input, output, session) {#
         col_names <- c(input$select)
         
         plot_data <- cann_model_data %>%
-          dplyr::slice_head(prop = .7) %>% # using a 70:30 split here
+          dplyr::slice_head(prop = .8) %>% # using a 70:30 split here
           select(all_of(col_names)) %>%
           pivot_longer(cols = everything(), names_to = "variable_id", values_to = "obs") %>%
           left_join(., site_vars, by = "variable_id") %>%
@@ -636,7 +636,7 @@ server <- function(input, output, session) {#
         col_names <- c(input$select)
         
         plot_data_stand <- cann_model_data %>%
-          dplyr::slice_head(prop = .7) %>% # using a 70:30 split here
+          dplyr::slice_head(prop = .8) %>% # using a 70:30 split here
           select(all_of(col_names)) %>%
           pivot_longer(cols = everything(), names_to = "variable_id", values_to = "obs") %>%
           left_join(., site_vars, by = "variable_id") %>%
@@ -714,7 +714,7 @@ server <- function(input, output, session) {#
         col_names <- c("datetime","chla",input$select)
         
         model_df4 <- as_tsibble(cann_model_data) %>%
-          dplyr::slice_head(prop = .7) %>% # using a 70:30 split here
+          dplyr::slice_head(prop = .8) %>% # using a 70:30 split here
           tsibble::fill_gaps() %>%
           select(all_of(col_names)) %>%
           mutate(across(input$select, list(zscore = ~as.numeric(scale(.)))))
@@ -833,7 +833,7 @@ server <- function(input, output, session) {#
       
       if(site_id == "cann"){
         plot_data <- as_tsibble(cann_model_data) %>%
-          dplyr::slice_head(prop = .7) %>% # using a 70:30 split here
+          dplyr::slice_head(prop = .8) %>% # using a 70:30 split here
           select(datetime, chla) 
         colnames(plot_data) <- c("datetime","target")
         y_lab = "chlorophyll-a (mg/L)"
@@ -999,13 +999,13 @@ server <- function(input, output, session) {#
       
       if(site_id == "cann"){
         train_data <- as_tsibble(cann_model_data) %>%
-          dplyr::slice_head(prop = .7) %>% # using a 70:30 split here
+          dplyr::slice_head(prop = .8) %>% # using a 70:30 split here
           select(datetime, chla) %>%
           rename(target = chla) %>%
           mutate(set = "training data")
         
         test_data <- as_tsibble(cann_model_data) %>%
-          dplyr::slice_tail(prop = .3) %>% # using a 70:30 split here
+          dplyr::slice_tail(prop = .2) %>% # using a 70:30 split here
           select(datetime, chla) %>%
           rename(target = chla) %>%
           mutate(set = "testing data")
@@ -1143,13 +1143,13 @@ server <- function(input, output, session) {#
       if(site_id == "cann"){
         
         test_data <- as_tsibble(cann_model_data) %>%
-          dplyr::slice_tail(prop = .3) %>% # using a 70:30 split here
+          dplyr::slice_tail(prop = .2) %>% # using a 70:30 split here
           select(datetime, chla) %>%
           rename(target = chla) %>%
           mutate(set = "testing data")
         
         train_data <- as_tsibble(cann_model_data) %>%
-          dplyr::slice_head(prop = .7) %>% # using a 70:30 split here
+          dplyr::slice_head(prop = .8) %>% # using a 70:30 split here
           select(datetime, chla) %>%
           rename(target = chla) %>%
           mutate(set = "training data") 
@@ -1432,13 +1432,13 @@ server <- function(input, output, session) {#
       if(site_id == "cann"){
         
         test_data <- as_tsibble(cann_model_data) %>%
-          dplyr::slice_tail(prop = .3) %>% # using a 70:30 split here
+          dplyr::slice_tail(prop = .2) %>% # using a 80:20 split here
           select(datetime, chla) %>%
           rename(target = chla) %>%
           mutate(set = "testing data")
         
         train_data <- as_tsibble(cann_model_data) %>%
-          dplyr::slice_head(prop = .7) %>% # using a 70:30 split here
+          dplyr::slice_head(prop = .8) %>% # using a 80:20 split here
           select(datetime, chla) %>%
           rename(target = chla) %>%
           mutate(set = "training data") 
@@ -1462,7 +1462,7 @@ server <- function(input, output, session) {#
       }
       
       fitted_values <- fitted(actA.arima$arima)
-      pred <- forecast(actA.arima$arima, new_data = new_data) %>%
+      pred <- forecast(actA.arima$arima, new_data = new_data, bootstrap = TRUE, times = 500) %>%
         hilo()
       
       
@@ -1600,7 +1600,7 @@ server <- function(input, output, session) {#
         col_names <- c("datetime","chla",input$select)
         
         train_data <- as_tsibble(cann_model_data) %>%
-          dplyr::slice_head(prop = .7)
+          dplyr::slice_head(prop = .8)
         
         new_data <- as_tsibble(cann_model_data) %>%
           filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
@@ -1615,7 +1615,7 @@ server <- function(input, output, session) {#
       
       }
       
-      rmse_out <- paste0("RMSE: ",round(mean(rmse, na.rm = TRUE), 2))
+      rmse_out <- paste0("RMSE: ",round(mean(rmse, na.rm = TRUE), 3))
       
       rmse.text$main <- rmse_out
       
@@ -1714,7 +1714,7 @@ server <- function(input, output, session) {#
         col_names <- c("datetime","chla",input$select)
         
         train_data <- as_tsibble(cann_model_data) %>%
-          dplyr::slice_head(prop = .7)
+          dplyr::slice_head(prop = .8)
         
         new_data <- as_tsibble(cann_model_data) %>%
           filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
@@ -3258,7 +3258,7 @@ server <- function(input, output, session) {#
         mutate(across(input$select_reg_actB, list(zscore = ~as.numeric(scale(.)))))
       
       fitted_values <- fitted(actB.arima$arima)
-      pred <- forecast(actB.arima$arima, new_data = new_data) %>%
+      pred <- forecast(actB.arima$arima, new_data = new_data, bootstrap = TRUE, times = 500) %>%
         hilo()
       
       p <- ggplot()+
@@ -3423,14 +3423,14 @@ server <- function(input, output, session) {#
         select(all_of(col_names)) %>%
         mutate(across(input$select_reg_actB, list(zscore = ~as.numeric(scale(.)))))
       
-      acc <- forecast(actB.arima$arima, new_data = new_data) %>%
+      acc <- forecast(actB.arima$arima, new_data = new_data, bootstrap = TRUE, times = 500) %>%
         accuracy(data = new_data)
         
         rmse <- acc$RMSE
       
-      rmse_out2 <- paste0("RMSE: ",round(mean(rmse, na.rm = TRUE), 2))
+      rmse_out2 <- paste0("RMSE: ",round(mean(rmse, na.rm = TRUE), 3))
       
-      rmse.text2$main <- rmse_out
+      rmse.text2$main <- rmse_out2
       
       return(rmse_out2)
       
@@ -3540,8 +3540,8 @@ server <- function(input, output, session) {#
              message = "Please fit an ARIMA model in Objective 7.")
       )
       validate(
-        need(input$calc_ign2 > 0,
-             message = "Click 'Calculate ignorance score'")
+        need(input$assess_mod2 > 0,
+             message = "Click 'Calculate RMSE and ignorance score'")
       )
       
       dat <- stand.data()
@@ -3560,10 +3560,10 @@ server <- function(input, output, session) {#
         select(all_of(col_names)) %>%
         mutate(across(input$select_reg_actB, list(zscore = ~as.numeric(scale(.)))))
       
-        pred <- forecast(actB.arima$arima, new_data = new_data) %>%
-          pull(input$select_tar_actB)
-        
-        dist_params <- distributional::parameters(pred)
+        pred <- forecast(actB.arima$arima, new_data = new_data, bootstrap = TRUE, times = 500) 
+        pred_a <- pred %>% pull(input$select_tar_actB)
+        dist_params <- data.frame(mu = mean(pred_a, na.rm = TRUE),
+                                  sigma = sqrt(distributional::variance(pred_a, na.rm = TRUE)))
         
         new_obs <- new_data %>%
           pull(input$select_tar_actB)
@@ -3623,8 +3623,8 @@ server <- function(input, output, session) {#
              message = "Please fit an ARIMA model in Objective 7.")
       )
       validate(
-        need(input$calc_ign2 > 0,
-             message = "Click 'Calculate ignorance score'")
+        need(input$assess_mod2 > 0,
+             message = "Click 'Calculate RMSE and ignorance score'")
       )
       
       ign_out <- paste0("You've selected new regressors! Please click 'Fit ARIMA' in Obj. 7 to recalculate the ignorance score!")
@@ -3964,6 +3964,187 @@ server <- function(input, output, session) {#
   
   # Objective 10
   
+  # Residuals plot
+  plot.resid3 <- reactiveValues(main=NULL)
+  
+  observe({
+    input$fit_arima2
+    
+    output$resid_plot3 <- renderPlot({ 
+      
+      validate(
+        need(!is.null(input$upload_data),
+             message = "Please upload your data in Objective 6.")
+      )
+      validate(
+        need(valid$main == TRUE,
+             message = "Please correct your data format in Objective 6.")
+      )
+      validate(
+        need(!is.null(input$select_tar_actB),
+             message = "Please select a target variable from the dropdown menu in Objective 7.")
+      )
+      validate(
+        need(!is.null(input$select_reg_actB),
+             message = "Please select at least 1 predictor from the dropdown menu in Objective 7.")
+      )
+      validate(
+        need(length(input$select_reg_actB) <= 3,
+             message = "Please only select up to 3 regressors to fit your model in Objective 7.")
+      )
+      validate(
+        need(plot.stand2$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors in Objective 7.")
+      )
+      validate(
+        need(input$prop <= 0.9,
+             message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
+      )
+      validate(
+        need(actB.arima$nrow_model_df >= 60,
+             message = "You are using fewer than 60 data points for model training. Please select a larger proportion of your data for training in Objective 7.")
+      )
+      validate(
+        need(!is.null(actB.arima$arima),
+             message = "Please fit an ARIMA model in Objective 7.")
+      )
+      validate(
+        need(!is.null(actC.models$nnetar),
+             message = "Please fit additional models in Objective 9.")
+      )
+      validate(
+        need(input$view_resid3 > 0,
+             message = "Click 'View residuals'")
+      )
+      
+      resid_ar <- data.frame(residuals(actB.arima$arima))
+      sd.resid.ar <- round(sd(resid_ar$.resid, na.rm = TRUE),3)
+      resid_ar$sd <- paste0("S.D. = ",sd.resid.ar)
+      
+      resid_nn <- data.frame(residuals(actC.models$nnetar))
+      sd.resid.nn <- round(sd(resid_nn$.resid, na.rm = TRUE),3)
+      resid_nn$sd <- paste0("S.D. = ",sd.resid.nn)
+      
+      resid_rw <- data.frame(residuals(actC.models$rw))
+      sd.resid.rw <- round(sd(resid_rw$.resid, na.rm = TRUE),3)
+      resid_rw$sd <- paste0("S.D. = ",sd.resid.rw)
+      
+      resid_doy <- residuals(actC.models$doy)
+      sd.resid.doy <- round(sd(resid_doy, na.rm = TRUE),3)
+      resid_do <- data.frame(.model = "DOY",
+                             datetime = NA,
+                             .resid = resid_doy,
+                             sd = paste0("S.D. = ",sd.resid.doy))
+      
+      resid <- bind_rows(resid_ar, resid_nn) %>%
+        bind_rows(., resid_rw) %>%
+        bind_rows(., resid_do)
+      
+      p <- ggplot(data = resid)+
+        geom_histogram(aes(x = .resid, color = .model, fill = .model), alpha = 0.5)+
+        xlab(input$select_tar_actB)+
+        theme_bw(base_size = 20)+
+        facet_wrap(facets = vars(.model), nrow = 1)+
+        scale_color_manual(values = c("ARIMA" = "#E69F00","NNETAR" = "#56B4E9",
+                                      "persistence" = "#009E73","DOY" = "#CC79A7"))+
+        scale_fill_manual(values = c("ARIMA" = "#E69F00","NNETAR" = "#56B4E9",
+                                      "persistence" = "#009E73","DOY" = "#CC79A7"))+
+        geom_text(aes(x = Inf, y = Inf, label = sd),
+                  hjust   = 1.05,
+                  vjust   = 1.5,
+                  size = 5)+
+        ylab("count")+
+        theme(legend.title = element_blank())
+      
+      plot.resid3$main <- p
+      
+      return(p)
+      
+    })
+    
+  })
+  
+  observe({
+    input$select_tar_actB
+    input$select_reg_actB
+    
+    output$resid_plot3 <- renderPlotly({ 
+      
+      validate(
+        need(!is.null(input$upload_data),
+             message = "Please upload your data in Objective 6.")
+      )
+      validate(
+        need(valid$main == TRUE,
+             message = "Please correct your data format in Objective 6.")
+      )
+      validate(
+        need(!is.null(input$select_tar_actB),
+             message = "Please select a target variable from the dropdown menu in Objective 7.")
+      )
+      validate(
+        need(!is.null(input$select_reg_actB),
+             message = "Please select at least 1 predictor from the dropdown menu in Objective 7.")
+      )
+      validate(
+        need(length(input$select_reg_actB) <= 3,
+             message = "Please only select up to 3 regressors to fit your model in Objective 7.")
+      )
+      validate(
+        need(plot.stand2$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors in Objective 7.")
+      )
+      validate(
+        need(input$prop <= 0.9,
+             message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
+      )
+      validate(
+        need(actB.arima$nrow_model_df >= 60,
+             message = "You are using fewer than 60 data points for model training. Please select a larger proportion of your data for training in Objective 7.")
+      )
+      validate(
+        need(!is.null(actB.arima$arima),
+             message = "Please fit an ARIMA model in Objective 7.")
+      )
+      validate(
+        need(!is.null(actC.models$nnetar),
+             message = "Please fit additional models in Objective 9.")
+      )
+      validate(
+        need(input$view_resid3 > 0,
+             message = "Click 'View residuals'")
+      )
+      
+      p <- ggplot() +
+        annotate("text", x = 10,  y = 10,
+                 size = 4,
+                 label = "You've chosen new regressors!\nClick 'Fit ARIMA' in Obj. 7 \nto regenerate this plot.") + 
+        theme_void()+
+        theme(panel.grid = element_blank(),
+              axis.line = element_blank())
+      
+      plot.resid3$main <- p
+      
+      return(ggplotly(p, dynamicTicks = TRUE))
+      
+    })
+    
+  })
+  
+  # Download scatterplot of arima
+  output$save_resid_plot3 <- downloadHandler(
+    filename = function() {
+      paste("QXX-plot-", Sys.Date(), ".png", sep="")
+    },
+    content = function(file) {
+      device <- function(..., width, height) {
+        grDevices::png(..., width = 8, height = 4,
+                       res = 200, units = "in")
+      }
+      ggsave(file, plot = plot.resid3$main, device = device)
+    }
+  )
+  
   # Predictions with uncertainty plot
   plot.pred.all <- reactiveValues(main=NULL)
   dist_params <- reactiveValues(arima=NULL,
@@ -4014,7 +4195,7 @@ server <- function(input, output, session) {#
       )
       validate(
         need(!is.null(actC.models$nnetar),
-             message = "Please fit additional models in Objective 8.")
+             message = "Please fit additional models in Objective 9.")
       )
       validate(
         need(input$plot_pred_models > 0,
@@ -4065,30 +4246,33 @@ server <- function(input, output, session) {#
         mutate(across(input$select_reg_actB, list(zscore = ~as.numeric(scale(.)))))
       
       # predictions and confidence intervals for fable models
-      pred_arima0 <- forecast(actB.arima$arima, new_data = new_data) %>%
+      pred_arima0 <- forecast(actB.arima$arima, new_data = new_data, bootstrap = TRUE, times = 500) %>%
         hilo() 
       pred_arima <- pred_arima0 %>%
         mutate(lower = `95%`$lower,
                upper = `95%`$upper) %>%
         select(.model, datetime, .mean, lower, upper)
       pred_a <- pred_arima0 %>% pull(input$select_tar_actB)
-      dist_params$arima <- distributional::parameters(pred_a)
+      dist_params$arima <- data.frame(mu = mean(pred_a, na.rm = TRUE),
+                                       sigma = sqrt(distributional::variance(pred_a, na.rm = TRUE)))
       
       rw_cols <- c("datetime",input$select_tar_actB)
       new_rw_data <- new_data %>%
         select(all_of(rw_cols))
       colnames(new_rw_data) <- c("datetime","target")
-      pred_rw0 <- forecast(actC.models$rw, new_data = new_rw_data) %>%
+      pred_rw0 <- forecast(actC.models$rw, new_data = new_rw_data, bootstrap = TRUE, times = 500) %>%
         hilo() 
       pred_rw <- pred_rw0 %>%
         mutate(lower = `95%`$lower,
                upper = `95%`$upper) %>%
         select(.model, datetime, .mean, lower, upper)
       pred_r <- pred_rw0 %>% pull(target)
-      dist_params$rw <- distributional::parameters(pred_r)
+      dist_params$rw <- data.frame(mu = mean(pred_r, na.rm = TRUE),
+                                      sigma = sqrt(distributional::variance(pred_r, na.rm = TRUE)))
+      
       
       progress$set(value = 0.5)
-      pred_nnetar0 <- forecast(actC.models$nnetar, new_data = new_data, times = 500) %>%
+      pred_nnetar0 <- forecast(actC.models$nnetar, new_data = new_data, bootstrap = TRUE, times = 500) %>%
         hilo() 
       pred_nnetar <- pred_nnetar0 %>%
         mutate(lower = `95%`$lower,
@@ -4122,7 +4306,7 @@ server <- function(input, output, session) {#
         ylab(input$select_tar_actB)+
         geom_point(data = plot_data, aes(x = datetime, y = target, color = set))+
         geom_ribbon(data = pred_all, aes(x = datetime, ymin = lower, ymax = upper, color = .model, fill = .model),
-                    alpha = 0.5)+
+                    alpha = 0.3)+
         geom_line(data = pred_all, aes(x = datetime, y = .mean, group = .model, color = .model))+
         geom_vline(xintercept = train_test_line)+
         labs(color = NULL, fill = NULL)+
@@ -4194,7 +4378,7 @@ server <- function(input, output, session) {#
       )
       validate(
         need(!is.null(actC.models$nnetar),
-             message = "Please fit additional models in Objective 8.")
+             message = "Please fit additional models in Objective 9.")
       )
       validate(
         need(input$plot_pred_models > 0,
@@ -4233,6 +4417,11 @@ server <- function(input, output, session) {#
   
   # Calculate ignorance
   ign.values <- reactiveValues(arima=NULL,
+                               nnetar=NULL,
+                               rw=NULL,
+                               doy=NULL)
+  
+  rmse.values <- reactiveValues(arima=NULL,
                                nnetar=NULL,
                                rw=NULL,
                                doy=NULL)
@@ -4288,7 +4477,7 @@ server <- function(input, output, session) {#
       )
       validate(
         need(input$calc_ign3 > 0,
-             message = "Click 'Calculate ignorance scores'")
+             message = "Click 'Calculate RMSE and ignorance scores'")
       )
       
       dat <- stand.data()
@@ -4311,15 +4500,43 @@ server <- function(input, output, session) {#
         pull(input$select_tar_actB)
       
       ign_arima <- scoringRules::logs_norm(new_obs, dist_params$arima$mu, dist_params$arima$sigma)
-      ign.values$arima <- round(mean(ign_arima, na.rm = TRUE),2)
+      ign.values$arima <- round(mean(ign_arima, na.rm = TRUE),3)
       ign_nnetar <- scoringRules::logs_norm(new_obs, dist_params$nnetar$mu, dist_params$nnetar$sigma)
-      ign.values$nnetar <- round(mean(ign_nnetar, na.rm = TRUE),2)
+      ign.values$nnetar <- round(mean(ign_nnetar, na.rm = TRUE),3)
       ign_rw <- scoringRules::logs_norm(new_obs, dist_params$rw$mu, dist_params$rw$sigma)
-      ign.values$rw <- round(mean(ign_rw, na.rm = TRUE),2)
+      ign.values$rw <- round(mean(ign_rw, na.rm = TRUE),3)
       ign_doy <- scoringRules::logs_norm(new_obs, dist_params$doy$mu, dist_params$doy$sigma)
-      ign.values$doy <- round(mean(ign_doy, na.rm = TRUE),2)
+      ign.values$doy <- round(mean(ign_doy, na.rm = TRUE),3)
+      
+      acc_arima <- forecast(actB.arima$arima, new_data = new_data) %>%
+        accuracy(data = new_data)
+      rmse.values$arima <- round(acc_arima$RMSE,3)
+      acc_nnetar <- forecast(actC.models$nnetar, new_data = new_data, times = 0) %>%
+        accuracy(data = new_data)
+      rmse.values$nnetar <- round(acc_nnetar$RMSE,3)
+      
+      # and for RW
+      rw_cols <- c("datetime",input$select_tar_actB)
+      new_rw_data <- new_data %>%
+        select(all_of(rw_cols))
+      colnames(new_rw_data) <- c("datetime","target")
+      acc_rw <- forecast(actC.models$rw, new_data = new_rw_data) %>%
+        accuracy(data = new_rw_data)
+      rmse.values$rw <- round(acc_rw$RMSE,3)
+      
+      # and for gam
+      # and for gam
+      doy_cols <- c("doy",input$select_tar_actB)
+      new_doy_data <- as.data.frame(new_data) %>%
+        mutate(doy = yday(datetime)) %>%
+        select(any_of(doy_cols))
+      colnames(new_doy_data) <- c("x","y")
+      pred_gam <- mgcv::predict.gam(actC.models$doy, new_doy_data, se.fit = TRUE)
+      acc_doy <- sqrt(mean((new_doy_data$y - pred_gam[[1]])^2))
+      rmse.values$doy <- round(acc_doy,3)
       
       ign.table <- data.frame(Model = c("ARIMA","NNETAR","persistence","DOY"),
+                              RMSE = c(rmse.values$arima, rmse.values$nnetar, rmse.values$rw, rmse.values$doy),
                               Ignorance = c(ign.values$arima, ign.values$nnetar, ign.values$rw, ign.values$doy))
       
       return(ign.table)
@@ -4380,7 +4597,7 @@ server <- function(input, output, session) {#
       )
       validate(
         need(input$calc_ign3 > 0,
-             message = "Click 'Calculate ignorance scores'")
+             message = "Click 'Calculate RMSE and ignorance scores'")
       )
       
       ign.table <- data.frame(Message = c("You've changed regressors! Please re-fit your ARIMA in Obj. 7."))

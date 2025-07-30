@@ -718,7 +718,7 @@ ui <- function(request) {
                                                column(6,
                                                       h3("Fit ARIMA model"),
                                                       p("Click the button below to fit an ARIMA model to the target variable from your selected environmental case study, including the regressors you have chosen above."),
-                                                      p(tags$b("Important Note! We are only using 70% of the available data to fit the ARIMA model. This leaves 30% of the data to be used for model assessment in Objective 5.")),
+                                                      p(tags$b("Important Note! We are only using 80% of the available data to fit the ARIMA model. This leaves 20% of the data to be used for model assessment in Objective 5.")),
                                                       actionButton("fit_arima",label = "Fit ARIMA"),
                                                       br(),br(),
                                                       wellPanel(textOutput("arima_order")
@@ -792,7 +792,7 @@ ui <- function(request) {
                                                column(4,
                                                       h3("Training vs. testing data"),
                                                       p("To understand how well our model can predict the dynamics of our target dataset, it is common practice to reserve some data for model testing."),
-                                                      p("In this case, we used 70% of the available data as ",tags$b("training data")," in the previous objective, and reserved 30% as ",tags$b("testing data.")),
+                                                      p("In this case, we used 80% of the available data as ",tags$b("training data")," in the previous objective, and reserved 20% as ",tags$b("testing data.")),
                                                       p("The figure on the right shows both the training and testing data of your target dataset, as well as the fitted values from your ARIMA model, generated using the training dataset only.")
                                                       ),
                                                column(8,
@@ -1158,7 +1158,7 @@ ui <- function(request) {
                                              fluidRow(
                                                column(6,
                                                       h3("Select train/test proportion and fit ARIMA model"),
-                                                      p("Recall that in Activity A, we used 70% of your data for model training and reserved 30% of your data for the testing set to assess model performance. Now, you may choose what proportion of your data to use for training. Too low a proportion can lead to a poor model fit due to lack of data. Too high a proportion can lead to poor model assessment due to lack of data on which to calculate the ignorance score."),
+                                                      p("Recall that in Activity A, we used 80% of your data for model training and reserved 20% of your data for the testing set to assess model performance. Now, you may choose what proportion of your data to use for training. Too low a proportion can lead to a poor model fit due to lack of data. Too high a proportion can lead to poor model assessment due to lack of data on which to calculate the ignorance score."),
                                                       p(tags$b("For these reasons, we require that you select a proportion that includes at least 60 data points for model training and reserves at least 10% of your data for model testing.")),
                                                       numericInput("prop", "Proportion of data to use for training:", value = 0.7, min = 0, max = 1, step = 0.1),
                                                       p("Click the button below to fit an ARIMA model to the target variable from your selected environmental case study, including the regressors you have chosen above."),
@@ -1428,6 +1428,13 @@ ui <- function(request) {
                                                       ),
                                                       downloadButton("save_plot_models", "Download plot", icon = icon("download"))
                                                       )
+                                             ),
+                                             hr(),
+                                             fluidRow(
+                                               column(10, offset = 1,
+                                                      h3("Next step"),
+                                                      p("In Objective 10, you will view the residuals of all the models, generate predictions with uncertainty, and compare predictive performance across models."),
+                                               )
                                              )
                                     ),
                                     #* Objective 10 - Compare across models ----
@@ -1442,9 +1449,46 @@ ui <- function(request) {
                                              ),
                                              hr(),
                                              fluidRow(
+                                               column(12,
+                                                      h3("View the residuals for all models"),
+                                                      p(tags$i("Click the button below to view the distributions for all the residuals of the models you have fit.")),
+                                                      actionButton("view_resid3","View residuals"),
+                                                      br(),br(),
+                                                      wellPanel(
+                                                        plotOutput("resid_plot3"),
+                                                      ),
+                                                      downloadButton("save_resid_plot3", "Download plot", icon = icon("download")),
+                                                      br(),br(),
+                                                      box(id = "box2", width = 12, status = "primary",
+                                                          solidHeader = TRUE,
+                                                          fluidRow(
+                                                            column(10, offset = 1,
+                                                                   h3("Questions"),
+                                                                   p(tags$i("Hint: the standard deviation of the residuals for each model is printed in the top right corner of each panel of the plot above.")),
+                                                                   p(tags$b(quest["q38", 1])),
+                                                                   p(tags$b(quest["q39", 1]))
+                                                            )
+                                                          )
+                                                      )
+                                                      )
+                                             ),
+                                             hr(),
+                                             fluidRow(
                                                column(4,
                                                       h3("Plot model predictions with uncertainty"),
-                                                      actionButton("plot_pred_models","Generate predictions with uncertainty")
+                                                      p(tags$i("Click the button below to plot predictions with uncertainty for all four of the models you have fit.")),
+                                                      actionButton("plot_pred_models","Generate predictions with uncertainty"),
+                                                      br(),br(),
+                                                      box(id = "box2", width = 12, status = "primary",
+                                                          solidHeader = TRUE,
+                                                          fluidRow(
+                                                            column(10, offset = 1,
+                                                                   h3("Questions"),
+                                                                   p(tags$b(quest["q40", 1])),
+                                                                   p(tags$b(quest["q41", 1]))
+                                                            )
+                                                          )
+                                                      )
                                                ),
                                                column(8,
                                                       wellPanel(
@@ -1455,13 +1499,33 @@ ui <- function(request) {
                                              ),
                                              hr(),
                                              fluidRow(
-                                               column(4,
+                                               column(6,
                                                       h3("Compare ignorance scores"),
-                                                      actionButton("calc_ign3","Calculate ignorance scores")
+                                                      actionButton("calc_ign3","Calculate RMSE and ignorance scores"),
+                                                      br(),br(),
+                                                      box(id = "box2", width = 12, status = "primary",
+                                                          solidHeader = TRUE,
+                                                          fluidRow(
+                                                            column(10, offset = 1,
+                                                                   h3("Questions"),
+                                                                   p(tags$b(quest["q42", 1])),
+                                                                   p(tags$b(quest["q43", 1])),
+                                                                   p(tags$b(quest["q44", 1])),
+                                                                   p(tags$b(quest["q45", 1]))
+                                                            )
+                                                          )
+                                                      )
                                                       ),
-                                               column(8,
+                                               column(6,
                                                       DTOutput("ign_table")
                                                       )
+                                             ),
+                                             hr(),
+                                             fluidRow(
+                                               column(10, offset = 1,
+                                                      h3("Congratulations!"),
+                                                      p("You have completed the module! Please be sure to turn in your handout to your instructor for assessment if required."),
+                                               )
                                              )
                                              
                                     ) #end Obj 12 
