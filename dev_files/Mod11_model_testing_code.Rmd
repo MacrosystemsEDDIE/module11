@@ -1,0 +1,193 @@
+---
+title: "Mod11_model_testing_code"
+author: "Mary Lofton"
+date: "2025-07-31"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Fit and assess ARIMA model from fable package
+```{r}
+model_df3 <- read_csv("/Users/marylofton/RProjects/module11_dev/app/data/cann_mod.csv")
+model_df4 <- as_tsibble(model_df3) %>%
+  fill_gaps() %>%
+  mutate(chla_lag = lag(chla)) %>%
+  slice_head(prop = .8) %>% # using a 70:30 split here
+  select(datetime, chla, frp, flow) %>%
+  mutate(across(frp:flow, list(zscore = ~as.numeric(scale(.)))))
+
+# random walk
+rw <- model_df4 %>%
+        model(`RW` = fable::RW(formula = chla))
+fitted_rw <- fitted(rw)
+resid_rw <- residuals(rw %>% select(`RW`))
+
+
+my_col = "chla"
+doy_cols <- c("doy",my_col)
+doy_data <- as.data.frame(model_df4) %>%
+        mutate(doy = yday(datetime)) %>%
+        select(any_of(doy_cols))
+colnames(doy_data) <- c("x","y")
+my.doy <- mgcv::gam(formula = y ~ s(x, bs = "cs"), family = gaussian(),
+                          data = doy_data, method = "REML")
+residuals(my.doy)
+fitted(my.doy)
+        
+reg_cols <- paste0(c("frp","flow"),"_zscore")
+
+my.formula <- formula(paste0("chla ~ ",reg_cols[1],"+",reg_cols[2]))
+
+my.arima <- model_df4 %>%
+  model(`ARIMA` = fable::ARIMA(formula = my.formula)) # get errors if include all variables due to small data size
+
+
+params <- coefficients(my.arima %>% select(`ARIMA`))
+resid_ar <- residuals(my.arima %>% select(`ARIMA`))
+
+resid <- bind_rows(resid_ar, resid_rw)
+
+ggplot(data = resid, aes(x = .resid, group = .model, color = .model))+
+  geom_density()
+
+strsplit(as.character(my.arima$ARIMA), split = " ")[[1]][3]
+
+gg_tsresiduals(my.arima %>% select(`ARIMA`))
+p+theme_bw()
+
+fitted_values <- fitted(my.arima)
+
+ARIMA_plot <- ggplot()+
+  xlab("")+
+  ylab("Chla (mg/L)")+
+  geom_point(data = model_df4, aes(x = datetime, y = chla, fill = "obs"))+
+  geom_line(data = fitted_rw, aes(x = datetime, y = .fitted, group = .model, color = .model))+
+  facet_wrap(facets = vars(.model))+
+  labs(color = NULL, fill = NULL)+
+  theme_classic()
+ARIMA_plot      
+```
+
+Generate predictions for test set data
+```{r}
+# get test data
+new_data <- as_tsibble(model_df3) %>%
+          filter(!datetime %in% model_df4$datetime) %>% # using a 70:30 split here
+          tsibble::fill_gaps() %>%
+          select(datetime, chla, frp, flow) %>%
+  mutate(across(frp:flow, list(zscore = ~as.numeric(scale(.))))) %>%
+  mutate(chla = NA)
+
+plot_obs <- as_tsibble(model_df3) %>%
+          filter(!datetime %in% model_df4$datetime) %>% # using a 70:30 split here
+          tsibble::fill_gaps() %>%
+          select(datetime, chla) 
+
+
+# generate predictions on test data
+pred <- forecast(my.arima, new_data = new_data, bootstrap = TRUE, times = 500) %>%
+  hilo() %>%
+  mutate(sd = distributional::sd(chla))
+pred
+
+pred_rw <- forecast(rw, new_data = new_data, bootstrap = TRUE, times = 500, h = 16) %>%
+  hilo() %>%
+  mutate(lower = `95%`$lower,
+               upper = `95%`$upper) %>%
+        select(.model, datetime, .mean, lower, upper)
+pred_rw
+dist_params <- distributional::parameters(pred_rw$chla)
+
+new_doy_data <- as.data.frame(new_data) %>%
+        mutate(doy = yday(datetime)) %>%
+        select(any_of(doy_cols))
+colnames(new_doy_data) <- c("x","y")
+pred_gam <- mgcv::predict.gam(my.doy, new_doy_data, se.fit = TRUE)
+check <- data.frame(.mean = pred_gam[[1]],
+                    upper = pred_gam[[1]] + 2*pred_gam[[2]],
+                    lower = pred_gam[[1]] - 2*pred_gam[[2]])
+
+all_data <- as_tsibble(model_df3) %>%
+          tsibble::fill_gaps() %>%
+          select(datetime, chla, frp, flow) %>%
+  mutate(across(frp:flow, list(zscore = ~as.numeric(scale(.)))))
+
+acc <- forecast(my.arima, new_data = new_data) %>%
+  accuracy(all_data,
+               measures = list(interval_accuracy_measures, distribution_accuracy_measures)
+)
+
+dist_params <- distributional::parameters(pred$chla)
+
+scoringRules::logs_norm(new_data$chla, dist_params$mu, dist_params$sigma)
+
+
+# plot predictions
+ARIMA_pred_plot <- ggplot()+
+  xlab("")+
+  ylab("Chla (mg/L)")+
+  geom_point(data = plot_obs, aes(x = datetime, y = chla, fill = "obs"))+
+  geom_line(data = pred, aes(x = datetime, y = .mean, group = .model, color = .model))+
+  geom_ribbon(data = pred, aes(x = datetime, ymin = `95%`$lower, ymax = `95%`$upper), color = "blue",
+              alpha = 0.1)+
+   geom_line(data = pred_rw, aes(x = datetime, y = .mean, group = .model, color = .model))+
+  geom_ribbon(data = pred_rw, aes(x = datetime, ymin = `95%`$lower, ymax = `95%`$upper), color = "blue",
+              alpha = 0.1)+
+  facet_wrap(facets = vars(.model))+
+  labs(color = NULL, fill = NULL)+
+  theme_classic()
+ARIMA_pred_plot    
+
+```
+
+Still need to add assessment of model predictions vs. observations
+
+```{r}
+
+kent_dat <- read_csv("/Users/marylofton/RProjects/module11_dev/app/data/kent_std.csv")
+wide_dat <- kent_dat %>%
+  pivot_wider(names_from = "variable", values_from = "observation") %>%
+  as_tsibble(.) %>%
+  tsibble::fill_gaps() %>%
+  tidyr::fill(., .direction = "down") 
+
+model_df4 <- wide_dat %>%
+        dplyr::slice_head(prop = 0.8) %>% # using a 70:30 split here
+        mutate(across(amm:flow, list(zscore = ~as.numeric(scale(.)))))
+
+my.nnetar <- model_df4 %>%
+  model(`NNETAR` = NNETAR(chla ~ temperature))
+new.data <- wide_dat %>%
+        filter(!datetime %in% model_df4$datetime) %>% # using a 70:30 split here
+        mutate(across(amm:flow, list(zscore = ~as.numeric(scale(.)))))
+pred_nnetar0 <- forecast(my.nnetar, new_data = new.data, times = 500) %>%
+        hilo(level = c(40, 80)) 
+pred_nnetar <- pred_nnetar0 %>%
+    mutate(lower = `95%`$lower,
+            upper = `95%`$upper) %>%
+    select(.model, datetime, .mean, lower, upper)
+pred_n <- pred_nnetar0 %>% pull(chla)
+check <- data.frame(check = mean(pred_n, na.rm = TRUE))
+check <- sqrt(distributional::variance(pred_n, na.rm = TRUE))
+
+check <- unlist(lapply(pred_n, mean, na.rm = TRUE), use.names = FALSE)
+
+acc <- forecast(my.nnetar, new_data = new.data, times = 100) %>%
+        accuracy(data = new.data)
+rmse <- acc$RMSE
+
+NNETAR_pred_plot <- ggplot()+
+  xlab("")+
+  ylab("Chla (mg/L)")+
+  geom_point(data = new.data, aes(x = datetime, y = chla, fill = "obs"))+
+  geom_line(data = pred_nnetar0, aes(x = datetime, y = .mean, group = .model, color = .model))+
+  geom_ribbon(data = pred_nnetar0, aes(x = datetime, ymin = `80%`$lower, ymax = `80%`$upper), color = "blue",
+              alpha = 0.1)+
+  facet_wrap(facets = vars(.model))+
+  labs(color = NULL, fill = NULL)+
+  theme_classic()
+NNETAR_pred_plot
+```

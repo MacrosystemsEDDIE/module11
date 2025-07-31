@@ -1942,15 +1942,32 @@ server <- function(input, output, session) {#
     }
     
     check_num_timesteps <- length(unique(dat$datetime))
-    if(check_num_timesteps < 70){
+    if(check_num_timesteps < 100){
       valid$main <- FALSE
-      validate("at least 70 timesteps are required to fit and assess models!")
+      validate("at least 100 timesteps are required to fit and assess models!")
     }
     
     check_date_format <- IsDate(dat$datetime)
     if(any(!check_date_format)){
       valid$main <- FALSE
       validate("'datetime' column cannot be translated to yyyy-mm-dd format!")
+    } 
+    
+    dat_distinct <- dat %>%
+      distinct(.)
+    if(nrow(dat_distinct) < nrow(dat)){
+      valid$main <- FALSE
+      validate("duplicate observations detected in data!")
+    } 
+    
+    pivot_check <- dat %>%
+      group_by(variable) %>%
+      summarize(n = n(),
+                distinct_dates = length(unique(datetime)),
+                diff = n - distinct_dates)
+    if(any(pivot_check$diff) > 0){
+      valid$main <- FALSE
+      validate("duplicate datetimes detected in data!")
     } 
     
     wide_dat <- dat %>%
@@ -1963,6 +1980,14 @@ server <- function(input, output, session) {#
       validate("sub-daily dates detected in data!")
     }
     
+    model_df <- as_tsibble(wide_dat) 
+    gap_count <- count_gaps(model_df)
+    n_gaps = sum(gap_count$.n)
+    if(n_gaps > 0){
+      valid$main <- FALSE
+      validate("data gaps or uneven timesteps detected in data!")
+    } 
+    
     valid$main <- TRUE
     
     return(dat)
@@ -1973,34 +1998,6 @@ server <- function(input, output, session) {#
     table_dat <- stand.data() %>%
       mutate(datetime = format(datetime, "%Y-%m-%d"))
     head(table_dat, input$n)
-  })
-  
-  # alert user that gaps are being filled
-  output$gap_text <- renderText({
-    
-    validate(
-      need(!is.null(input$upload_data),
-           message = "Please upload your data above.")
-    )
-    validate(
-      need(valid$main == TRUE,
-           message = "Please correct your data format and try again.")
-    )
-    
-    dat <- stand.data()
-    wide_dat <- dat %>%
-      pivot_wider(names_from = "variable", values_from = "observation")
-
-    model_df <- as_tsibble(wide_dat) %>%
-      fill_gaps()
-
-    n_gaps = nrow(model_df) - nrow(wide_dat)
-
-    if(nrow(model_df) > nrow(wide_dat)){
-      return(paste0("Data gaps detected! Filling ",n_gaps," gap(s) with NA values!"))
-    } else {
-      return("No data gaps detected!")
-    }
   })
   
   # plot variables in user data

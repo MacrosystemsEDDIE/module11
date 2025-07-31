@@ -21,9 +21,10 @@ q9,"Q9. Observe the PACF plot on the right. Based on this figure, how many lags 
 q10,"Q10. Observe the plot on the right. Based on visual inspection, does differencing substantially improve the stationarity of the target variable data? Explain your reasoning."
 q11,"Q11. List up to three exogenous regressors that you would like to include in your fitted ARIMA model. For each regressor, explain why you chose to include it in the model. If you choose not to include any regressors, explain your reasoning."
 q12,"Q12. Examine the (p, d, q) order of your ARIMA model printed above. Interpret the order of your ARIMA. "
-q12a,a. How many lags are included in the model? How do you know?
-q12b,b. Are the data differenced to fit the model? How do you know?
-q12c,c. How many timesteps of previous errors are included in the model? How do you know?
+q12a,a. Record the order of your ARIMA model printed above.
+q12b,b. How many lags are included in the model? How do you know?
+q12c,c. Are the data differenced to fit the model? How do you know?
+q12d,d. How many timesteps of previous errors are included in the model? How do you know?
 q13,"Q13. Which term is most important in your fitted model (i.e., has the greatest absolute value)?"
 q14,"Q14. If the standard error of a term is bigger than the absolute value of the estimate of a term, we cannot say for sure that the effect of that term is meaningfully different from 0. Are there any terms in your model that are not meaningfully different from 0? Which ones?"
 q15,"Q15. Assess the importance of the exogenous regressors you chose to include in the model. Based on the term estimates and standard errors, were these variables important in your final, fitted model? Explain your reasoning."
@@ -46,9 +47,10 @@ q27,Q27. What is the target variable for your dataset?
 q28,"Q28. List the three exogenous regressors that you would like to include in your ARIMA model. For each regressor, explain why you chose to include it in the model. If you choose not to include any regressors, explain your reasoning."
 q29,Q29. Record the proportion of data you chose to use for model training.
 q30,"Q30. Examine the (p, d, q) order of your ARIMA model printed above. Interpret the order of your ARIMA."
-q30a,a. How many lags are included in the model? How do you know?
-q30b,b. Are the data differenced to fit the model? How do you know?
-q30c,c. How many timesteps of previous errors are included in the model? How do you know?
+q30a,a. Record the order of your ARIMA model printed above.
+q30b,b. How many lags are included in the model? How do you know?
+q30c,c. Are the data differenced to fit the model? How do you know?
+q30d,d. How many timesteps of previous errors are included in the model? How do you know?
 q31,"Q31. Which term is most important in your fitted model (i.e., has the greatest absolute value)?"
 q32,Q32. Inspect the plot on the right. How well do you think the model predictions fit the observations in the test dataset? Explain your reasoning.
 q33,Q33. Record the RMSE and ignorance score for your model.

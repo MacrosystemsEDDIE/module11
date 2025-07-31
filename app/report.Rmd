@@ -1,5 +1,5 @@
 ---
-title: "Module 5: Introduction to Ecological Forecasting - Student Handout"
+title: "Module 11: Time Series Modeling and Prediction of Environmental Data - Student Handout"
 output: 
    word_document:
     reference_docx: report-style.docx
@@ -30,8 +30,11 @@ env_var_rel <- data.frame("Target" = rep("",10),
                           "Variable" = rep("",10),
                           "Relationship" = rep("",10))
 
-state_par <- data.frame("States" = rep("",2),
-                        "Parameters" = rep("",2))
+model_perf <- data.frame("Model" = c("ARIMA","NNETAR","persistence","DOY"),
+                          "RMSE" = rep("",4),
+                          "ignorance" = rep("",4))
+
+
 
 ```
 
@@ -95,6 +98,8 @@ This can be accessed via any internet browser and allows you to navigate through
 - Wickham, H., Çetinkaya-Rundel, M., and Grolemund, G. (2023) R for Data Science (2nd ed.), [Chapter 5: Data Tidying.](https://r4ds.hadley.nz/data-tidy.html)
 \
 
+\newpage
+
 ## Pre-class activity: Explore environmental case study
 Choose one of the papers describing an environmental case study and use it to answer the questions below. Choose a case study that you will work with for Activity A of the module.
 \
@@ -125,24 +130,28 @@ D.  Describe the way(s) in which the model predictions are assessed (evaluated f
 **Answer:** 
 
 \
+
+\newpage
+
+# Introduction
+
 Now navigate to the [Shiny interface](https://macrosystemseddie.shinyapps.io/module11) to answer the rest of the questions.
 
 The questions you must answer are written both in the Shiny interface as well as in this handout. As you go, you should fill out your answers in this document.
 
-# Think about it!
+## Think about it!
 \
 Answer the following questions:
 
 1. `r substr(quest["q1", ], 4, nchar(quest["q1", ]))`  
-
+\
 **Answer:** 
 \
 
 2. `r substr(quest["q2", ], 4, nchar(quest["q2", ]))`   
-
+\
 **Answer:** 
 \
-
 
 
 # Activity A: Select an environmental case study, visualize data, and fit a model
@@ -155,13 +164,17 @@ Answer the following questions:
 ***
 
 3. `r substr(quest["q3", ], 4, nchar(quest["q3", ]))`  
-
+\
 *Table 1. Site Characteristics*
 ```{r}
 knitr::kable(site_tab) 
 ```
 
 4. `r substr(quest["q4", ], 4, nchar(quest["q4", ]))`
+\
+**Answer:**
+\
+
 
 ## Objective 2: Explore data
 
@@ -171,15 +184,16 @@ knitr::kable(site_tab)
 ***
 
 5. `r substr(quest["q5", ], 4, nchar(quest["q5", ]))`
-
+\
 *Table 2. Description of site variables:*  
 
 ```{r}
 knitr::kable(env_var_tab) 
 ```
+\
 
 6. `r substr(quest["q6", ], 4, nchar(quest["q6", ]))`
-
+\
 *Table 3. Description of effect of each variable on the target variable*  
 
 ```{r}
@@ -197,304 +211,341 @@ knitr::kable(env_var_rel)
 
 7. `r substr(quest["q7", ], 4, nchar(quest["q7", ]))`
 \
-
-8. `r substr(quest["q7", ], 4, nchar(quest["q7", ]))`
+**Answer:**
 \
 
-**Download the plot associated with this question and copy-paste it into your report below.**
+8. `r substr(quest["q8", ], 4, nchar(quest["q8", ]))`
+\
+**Answer:**
+\
+
+**Please download the plot associated with Q8 and copy-paste it into your report below.**
 
 *Figure 1. Target variable vs. one-day lag of environmental case study target variable*  
 
-9. `r substr(quest["q7", ], 4, nchar(quest["q7", ]))`
+9. `r substr(quest["q9", ], 4, nchar(quest["q9", ]))`
+\
+**Answer:**
 \
 
-**Download the plot associated with this question and copy-paste it into your report below.**
+**Please download the plot associated with Q9 and copy-paste it into your report below.**
 
 *Figure 2. Partial autocorrelation of environmental case study target variable*  
 
-10. `r substr(quest["q7", ], 4, nchar(quest["q7", ]))`
+10. `r substr(quest["q10", ], 5, nchar(quest["q10", ]))`
+\
+**Answer:**
 \
 
-**Download the plot associated with this question and copy-paste it into your report below.**
+**Please download the plot associated with Q10 and copy-paste it into your report below.**
 
 *Figure 3. Differenced time series of environmental case study target variable*  
 
 
-
-## Objective 4: Understand model\
+## Objective 4: Fit model\
 
 ***
 `r module_text["obj_04", ]`
 
 ***
 
-6. `r substr(quest["q6", ], 4, nchar(quest["q6", ]))`  
+11. `r substr(quest["q11", ], 5, nchar(quest["q11", ]))` 
 \
-    a.  `r substr(quest["q6a", ], 3, nchar(quest["q6a", ]))`:   
+**Answer:**
+\
+
+12. `r substr(quest["q12", ], 5, nchar(quest["q12", ]))`  
+\
+    a.  `r substr(quest["q12a", ], 4, nchar(quest["q12a", ]))`:   
     \
-    b.  `r substr(quest["q6b", ], 3, nchar(quest["q6b", ]))`:   
+    **Answer:**
+    \
+    b.  `r substr(quest["q12b", ], 4, nchar(quest["q12b", ]))`:   
+    \
+    **Answer:**
+    \
+    c.  `r substr(quest["q12c", ], 4, nchar(quest["q12c", ]))`:   
+    \
+    **Answer:**
+    \
+    d.  `r substr(quest["q12d", ], 4, nchar(quest["q12d", ]))`:   
+    \
+    **Answer:**
     \
 \
 
-7. `r substr(quest["q7", ], 5, nchar(quest["q7", ]))` 
+13. `r substr(quest["q13", ], 5, nchar(quest["q13", ]))` 
+\
+**Answer:**
 \
 
-*Table 4. Sorted parameters and state variables.*
-
-```{r echo = FALSE, results = "asis"}
-knitr::kable(state_par)
-
-```
- 
+14. `r substr(quest["q14", ], 5, nchar(quest["q14", ]))` 
+\
+**Answer:**
 \
 
-8. `r substr(quest["q8", ], 5, nchar(quest["q8", ]))`
+15. `r substr(quest["q15", ], 5, nchar(quest["q15", ]))` 
 \
-    a.  `r substr(quest["q8a", ], 3, nchar(quest["q8a", ]))`: 
-    b.  `r substr(quest["q8b", ], 3, nchar(quest["q8b", ]))`: 
+**Answer:**
 \
 
-## Objective 5: Build model\
+
+## Objective 5: Assess model fit\
 
 ***
 `r module_text["obj_05", ]`
 
 ***
 
-9. `r substr(quest["q9", ], 5, nchar(quest["q9", ]))`  
+16. `r substr(quest["q16", ], 5, nchar(quest["q16", ]))`
 \
-**Answer:** 
-
-10. `r substr(quest["q10", ], 6, nchar(quest["q10", ]))`
-\
-**Answer:**   
-
-11. `r substr(quest["q11", ], 6, nchar(quest["q11", ]))`
-\
-**Answer:**   
-\
-*Please copy-paste your Q-11-plot.png image here.*\
-\
-*Figure 1. Modeled primary productivity for your selected NEON lake compared to chlorophyll-a concentrations, a proxy measurement for aquatic primary productivity.*
-\
-12. `r substr(quest["q12", ], 6, nchar(quest["q12", ]))`
-\
-13. `r substr(quest["q13", ], 6, nchar(quest["q13", ]))`
+**Answer:**
 \
 
-*Table 5. Calibrated primary productivity model settings.*
-```{r}
-knitr::kable(mod_sett1) 
-```
+**Please download the plot associated with Q16 and copy-paste it into your report below.**
 
+*Figure 4. ARIMA predictions of out-of-sample observations of the environmental case study target variable* 
+
+17. `r substr(quest["q17", ], 5, nchar(quest["q17", ]))`
+\
+**Answer:**
 \
 
-# Activity B: Forecast!
+18. `r substr(quest["q18", ], 5, nchar(quest["q18", ]))`
+\
+**Answer:**
+\
 
-## Objective 6: Examine uncertainty\
+19. `r substr(quest["q19", ], 5, nchar(quest["q19", ]))`
+\
+**Answer:**
+\
+
+**Please download the plot associated with Q19 and copy-paste it into your report below.**
+
+*Figure 5. ARIMA predictions with uncertainty of out-of-sample observations of the environmental case study target variable*
+
+20. `r substr(quest["q20", ], 5, nchar(quest["q20", ]))`
+\
+**Answer:**
+\
+
+\newpage
+
+# Activity B: Upload your own data and fit a time series model
+
+## Objective 6: Upload standardized data\
 
 ***
 `r module_text["obj_06", ]`
 
 ***
 
-14. `r substr(quest["q14", ], 6, nchar(quest["q14", ]))`  
+24. `r substr(quest["q24", ], 6, nchar(quest["q24", ]))`  
 \
 **Answer:** 
 \
 
-15. `r substr(quest["q15", ], 6, nchar(quest["q15", ]))`
+25. `r substr(quest["q25", ], 6, nchar(quest["q25", ]))`  
 \
-    a.  `r substr(quest["q15a", ], 3, nchar(quest["q15a", ]))`  
+**Answer:** 
+\
+
+26. `r substr(quest["q26", ], 6, nchar(quest["q26", ]))`
+\
+    a.  `r substr(quest["q26a", ], 3, nchar(quest["q26a", ]))`  
     \
     **Answer:**  
     \
-    b.  `r substr(quest["q15b", ], 3, nchar(quest["q15b", ]))`  
+    b.  `r substr(quest["q26b", ], 3, nchar(quest["q26b", ]))`  
     \
     **Answer:**   
     \
-    c.  `r substr(quest["q15c", ], 3, nchar(quest["q15c", ]))`  
+    c.  `r substr(quest["q26c", ], 3, nchar(quest["q26c", ]))`  
     \
     **Answer:**   
     \
-    *Please copy-paste your Q-15-plot.png image here.*\
+    d.  `r substr(quest["q26d", ], 3, nchar(quest["q26d", ]))`  
+    \
+    **Answer:**   
+    \
 \
-*Figure 2. Weather forecast plot at the selected NEON lake generated from National Oceanic and Atmospheric Administration (NOAA)  [Global Ensemble Forecast System](https://www.ncdc.noaa.gov/data-access/model-data/model-datasets/global-ensemble-forecast-system-gefs)  (GEFS).* 
 
 
-## Objective 7: Prepare inputs
+## Objective 7: Fit an ARIMA model to your standardized dataset\
 
 ***
 `r module_text["obj_07", ]`
 
 ***
 
-16. `r substr(quest["q16", ], 6, nchar(quest["q16", ]))`  
+27. `r substr(quest["q27", ], 6, nchar(quest["q27", ]))`  
+\
+**Answer:** 
+\
+
+28. `r substr(quest["q28", ], 6, nchar(quest["q28", ]))`  
+\
+**Answer:** 
+\
+
+29. `r substr(quest["q29", ], 6, nchar(quest["q29", ]))`  
+\
+**Answer:** 
+\
+
+30. `r substr(quest["q30", ], 6, nchar(quest["q30", ]))`
+\
+    a.  `r substr(quest["q30a", ], 3, nchar(quest["q30a", ]))`  
+    \
+    **Answer:**  
+    \
+    b.  `r substr(quest["q30b", ], 3, nchar(quest["q30b", ]))`  
+    \
+    **Answer:**   
+    \
+    c.  `r substr(quest["q30c", ], 3, nchar(quest["q30c", ]))`  
+    \
+    **Answer:**   
+    \
+    d.  `r substr(quest["q30d", ], 3, nchar(quest["q30d", ]))`  
+    \
+    **Answer:**   
+    \
+\
+
+31. `r substr(quest["q31", ], 6, nchar(quest["q31", ]))`  
 \
 **Answer:** 
 \
 
 
-## Objective 8: Forecast\
+## Objective 8: Assess model fit\
 
 ***
 `r module_text["obj_08", ]`
 
 ***
 
-17. `r substr(quest["q17", ], 6, nchar(quest["q17", ]))`  
+32. `r substr(quest["q32", ], 6, nchar(quest["q32", ]))`  
 \
-**Answer:**   
-\
-*Please copy-paste your Q-17-plot.png image here.*\
-\
-*Figure 3. Ecological forecast for primary productivity at your selected NEON lake for the next 30 days.*  
+**Answer:** 
 \
 
-18. `r substr(quest["q18", ], 6, nchar(quest["q18", ]))`\
-\
-    a.  `r substr(quest["q18a", ], 3, nchar(quest["q18a", ]))`  
-    \
-    **Answer:**  
-    \
-    b.  `r substr(quest["q18b", ], 3, nchar(quest["q18b", ]))`  
-    \
-    **Answer:**   
-    \
+**Please download the plot associated with Q32 and copy-paste it into your report below.**
 
-## Objective 9: Communicate forecast\
+*Figure 6. ARIMA predictions with uncertainty of out-of-sample observations of the standardized dataset target variable*
+
+33. `r substr(quest["q33", ], 6, nchar(quest["q33", ]))`  
+\
+**Answer:** 
+\
+
+\newpage
+
+# Activity C: Compare predictive performance across models
+
+## Objective 9: Fit additional models\
 
 ***
 `r module_text["obj_09", ]`
 
 ***
 
-19. `r substr(quest["q19", ], 6, nchar(quest["q19", ]))`  
+34. `r substr(quest["q34", ], 6, nchar(quest["q34", ]))`
 \
-**Answer:**   
-\
-
-20. `r substr(quest["q20", ], 6, nchar(quest["q20", ]))`  
-\
-    a.  `r substr(quest["q20a", ], 3, nchar(quest["q20a", ]))`  
+    a.  `r substr(quest["q34a", ], 3, nchar(quest["q34a", ]))`  
     \
     **Answer:**  
     \
-    b.  `r substr(quest["q20b", ], 3, nchar(quest["q20b", ]))`  
+    b.  `r substr(quest["q34b", ], 3, nchar(quest["q34b", ]))`  
     \
     **Answer:**   
     \
-    *Please copy-paste your Q-20-visualization.png image here.*\
+    c.  `r substr(quest["q34c", ], 3, nchar(quest["q34c", ]))`  
+    \
+    **Answer:**   
+    \
 \
-*Figure 4. A visualization of an ecological forecast for primary productivity at your selected NEON lake for the next 30 days. You selected this visualization to optimize forecast communication.*  
 
+35. `r substr(quest["q35", ], 6, nchar(quest["q35", ]))`  
+\
+**Answer:** 
 \
 
-## Objective 10: Assess forecast\
+36. `r substr(quest["q36", ], 6, nchar(quest["q36", ]))`  
+\
+**Answer:** 
+\
+
+37. `r substr(quest["q37", ], 6, nchar(quest["q37", ]))`  
+\
+**Answer:** 
+\
+
+**Please download the plot associated with Q37 and copy-paste it into your report below.**
+
+*Figure 7. ARIMA, NNETAR, persistence, and DOY model fits for the standardized dataset target variable*
+
+
+## Objective 10: Compare model performance\
 
 ***
 `r module_text["obj_10", ]`
 
 ***
 
-21. `r substr(quest["q21", ], 6, nchar(quest["q21", ]))`  
-\
-    a.  `r substr(quest["q21a", ], 3, nchar(quest["q21a", ]))`  
-    \
-    **Answer:**  
-    \
-    b.  `r substr(quest["q21b", ], 3, nchar(quest["q21b", ]))`  
-    \
-    **Answer:**   
-    \
-    *Please copy-paste your Q-21-plot.png image here.*\
-\
-*Figure 5. Assessment of the forecast one week later by comparing the forecast to new observations at your selected NEON lake.*   
-\
-
-# Activity C: Complete the forecast cycle
-
-## Objective 11: Update model\
-
-***
-`r module_text["obj_11", ]`
-
-***
-
-22. `r substr(quest["q22", ], 6, nchar(quest["q22", ]))`  
-\
-    a.  `r substr(quest["q22a", ], 3, nchar(quest["q22a", ]))`  
-    \
-    **Answer:** 
-    \
-    *Table 6. Calibrated and updated primary productivity model settings.*
-    ```{r}
-    knitr::kable(mod_sett2) 
-    ```
-\
-    b.  `r substr(quest["q22b", ], 3, nchar(quest["q22b", ]))`  
-    \
-    **Answer:**   
-    \
-    *Please copy-paste your Q-22b-plot.png image here.*\
-    \
-    *Figure 6. Updated forecast by updating the model parameters for your selected NEON lake site.*
-\
-    c.  `r substr(quest["q22c", ], 3, nchar(quest["q22c", ]))`  
-    \
-    **Answer:**  
-    \
-    *Please copy-paste your Q-22c-plot.png image here.*\
-    \
-    *Figure 7. Assessment of the updated forecast.*   
-    \
-    d.  `r substr(quest["q22d", ], 3, nchar(quest["q22d", ]))`  
-    \
-    **Answer:** 
-    \
-\
-
-
-## Objective 12: Next forecast\
-
-***
-`r module_text["obj_12", ]`
-
-***
-
-23. `r substr(quest["q23", ], 6, nchar(quest["q23", ]))`  
-\
-    a.  `r substr(quest["q23a", ], 3, nchar(quest["q23a", ]))`  
-    \
-    **Answer:** 
-    \
-    *Table 7. Primary productivity model settings for the first forecast, updated forecast, and second forecast.*
-    \
-    ```{r}
-         knitr::kable(mod_sett3) 
-    ```
-    \
-    b.  `r substr(quest["q23b", ], 3, nchar(quest["q23b", ]))`  
-    \
-    **Answer:**   
-    \
-    *Please copy-paste your Q-23-plot.png image here.*\
-    \
-    c.  `r substr(quest["q23c", ], 3, nchar(quest["q23c", ]))`  
-    \
-    **Answer:**  
-    \
-  
-
-24. `r substr(quest["q24", ], 6, nchar(quest["q24", ]))`  
+38. `r substr(quest["q38", ], 6, nchar(quest["q38", ]))`  
 \
 **Answer:** 
 \
 
+**Please download the plot associated with Q38 and copy-paste it into your report below.**
 
+*Figure 8. Distributions of the residuals of ARIMA, NNETAR, persistence, and DOY model fits for the standardized dataset target variable*
 
+39. `r substr(quest["q39", ], 6, nchar(quest["q39", ]))`  
+\
+**Answer:** 
+\
 
+40. `r substr(quest["q40", ], 6, nchar(quest["q40", ]))`  
+\
+**Answer:** 
+\
 
-This module was developed by Moore, T.N., M.E. Lofton, C.C. Carey, and R.Q. Thomas. 03 July 2023. Macrosystems EDDIE: Introduction to Ecological Forecasting. Macrosystems EDDIE Module 5, Version 2. http://module5.macrosystemseddie.org. Module development was supported by NSF grants DEB-1926050 and DBI-1933016.
+**Please download the plot associated with Q40 and copy-paste it into your report below.**
 
-This document last modified: 03 July 2023 by MEL.
+*Figure 9. Predictions with uncertainty of ARIMA, NNETAR, persistence, and DOY models fit to the standardized dataset target variable*
+
+41. `r substr(quest["q41", ], 6, nchar(quest["q41", ]))`  
+\
+**Answer:** 
+\
+
+42. `r substr(quest["q42", ], 6, nchar(quest["q42", ]))`  
+\
+*Table 4. RMSE and ignorance score of the ARIMA, NNETAR, persistence, and DOY models*
+```{r}
+knitr::kable(model_perf) 
+```
+\
+
+43. `r substr(quest["q43", ], 6, nchar(quest["q43", ]))`  
+\
+**Answer:** 
+\
+
+44. `r substr(quest["q44", ], 6, nchar(quest["q44", ]))`  
+\
+**Answer:** 
+\
+
+45. `r substr(quest["q45", ], 6, nchar(quest["q45", ]))`  
+\
+**Answer:** 
+\
+
+This module was developed by Lofton, M.E., M.H. Hipsey, K. Kurucz, and C.C. Carey. 31 July 2025. Macrosystems EDDIE: Time Series Modeling and Prediction of Environmental Data. Macrosystems EDDIE Module 11, Version 1. http://module11.macrosystemseddie.org. Module development was supported by NSF grants XX and XX.
+
+This document last modified: 31 July 2025 by MEL.

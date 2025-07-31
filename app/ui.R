@@ -318,7 +318,8 @@ ui <- function(request) {
                         fluidRow(
                           column(12,
                                  wellPanel(style = paste0("background: ", obj_bg),
-                                  h2("Activity A: Select an environmental case study, visualize data, and fit a model"),
+                                  h2("Activity A: Fit a time series model to environmental data"),
+                                  h4("Select an environmental case study, visualize data, and fit a model."),
                                   p("Complete objectives 1-3 to gather the information you will need for your model. Then, complete objectives 4-5 to fit and assess a time series model.")
                                  )
                           )
@@ -760,7 +761,8 @@ ui <- function(request) {
                                                                    h3("Questions"),
                                                                    p(tags$b(quest["q13", 1])),
                                                                    p(tags$b(quest["q14", 1])),
-                                                                   p(tags$b(quest["q15", 1]))
+                                                                   p(tags$b(quest["q15", 1])),
+                                                                   p(tags$i("Hint! It may be helpful to compare the values of your model terms with other students in the class who chose the same case study as you but selected different exogenous regressors for their models. This will help you gain an understanding of whether the magnitudes of your estimated model parameters are relatively large or small."))
                                                             )
                                                           )
                                                       )
@@ -880,7 +882,7 @@ ui <- function(request) {
                                                                    p(tags$b(quest["q18", 1])),
                                                                    p(tags$b(quest["q19", 1])),
                                                                    p(tags$b(quest["q20", 1])),
-                                                                   p(tags$i("Hint: there is no right or wrong answer to Q20."))
+                                                                   p(tags$i("Hint: there is no right or wrong answer to Q20. For example, for some environmental variables, negative values are not possible, and so uncertainty bounds that cross 0 might affect our interpretation of model predictive skill. But for other variables, negative values are acceptable. So answers to Q20 will vary."))
                                                             )
                                                           )
                                                       )
@@ -952,9 +954,9 @@ ui <- function(request) {
                         fluidRow(
                           column(12,
                                  wellPanel(style = paste0("background: ", obj_bg),
-                                 h2("Activity B: Generate and assess your first forecast"),
-                                 h4("Forecast!"),
-                                 p("Complete objectives 6-8 to complete the steps involved with the forecast.")
+                                 h2("Activity B: Upload your own data and fit a time series model"),
+                                 h4("In Activity B, you will either upload your own dataset or select one of the provided datasets to work with. Then, you will fit another ARIMA model."),
+                                 p("Upload your data in Objective 6, then fit and assess the ARIMA model in Objectives 7 and 8.")
                                  )
                           )
                           ),
@@ -1015,7 +1017,7 @@ ui <- function(request) {
                                                         tags$li("We do not currently support sub-daily datasets. If your data are sub-daily, you will need to aggregate them to daily values prior to upload.")
                                                       ),
                                                       tags$ul(
-                                                        tags$li("If you would like to interpolate values to fill gaps in your dataset, this should be done before uploading your data to the module. Missing timesteps can be handled by our model fitting procedure but uneven or duplicated timesteps will cause an error.")
+                                                        tags$li("Missing timesteps, uneven timesteps, or duplicated timesteps will cause an error. If your timestep is daily, you must have an observation for every day from the start to the end of your dataset. If your timestep is weekly, you must have an observation for each week from the start to the end of your dataset. If it is monthly, you must have an observation for each month from the start to the end of your dataset. If working with weekly or monthly data, be sure the observations are evenly spaced! For example, a weekly dataset where sometimes there are 6 days between observations and sometimes there are 9 days between observations will likely throw an error.")
                                                       ),
                                                       tags$ul(
                                                         tags$li("We require a minimum of 100 timesteps in your dataset. This will allow for adequate training data for model fitting as well as adequate testing data for model assessment.")
@@ -1084,8 +1086,7 @@ ui <- function(request) {
                                                       numericInput("n", "Number of rows of uploaded data to display:", value = 5, min = 1, step = 1),
                                                       wellPanel(
                                                       tableOutput("stand_data")
-                                                      ),
-                                                      textOutput("gap_text")
+                                                      )
                                                       ),
                                                column(8,
                                                       wellPanel(
@@ -1250,17 +1251,7 @@ ui <- function(request) {
                                                       h3("Apply model to testing data"),
                                                       p("Now, we will apply our model to the test data to see how the predictions look."),
                                                       p("Click 'Generate predictions' to view the model predictions for the test data, and then answer the question below."),
-                                                      actionButton("generate_pred2",label = "Generate predictions"),
-                                                      br(),br(),
-                                                      box(id = "box2", width = 12, status = "primary",
-                                                          solidHeader = TRUE,
-                                                          fluidRow(
-                                                            column(10, offset = 1,
-                                                                   h3("Questions"),
-                                                                   p(tags$b(quest["q32", 1]))
-                                                            )
-                                                          )
-                                                      )
+                                                      actionButton("generate_pred2",label = "Generate predictions")
                                                ),
                                                column(8,
                                                       wellPanel(
@@ -1295,10 +1286,7 @@ ui <- function(request) {
                                                           fluidRow(
                                                             column(10, offset = 1,
                                                                    h3("Questions"),
-                                                                   p(tags$b(quest["q18", 1])),
-                                                                   p(tags$b(quest["q19", 1])),
-                                                                   p(tags$b(quest["q20", 1])),
-                                                                   p(tags$i("Hint: there is no right or wrong answer to Q20."))
+                                                                   p(tags$b(quest["q32", 1]))
                                                             )
                                                           )
                                                       )
