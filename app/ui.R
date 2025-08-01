@@ -441,7 +441,7 @@ ui <- function(request) {
                                                       h3("Data Plot"),
                                                       p("All plots in this Shiny app are generated using Plotly. This allows you to hover your mouse over the plot to get information from each of the plots. You can inspect the data closely by clicking and zooming into particular areas. There is also a tool box at the top of the plot."),
                                                       selectizeInput("view_var", "Select variable",
-                                                                     choices = unique(site_vars$variable_name)
+                                                                     choices = NULL
                                                                      ),
                                                       plotlyOutput("var_plot"),
                                                       useShinyjs(),  # Set up shinyjs
@@ -480,7 +480,7 @@ ui <- function(request) {
                                                       h3("Investigate variable relationships"),
                                                       p("For Q. 6 you will explore the relationship between the target variable for prediction and the other variables at this site. You may or may not discover any relationships between these variables."),
                                                       selectizeInput("x_var", "Select X variable",
-                                                                     choices = unique(site_vars$variable_name)[-1],
+                                                                     choices = NULL,
                                                                      options = list(
                                                                        placeholder = 'Please select a variable',
                                                                        onInitialize = I('function() { this.setValue(""); }'))

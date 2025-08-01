@@ -6,3 +6,6 @@ cann,frp,ug/L,filterable reactive phosphorus,Free reduced phosphorus (ug/L) is a
 cann,oxygen,mg/L,bottom water dissolved oxygen,Dissolved oxygen (mg/L) is a measure of how much oxygen gas (O2) is dissolved in the water. Low dissolved oxygen in the bottom waters of a water body can lead to the release of additional nutrients in the sediments and therefore exacerbation of harmful phytoplankton blooms.
 cann,temperature,degrees C,water temperature,Water temperature is measured in degrees Celsius.
 cann,flow,m3/s,discharge,Discharge (m3/s) is the measure of the volume of water flowing down the river per unit time.
+bart,nee,gC/m2/day,net ecosystem exchange,Daily mean net ecosystem exchange is the net exchange of carbon dioxide between the air and a terrestrial ecosystem.
+bart,temp,degrees C,air temperature,Air temperature is measured in degrees Celsius
+,,,,

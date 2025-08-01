@@ -10,3 +10,12 @@ cann,amm_zscore,standardized ammonia (NH4-N)
 cann,intercept,constant value added to fitted model
 cann,ma1,term for error from previous timestep (t-1)
 cann,ma2,term for error from second-to-previous timestep (t-2)
+bart,ar1,term for 1-timestep lag
+bart,ar2,term for 2-timestep lag
+bart,ma1,term for error from previous timestep (t-1)
+bart,ma2,term for error from second-to-previous timestep (t-2)
+bart,intercept,constant value added to fitted model
+bart,temp_zscore,standardized air temperature
+bart,ma3,term for error from third-to-previous timestep (t-3)
+bart,ma4,term for error from fourth-to-previous timestep (t-4)
+bart,ma5,term for error from fifth-to-previous timestep (t-5)

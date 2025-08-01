@@ -50,11 +50,12 @@ data_slides <- list.files("www/data_standards", full.names = TRUE)
 model_slides <- list.files("www/additional_models", full.names = TRUE)
 
 # Create case study site dataframe
-sites_df <- tibble(SiteID = c("cann"),
-                   SiteName = c("Canning River"), 
-                   SiteLocation = c("Perth, Australia"),
-                   Latitude = c(-32.02115897791225), #currently Kent St Weir coords, needs updating
-                   Longitude = c(115.92079680626996)) # currently Kent St Weir coords, needs updating
+sites_df <- tibble(SiteID = c("cann","bart"),
+                   SiteName = c("Canning River","Bartlett Experimental Forest"), 
+                   SiteLocation = c("Perth, WA, Australia","Carroll County, NH, USA"),
+                   Latitude = c(-32.02115897791225,44.063889), #currently Kent St Weir coords, needs updating
+                   Longitude = c(115.92079680626996,-71.287375),
+                   Type = c("Aquatic","Terrestrial")) # currently Kent St Weir coords, needs updating
 
 # Load case study data
 
@@ -62,13 +63,19 @@ sites_df <- tibble(SiteID = c("cann"),
 cann_data <- read_csv("./data/cann.csv") # joined observational data at weekly timestep
 cann_model_data <- read_csv("./data/cann_mod.csv") # interpolated data for model fitting
 
+# NEON NEE
+bart_data <- read_csv("./data/bart.csv") # wide format observational data at daily timestep
+bart_model_data <- read_csv("./data/bart_mod.csv") # interpolated wide format data for model fitting
+
+
 # Load variable descriptions
 site_vars <- read.csv("data/site_variables.csv")
 
 
 # Icons
 siteIcons <- iconList(
-  Aquatic = makeIcon("icons/water-icon.png", iconWidth = 28, iconHeight = 28)
+  Aquatic = makeIcon("icons/water-icon.png", iconWidth = 28, iconHeight = 28),
+  Terrestrial = makeIcon("icons/mountain-icon.png", iconWidth =  28, iconHeight = 28)
 )
 
 # Statistics for exploring data

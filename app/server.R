@@ -117,7 +117,7 @@ server <- function(input, output, session) {#
       ) %>%
       addMarkers(data = sites_df,
                  layerId = ~SiteID, clusterOptions = markerClusterOptions(),
-                 label = ~SiteName, icon = ~siteIcons[1])
+                 label = ~SiteName, icon = ~siteIcons)
     
   })
   
@@ -128,10 +128,23 @@ server <- function(input, output, session) {#
       need(input$table01_rows_selected != "",
            message = "Please select a site in the table.")
     )
+    
+    row_selected = sites_df[input$table01_rows_selected, ]
+    site_id <- row_selected$SiteID
+    
+    if(site_id == "cann"){
+      hght = 403.2
+      wid = 302.4
+    }
+    if(site_id == "bart"){
+      hght = 320
+      wid = 370
+    }
+
     list(src = site_photo_file$img,
          alt = "Image failed to render.",
-         height = 403.2,
-         width = 302.4)
+         height = hght,
+         width = wid)
   }, deleteFile = FALSE)
   
   # Objective 2
@@ -155,17 +168,46 @@ server <- function(input, output, session) {#
     site_id <- row_selected$SiteID
     
     if(site_id == "cann"){
-      df <- cann_data
-      
-      autocorrelation_data <- df %>%
-        select(datetime, chla) %>%
-        mutate(chla = na.approx(chla, na.rm = F)) %>% 
-        mutate(chla_lag = lag(chla)) %>%
-        filter(complete.cases(.))
+      df <- cann_data 
+      ac_df <- cann_data %>%
+        dplyr::rename(target = chla)
     }
+    if(site_id == "bart"){
+      df <- bart_data 
+      ac_df <- bart_data %>%
+        dplyr::rename(target = nee)
+    }
+    
+    autocorrelation_data <- ac_df %>%
+      select(datetime, target) %>%
+      mutate(target = na.approx(target, na.rm = F)) %>% 
+      mutate(target_lag = lag(target)) %>%
+      filter(complete.cases(.))
     
     return(list(data = df,
                 ac = autocorrelation_data))
+  })
+  
+  # select input for plotting variables
+  var.view <- reactiveValues(lst=NULL) 
+  
+  observe({
+    
+    validate(
+      need(input$table01_rows_selected != "",
+           message = "Please select a site in Objective 1.")
+    )
+    
+    row_selected = sites_df[input$table01_rows_selected, ]
+
+    select_list <- site_vars[which(site_vars$site_id == row_selected$SiteID), "variable_id"]
+    names(select_list) = site_vars[which(site_vars$site_id == row_selected$SiteID), "variable_name"]
+    
+    var.view$lst <- select_list
+    
+    
+    updateSelectizeInput(session, "view_var", choices = var.view$lst)
+    
   })
   
   # Select variable for plotting/data table
@@ -175,7 +217,9 @@ server <- function(input, output, session) {#
            message = "Please select a site in Objective 1.")
     )
     
-    read_var <- site_vars$variable_id[which(site_vars$variable_name == input$view_var)][1]
+    row_selected = sites_df[input$table01_rows_selected, ]
+    selected_site_vars <- site_vars[which(site_vars$site_id == row_selected$SiteID),]
+    read_var <- selected_site_vars$variable_id[which(selected_site_vars$variable_id == input$view_var)][1]
     df <- site_data()$data[,c("datetime",read_var)]
     df[, -1] <- signif(df[, -1], 4)
     names(df)[ncol(df)] <- read_var
@@ -201,8 +245,12 @@ server <- function(input, output, session) {#
       need(input$table01_rows_selected != "",
            message = "Please select a site in Objective 1.")
     )
+    validate(
+      need(input$view_var != "",
+           message = "Please select a variable from the dropdown menu.")
+    )
     
-    units <- site_vars$variable_unit[which(site_vars$variable_name == input$view_var)][1]
+    units <- site_vars$variable_unit[which(site_vars$variable_id == input$view_var)][1]
     
     p <- ggplot() +
       geom_point(data = site_DT()$data, aes_string(names(site_DT()$data)[1], names(site_DT()$data)[2]), color = "black") +
@@ -220,7 +268,11 @@ server <- function(input, output, session) {#
       need(input$table01_rows_selected != "",
            message = "Please select a site in Objective 1.")
     )
-    out_txt <- site_vars$variable_description[which(site_vars$variable_name == input$view_var)][1]
+    validate(
+      need(input$view_var != "",
+           message = "Please select a variable from the dropdown menu.")
+    )
+    out_txt <- site_vars$variable_description[which(site_vars$variable_id == input$view_var)][1]
     return(out_txt)
   })
   
@@ -230,6 +282,10 @@ server <- function(input, output, session) {#
     validate(
       need(input$table01_rows_selected != "",
            message = "Please select a site in Objective 1.")
+    )
+    validate(
+      need(input$view_var != "",
+           message = "Please select a variable from the dropdown menu.")
     )
     
     sum_stat <- summary(site_DT()$data)
@@ -249,6 +305,29 @@ server <- function(input, output, session) {#
     server = FALSE, escape = FALSE, editable = FALSE
   )
   
+  # make multi-select list
+  select.x <- reactiveValues(lst=NULL)
+
+  observeEvent(input$table01_rows_selected, {
+    
+
+      validate(
+        need(input$table01_rows_selected != "",
+             message = "Please select a site in Objective 1.")
+      )
+      
+      row_selected = sites_df[input$table01_rows_selected, ]
+      row_selected = sites_df[input$table01_rows_selected, ]
+      selected_site_vars <- site_vars[which(site_vars$site_id == row_selected$SiteID),]
+      select_list <- unique(selected_site_vars$variable_id)
+      names(select_list) = unique(selected_site_vars$variable_name)
+      
+      select.x$lst <- select_list[-1]
+      
+      updateSelectizeInput(session, "x_var", choices = select.x$lst)
+    
+  })
+  
   # Comparison plot ----
   output$xy_plot <- renderPlotly({
     
@@ -265,13 +344,19 @@ server <- function(input, output, session) {#
     row_selected = sites_df[input$table01_rows_selected, ]
     site_id <- row_selected$SiteID
     
-    ref <- site_vars$variable_id[which(site_vars$variable_name == input$x_var)][1]
+    ref <- site_vars$variable_id[which(site_vars$variable_id == input$x_var)][1]
     
     if(site_id == "cann"){
       plot_data <- site_data()$data[,c("datetime",ref,"chla")]
-      x_units <- site_vars$variable_unit[which(site_vars$variable_name == input$x_var)]
+      x_units <- site_vars$variable_unit[which(site_vars$variable_id == input$x_var)]
       target = "chlorophyll-a"
       y_units = "mg/L"
+    }
+    if(site_id == "bart"){
+      plot_data <- site_data()$data[,c("datetime",ref,"nee")]
+      x_units <- site_vars$variable_unit[which(site_vars$variable_id == input$x_var)]
+      target = "net ecosystem exchange"
+      y_units = "gC/m2/day"
     }
     
     validate(
@@ -333,8 +418,12 @@ server <- function(input, output, session) {#
         x_lab = "1-day lag of chlorophyll-a (mg/L)"
         y_lab = "chlorophyll-a (mg/L)"
       }
+      if(site_id == "bart"){
+        x_lab = "1-day lag of net ecosystem exchange (gC/m2/day)"
+        y_lab = "net ecosystem exchange (gC/m2/day)"
+      }
       
-      p <- ggplot(data = df, aes(x = chla_lag, y = chla))+
+      p <- ggplot(data = df, aes(x = target_lag, y = target))+
         geom_point()+
         xlab(x_lab)+
         ylab(y_lab)+
@@ -388,9 +477,7 @@ server <- function(input, output, session) {#
       row_selected = sites_df[input$table01_rows_selected, ]
       site_id <- row_selected$SiteID
       
-      if(site_id == "cann"){
-        pacf_list <- acf(df$chla, type = c("partial"), plot = FALSE)
-      }
+        pacf_list <- acf(df$target, type = c("partial"), plot = FALSE)
       
       pacf_plot_data <- tibble(Lag = pacf_list$lag,
                                Partial_ACF = round(pacf_list$acf, 2))
@@ -448,13 +535,17 @@ server <- function(input, output, session) {#
       row_selected = sites_df[input$table01_rows_selected, ]
       site_id <- row_selected$SiteID
       
+      diff_data <- diff(df$target)
+      
       if(site_id == "cann"){
-        diff_data <- diff(df$chla)
         y_lab = "chlorophyll-a (mg/L)"
+      }
+      if(site_id == "bart"){
+        y_lab = "net ecosystem exchange (gC/m2/day)"
       }
       
       diff_plot_data <- tibble(datetime = df$datetime,
-                               undiff = df$chla,
+                               undiff = df$target,
                                diff = c(NA,diff_data)) %>%
         pivot_longer(undiff:diff, names_to = "series_name", values_to = "value") %>%
         mutate(series_name = ifelse(series_name == "undiff","undifferenced data","differenced data"))
@@ -510,17 +601,14 @@ server <- function(input, output, session) {#
     #        message = "Please select a site in Objective 1.")
     # )
     
-    row_selected = sites_df[input$table01_rows_selected, ]
-    site_id <- row_selected$SiteID
-    
-    if(site_id == "cann"){
-      selected_site_vars <- site_vars %>%
-        filter(site_id == "cann")
+      row_selected = sites_df[input$table01_rows_selected, ]
+      row_selected = sites_df[input$table01_rows_selected, ]
+      selected_site_vars <- site_vars[which(site_vars$site_id == row_selected$SiteID),]
       select_list <- unique(selected_site_vars$variable_id)
       names(select_list) = unique(selected_site_vars$variable_name)
-    }
-    
+      
     multi.select$lst <- select_list[-1]
+    
     updateSelectizeInput(session, "select", choices = multi.select$lst)
     print("I ran!")
     }
@@ -574,21 +662,24 @@ server <- function(input, output, session) {#
       
       row_selected = sites_df[input$table01_rows_selected, ]
       site_id <- row_selected$SiteID
+      selected_site_vars <- site_vars[which(site_vars$site_id == row_selected$SiteID),]
+      var_names <- selected_site_vars[,c("variable_id","variable_name","variable_unit")]
+      col_names <- c(input$select)
       
       if(site_id == "cann"){
-        
-        var_names <- site_vars[,c("variable_id","variable_name","variable_unit")]
-        
-        col_names <- c(input$select)
-        
-        plot_data <- cann_model_data %>%
-          dplyr::slice_head(prop = .8) %>% # using a 70:30 split here
-          select(all_of(col_names)) %>%
-          pivot_longer(cols = everything(), names_to = "variable_id", values_to = "obs") %>%
-          left_join(., site_vars, by = "variable_id") %>%
-          mutate(plot_labels = paste(variable_name, paste0("(",variable_unit,")"), sep = " "))
-        
+        plot_data0 <- cann_model_data 
       }
+      if(site_id == "bart"){
+        plot_data0 <- bart_model_data 
+      }
+      
+      plot_data <- plot_data0 %>%
+        dplyr::slice_head(prop = .8) %>% # using a 70:30 split here
+        select(all_of(col_names)) %>%
+        pivot_longer(cols = everything(), names_to = "variable_id", values_to = "obs") %>%
+        left_join(., site_vars, by = "variable_id") %>%
+        mutate(plot_labels = paste(variable_name, paste0("(",variable_unit,")"), sep = " "))
+      
       
       p <- ggplot(data = plot_data)+
         geom_density(aes(x = obs, color = plot_labels, fill = plot_labels), alpha = 0.5)+
@@ -633,24 +724,26 @@ server <- function(input, output, session) {#
       
       row_selected = sites_df[input$table01_rows_selected, ]
       site_id <- row_selected$SiteID
+      selected_site_vars <- site_vars[which(site_vars$site_id == row_selected$SiteID),]
+      var_names <- selected_site_vars[,c("variable_id","variable_name","variable_unit")]
+      col_names <- c(input$select)
       
       if(site_id == "cann"){
-        
-        var_names <- site_vars[,c("variable_id","variable_name","variable_unit")]
-        
-        col_names <- c(input$select)
-        
-        plot_data_stand <- cann_model_data %>%
-          dplyr::slice_head(prop = .8) %>% # using a 70:30 split here
-          select(all_of(col_names)) %>%
-          pivot_longer(cols = everything(), names_to = "variable_id", values_to = "obs") %>%
-          left_join(., site_vars, by = "variable_id") %>%
-          mutate(plot_labels = paste(variable_name, paste0("(",variable_unit,")"), sep = " ")) %>%
-          group_by(plot_labels) %>%
-          mutate(zscore = as.numeric(scale(obs))) %>%
-          ungroup()
-        
+        plot_data0 <- cann_model_data 
       }
+      if(site_id == "bart"){
+        plot_data0 <- bart_model_data 
+      }
+      
+      plot_data_stand <- plot_data0 %>%
+        dplyr::slice_head(prop = .8) %>% # using a 70:30 split here
+        select(all_of(col_names)) %>%
+        pivot_longer(cols = everything(), names_to = "variable_id", values_to = "obs") %>%
+        left_join(., site_vars, by = "variable_id") %>%
+        mutate(plot_labels = paste(variable_name, paste0("(",variable_unit,")"), sep = " ")) %>%
+        group_by(plot_labels) %>%
+        mutate(zscore = as.numeric(scale(obs))) %>%
+        ungroup()
       
       p <- ggplot(data = plot_data_stand)+
         geom_density(aes(x = zscore, color = plot_labels, fill = plot_labels), alpha = 0.5)+
@@ -721,6 +814,7 @@ server <- function(input, output, session) {#
       
       row_selected = sites_df[input$table01_rows_selected, ]
       site_id <- row_selected$SiteID
+      selected_site_vars <- site_vars[which(site_vars$site_id == row_selected$SiteID),]
       
       if(site_id == "cann"){
         
@@ -754,10 +848,40 @@ server <- function(input, output, session) {#
         
       }
       
+      if(site_id == "bart"){
+        
+        col_names <- c("datetime","nee",input$select)
+        
+        model_df4 <- as_tsibble(bart_model_data) %>%
+          dplyr::slice_head(prop = .8) %>% # using a 70:30 split here
+          tsibble::fill_gaps() %>%
+          select(all_of(col_names)) %>%
+          mutate(across(input$select, list(zscore = ~as.numeric(scale(.)))))
+        
+        reg_cols <- paste0(input$select,"_zscore")
+        
+        if(length(input$select) == 0){
+          #my.arima <- model_df4 %>%
+          #model(`ARIMA` = fable::ARIMA("chla"))
+          order_txt <- "Please select at least one predictor to fit the ARIMA."
+        } else if(length(input$select) == 1){
+          my.formula <- formula(paste0("nee ~ ",reg_cols[1]))
+          actA.arima$arima <- model_df4 %>%
+            model(`ARIMA` = fable::ARIMA(formula = my.formula))
+        } else if(length(input$select) == 2){
+          my.formula <- formula(paste0("nee ~ ",reg_cols[1],"+",reg_cols[2]))
+          actA.arima$arima <- model_df4 %>%
+            model(`ARIMA` = fable::ARIMA(formula = my.formula))
+        } else if(length(input$select) == 3){
+          my.formula <- formula(paste0("nee ~ ",reg_cols[1],"+",reg_cols[2],"+",reg_cols[3]))
+          actA.arima$arima <- model_df4 %>%
+            model(`ARIMA` = fable::ARIMA(formula = my.formula))
+        }
+        
+      }
+      
       if(length(input$select) >= 1 & length(input$select) <= 3){
         order <- strsplit(as.character(actA.arima$arima$ARIMA), split = " ")[[1]][3]
-        selected_site_vars <- site_vars %>%
-          filter(site_id == "cann")
         predictors <- selected_site_vars$variable_name[which(selected_site_vars$variable_id %in% input$select)]
         predictors_list = ""
         for (i in 1:length(predictors)){
@@ -811,7 +935,6 @@ server <- function(input, output, session) {#
              message = "Click 'Fit ARIMA'")
       )
 
-    
       row_selected = sites_df[input$table01_rows_selected, ]
       site_id <- row_selected$SiteID
       
@@ -821,6 +944,13 @@ server <- function(input, output, session) {#
           select(datetime, chla) 
         colnames(plot_data) <- c("datetime","target")
         y_lab = "chlorophyll-a (mg/L)"
+      }
+      if(site_id == "bart"){
+        plot_data <- as_tsibble(bart_model_data) %>%
+          dplyr::slice_head(prop = .8) %>% # using a 70:30 split here
+          select(datetime, nee) 
+        colnames(plot_data) <- c("datetime","target")
+        y_lab = "net ecosystem exchange (gC/m2/day)"
       }
       
       fitted_values <- fitted(actA.arima$arima)
@@ -884,7 +1014,12 @@ server <- function(input, output, session) {#
         need(length(input$select) <= 3,
              message = "Please only select up to 3 regressors to fit your model.")
       )
-      model_coeffs_info <- model_coeffs_key %>%
+      
+      row_selected = sites_df[input$table01_rows_selected, ]
+      site_id <- row_selected$SiteID
+      selected_model_coeffs <- model_coeffs_key[which(model_coeffs_key$site_id == row_selected$SiteID),]
+      
+      model_coeffs_info <- selected_model_coeffs %>%
         select(term, coeff_description)
       t <- coefficients(actA.arima$arima %>% select(`ARIMA`))[,c(2:4)]
       t[,c(2:3)] <- round(t[,c(2:3)], digits = 3)
@@ -951,6 +1086,28 @@ server <- function(input, output, session) {#
         plot_data <- bind_rows(train_data, test_data)
         
         y_lab = "chlorophyll-a (mg/L)"
+        
+        train_test_dates <- train_data %>%
+          pull(datetime)
+        train_test_line <- last(train_test_dates)
+      }
+      
+      if(site_id == "bart"){
+        train_data <- as_tsibble(bart_model_data) %>%
+          dplyr::slice_head(prop = .8) %>% # using a 70:30 split here
+          select(datetime, nee) %>%
+          rename(target = nee) %>%
+          mutate(set = "training data")
+        
+        test_data <- as_tsibble(bart_model_data) %>%
+          dplyr::slice_tail(prop = .2) %>% # using a 70:30 split here
+          select(datetime, nee) %>%
+          rename(target = nee) %>%
+          mutate(set = "testing data")
+        
+        plot_data <- bind_rows(train_data, test_data)
+        
+        y_lab = "net ecosystem exchange (gC/m2/day)"
         
         train_test_dates <- train_data %>%
           pull(datetime)
@@ -1064,6 +1221,38 @@ server <- function(input, output, session) {#
         
       }
       
+      if(site_id == "bart"){
+        
+        test_data <- as_tsibble(bart_model_data) %>%
+          dplyr::slice_tail(prop = .2) %>% # using a 70:30 split here
+          select(datetime, nee) %>%
+          rename(target = nee) %>%
+          mutate(set = "testing data")
+        
+        train_data <- as_tsibble(bart_model_data) %>%
+          dplyr::slice_head(prop = .8) %>% # using a 70:30 split here
+          select(datetime, nee) %>%
+          rename(target = nee) %>%
+          mutate(set = "training data") 
+        
+        plot_data <- bind_rows(train_data, test_data)
+        
+        y_lab = "net ecosystem exchange (gC/m2/day)"
+        
+        train_test_dates <- train_data %>%
+          pull(datetime)
+        train_test_line <- last(train_test_dates)
+        
+        col_names <- c("datetime","nee",input$select)
+        
+        new_data <- as_tsibble(bart_model_data) %>%
+          filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
+          tsibble::fill_gaps() %>%
+          select(all_of(col_names)) %>%
+          mutate(across(input$select, list(zscore = ~as.numeric(scale(.)))))
+        
+      }
+      
       fitted_values <- fitted(actA.arima$arima)
       pred <- forecast(actA.arima$arima, new_data = new_data)
       
@@ -1148,6 +1337,9 @@ server <- function(input, output, session) {#
       
       if(site_id == "cann"){
         x_lab = "chlorophyll-a (mg/L)"
+      }
+      if(site_id == "bart"){
+        x_lab = "net ecosystem exchange (gC/m2/day)"
       }
       resid <- residuals(actA.arima$arima)
       sd.resid <- round(sd(resid$.resid, na.rm = TRUE),3)
@@ -1247,6 +1439,38 @@ server <- function(input, output, session) {#
         col_names <- c("datetime","chla",input$select)
         
         new_data <- as_tsibble(cann_model_data) %>%
+          filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
+          tsibble::fill_gaps() %>%
+          select(all_of(col_names)) %>%
+          mutate(across(input$select, list(zscore = ~as.numeric(scale(.)))))
+        
+      }
+      
+      if(site_id == "bart"){
+        
+        test_data <- as_tsibble(bart_model_data) %>%
+          dplyr::slice_tail(prop = .2) %>% # using a 70:30 split here
+          select(datetime, nee) %>%
+          rename(target = nee) %>%
+          mutate(set = "testing data")
+        
+        train_data <- as_tsibble(bart_model_data) %>%
+          dplyr::slice_head(prop = .8) %>% # using a 70:30 split here
+          select(datetime, nee) %>%
+          rename(target = nee) %>%
+          mutate(set = "training data") 
+        
+        plot_data <- bind_rows(train_data, test_data)
+        
+        y_lab = "net ecosystem exchange (gC/m2/day)"
+        
+        train_test_dates <- train_data %>%
+          pull(datetime)
+        train_test_line <- last(train_test_dates)
+        
+        col_names <- c("datetime","nee",input$select)
+        
+        new_data <- as_tsibble(bart_model_data) %>%
           filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
           tsibble::fill_gaps() %>%
           select(all_of(col_names)) %>%
@@ -1358,6 +1582,26 @@ server <- function(input, output, session) {#
       
       }
       
+      if(site_id == "bart"){
+        
+        col_names <- c("datetime","nee",input$select)
+        
+        train_data <- as_tsibble(bart_model_data) %>%
+          dplyr::slice_head(prop = .8)
+        
+        new_data <- as_tsibble(bart_model_data) %>%
+          filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
+          tsibble::fill_gaps() %>%
+          select(all_of(col_names)) %>%
+          mutate(across(input$select, list(zscore = ~as.numeric(scale(.)))))
+        
+        acc <- forecast(actA.arima$arima, new_data = new_data) %>%
+          accuracy(data = new_data)
+        
+        rmse <- acc$RMSE
+        
+      }
+      
       rmse_out <- paste0("RMSE: ",round(mean(rmse, na.rm = TRUE), 3))
       
       rmse.text$main <- rmse_out
@@ -1427,6 +1671,27 @@ server <- function(input, output, session) {#
         dist_params <- distributional::parameters(pred$chla)
         
         ign <- scoringRules::logs_norm(new_data$chla, dist_params$mu, dist_params$sigma)
+        
+      }
+      
+      if(site_id == "bart"){
+        
+        col_names <- c("datetime","nee",input$select)
+        
+        train_data <- as_tsibble(bart_model_data) %>%
+          dplyr::slice_head(prop = .8)
+        
+        new_data <- as_tsibble(bart_model_data) %>%
+          filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
+          tsibble::fill_gaps() %>%
+          select(all_of(col_names)) %>%
+          mutate(across(input$select, list(zscore = ~as.numeric(scale(.)))))
+        
+        pred <- forecast(actA.arima$arima, new_data = new_data) 
+        
+        dist_params <- distributional::parameters(pred$nee)
+        
+        ign <- scoringRules::logs_norm(new_data$nee, dist_params$mu, dist_params$sigma)
         
       }
       
