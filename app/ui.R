@@ -677,7 +677,7 @@ ui <- function(request) {
                                                       ),
                                                column(6,
                                                       br(),br(),
-                                                      selectInput( 
+                                                      selectizeInput( 
                                                         "select", 
                                                         textOutput("dropdown_txt"), 
                                                         choices = NULL, 
@@ -734,7 +734,8 @@ ui <- function(request) {
                                                                    p(tags$i("Hint: go back to Objective 3 if you need a reminder about how to interpret the ARIMA(p, d, q) order.")),
                                                                    p(tags$b(quest["q12a", 1])),
                                                                    p(tags$b(quest["q12b", 1])),
-                                                                   p(tags$b(quest["q12c", 1]))
+                                                                   p(tags$b(quest["q12c", 1])),
+                                                                   p(tags$b(quest["q12d", 1]))
                                                             )
                                                           )
                                                       )
@@ -1063,7 +1064,7 @@ ui <- function(request) {
                                                       )
                                                       ),
                                                column(4,
-                                                      selectInput("actB_dataset", "Option 2 only: Pick a dataset", choices = actB_choices),
+                                                      selectizeInput("actB_dataset", "Option 2 only: Pick a dataset", choices = actB_choices),
                                                       tableOutput("preview_actB_dataset"),
                                                       column(6,
                                                              downloadButton("download_actB_dataset", "Download .csv")
@@ -1116,13 +1117,13 @@ ui <- function(request) {
                                                ),
                                                column(6,
                                                       br(),br(),
-                                                      selectInput( 
+                                                      selectizeInput( 
                                                         "select_tar_actB", 
                                                         textOutput("tar_dropdown_actB"), 
                                                         choices = NULL, 
                                                         multiple = FALSE 
                                                       ),
-                                                      selectInput( 
+                                                      selectizeInput( 
                                                         "select_reg_actB", 
                                                         textOutput("reg_dropdown_actB"), 
                                                         choices = NULL, 

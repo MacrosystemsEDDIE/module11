@@ -8,3 +8,5 @@ cann,temperature_zscore,standardized water temperature
 cann,flow_zscore,standardized discharge
 cann,amm_zscore,standardized ammonia (NH4-N)
 cann,intercept,constant value added to fitted model
+cann,ma1,term for error from previous timestep (t-1)
+cann,ma2,term for error from second-to-previous timestep (t-2)

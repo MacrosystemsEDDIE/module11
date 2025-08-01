@@ -494,17 +494,21 @@ server <- function(input, output, session) {#
   
   # make multi-select list
   multi.select <- reactiveValues(lst=NULL)
+  restoreState <- reactiveVal(F)
   
-  observe({
+  observeEvent(input$table01_rows_selected, {
     
+    print(restoreState())
+    
+    if (!restoreState()){   
     validate(
       need(input$table01_rows_selected != "",
            message = "Please select a site in Objective 1.")
     )
-    validate(
-      need(!is.null(site_data()$data),
-           message = "Please select a site in Objective 1.")
-    )
+    # validate(
+    #   need(!is.null(site_data()$data),
+    #        message = "Please select a site in Objective 1.")
+    # )
     
     row_selected = sites_df[input$table01_rows_selected, ]
     site_id <- row_selected$SiteID
@@ -517,6 +521,10 @@ server <- function(input, output, session) {#
     }
     
     multi.select$lst <- select_list[-1]
+    updateSelectizeInput(session, "select", choices = multi.select$lst)
+    print("I ran!")
+    }
+    restoreState(F)
     
   })
   
@@ -534,11 +542,6 @@ server <- function(input, output, session) {#
     
     return("Please select up to 3 predictors from the dropdown menu.")
     
-  })
-  
-  # Update the selectInput with the named list
-  observe({
-    updateSelectInput(session, "select", choices = multi.select$lst)
   })
   
   
@@ -605,7 +608,9 @@ server <- function(input, output, session) {#
   
   observe({
     
-    input$standardize_data
+    input$select
+    
+    if(input$standardize_data > 0){
     
     output$standardize_plot <- renderPlotly({
       
@@ -658,8 +663,11 @@ server <- function(input, output, session) {#
       plot.stand$stand.tracker = 1
       
       return(ggplotly(p, dynamicTicks = TRUE))
+
       
     })
+    
+    }
     
     
   })
@@ -682,7 +690,8 @@ server <- function(input, output, session) {#
   actA.arima <- reactiveValues(arima=NULL)
   
   observe({
-    input$fit_arima
+    input$select
+    
     output$arima_order <- renderText({
       
       validate(
@@ -704,6 +713,10 @@ server <- function(input, output, session) {#
       validate(
         need(plot.stand$stand.tracker == 1,
              message = "Please standardize your exogenous regressors.")
+      )
+      validate(
+        need(input$fit_arima > 0,
+             message = "Please click 'Fit ARIMA'.")
       )
       
       row_selected = sites_df[input$table01_rows_selected, ]
@@ -761,44 +774,15 @@ server <- function(input, output, session) {#
       
       return(order_txt)
       })
+
   })
   
-  # Reset ARIMA order text when change selected variables
-  observe({
-    input$select
-    output$arima_order <- renderText({
-      
-      validate(
-        need(input$table01_rows_selected != "",
-             message = "Please select a site in Objective 1.")
-      )
-      validate(
-        need(!is.null(site_data()$data),
-             message = "Please select a site in Objective 1.")
-      )
-      validate(
-        need(!is.null(input$select),
-             message = "Please select at least 1 predictor from the dropdown menu.")
-      )
-      validate(
-        need(length(input$select) <= 3,
-             message = "Please only select up to 3 regressors to fit your model.")
-      )
-      validate(
-        need(plot.stand$stand.tracker == 1,
-             message = "Please standardize your exogenous regressors.")
-      )
-      
-      return("Please click 'Fit ARIMA'.")
-      
-      })
-  })
   
   # ARIMA plot ----
   plot.arima <- reactiveValues(main=NULL)
   
   observe({
-    input$fit_arima
+    input$select
     
     output$arima_plot <- renderPlotly({ 
       
@@ -858,52 +842,6 @@ server <- function(input, output, session) {#
     
   })
   
-  observe({
-    input$select
-    
-    output$arima_plot <- renderPlotly({ 
-      
-      validate(
-        need(input$table01_rows_selected != "",
-             message = "Please select a site in Objective 1.")
-      )
-      validate(
-        need(!is.null(site_data()$data),
-             message = "Please select a site in Objective 1.")
-      )
-      validate(
-        need(!is.null(input$select),
-             message = "Please select at least 1 predictor from the dropdown menu.")
-      )
-      validate(
-        need(length(input$select) <= 3,
-             message = "Please only select up to 3 regressors to fit your model.")
-      )
-      validate(
-        need(plot.stand$stand.tracker == 1,
-             message = "Please standardize your exogenous regressors.")
-      )
-      validate(
-        need(input$fit_arima > 0,
-             message = "Click 'Fit ARIMA'")
-      )
-      
-      p <- ggplot() +
-        annotate("text", x = 10,  y = 10,
-                 size = 6,
-                 label = "Looks like you've chosen new regressors!\nPlease click 'Fit ARIMA' to regenerate this plot.") + 
-        theme_void()+
-        theme(panel.grid = element_blank(),
-              axis.line = element_blank())
-      
-      plot.arima$main <- p
-      
-      return(ggplotly(p, dynamicTicks = TRUE))
-      
-    })
-    
-  })
-  
   # Download scatterplot of arima
   output$save_arima_plot <- downloadHandler(
     filename = function() {
@@ -922,7 +860,7 @@ server <- function(input, output, session) {#
   coeff.table <- reactiveValues(main=NULL)
   
   observe({
-    input$fit_arima
+    input$select
     
     output$coeff_table <- renderDT({ 
       
@@ -964,7 +902,7 @@ server <- function(input, output, session) {#
   plot.train.test <- reactiveValues(main=NULL)
   
   observe({
-    input$fit_arima
+    input$select
     
     output$train_test_plot <- renderPlotly({ 
       
@@ -1039,53 +977,7 @@ server <- function(input, output, session) {#
     
   })
   
-  observe({
-    input$select
-    
-    output$train_test_plot <- renderPlotly({ 
-      
-      validate(
-        need(input$table01_rows_selected != "",
-             message = "Please select a site in Objective 1.")
-      )
-      validate(
-        need(!is.null(site_data()$data),
-             message = "Please select a site in Objective 1.")
-      )
-      validate(
-        need(!is.null(input$select),
-             message = "Please select at least 1 predictor from the dropdown menu in Objective 4.")
-      )
-      validate(
-        need(length(input$select) <= 3,
-             message = "Please only select up to 3 regressors to fit your model in Objective 4.")
-      )
-      validate(
-        need(plot.stand$stand.tracker == 1,
-             message = "Please standardize your exogenous regressors in Objective 4.")
-      )
-      validate(
-        need(!is.null(actA.arima$arima),
-             message = "Please fit an ARIMA model in Objective 4.")
-      )
-      
-      p <- ggplot() +
-        annotate("text", x = 10,  y = 10,
-                 size = 6,
-                 label = "Looks like you've chosen new regressors!\nPlease click 'Fit ARIMA' in Objective 4 to regenerate this plot.") + 
-        theme_void()+
-        theme(panel.grid = element_blank(),
-              axis.line = element_blank())
-      
-      plot.train.test$main <- p
-      
-      return(ggplotly(p, dynamicTicks = TRUE))
-      
-    })
-    
-  })
-  
-  # Download scatterplot of arima
+  # Download train test plot
   output$save_train_test_plot <- downloadHandler(
     filename = function() {
       paste("QXX-plot-", Sys.Date(), ".png", sep="")
@@ -1103,7 +995,7 @@ server <- function(input, output, session) {#
   plot.test.pred <- reactiveValues(main=NULL)
   
   observe({
-    input$fit_arima
+    input$select
     
     output$test_pred_plot <- renderPlotly({ 
       
@@ -1194,57 +1086,7 @@ server <- function(input, output, session) {#
     
   })
   
-  observe({
-    input$select
-    
-    output$test_pred_plot <- renderPlotly({ 
-      
-      validate(
-        need(input$table01_rows_selected != "",
-             message = "Please select a site in Objective 1.")
-      )
-      validate(
-        need(!is.null(site_data()$data),
-             message = "Please select a site in Objective 1.")
-      )
-      validate(
-        need(!is.null(input$select),
-             message = "Please select at least 1 predictor from the dropdown menu in Objective 4.")
-      )
-      validate(
-        need(length(input$select) <= 3,
-             message = "Please only select up to 3 regressors to fit your model in Objective 4.")
-      )
-      validate(
-        need(plot.stand$stand.tracker == 1,
-             message = "Please standardize your exogenous regressors in Objective 4.")
-      )
-      validate(
-        need(!is.null(actA.arima$arima),
-             message = "Please fit an ARIMA model in Objective 4.")
-      )
-      validate(
-        need(input$generate_pred > 0,
-             message = "Click 'Generate predictions'")
-      )
-      
-      p <- ggplot() +
-        annotate("text", x = 10,  y = 10,
-                 size = 6,
-                 label = "Looks like you've chosen new regressors!\nPlease click 'Fit ARIMA' in Objective 4 to regenerate this plot.") + 
-        theme_void()+
-        theme(panel.grid = element_blank(),
-              axis.line = element_blank())
-      
-      plot.test.pred$main <- p
-      
-      return(ggplotly(p, dynamicTicks = TRUE))
-      
-    })
-    
-  })
-  
-  # Download scatterplot of arima
+  # Download test pred plot
   output$save_test_pred_plot <- downloadHandler(
     filename = function() {
       paste("QXX-plot-", Sys.Date(), ".png", sep="")
@@ -1267,7 +1109,7 @@ server <- function(input, output, session) {#
   plot.resid <- reactiveValues(main=NULL)
   
   observe({
-    input$fit_arima
+    input$select
     
     output$resid_plot <- renderPlotly({ 
       
@@ -1324,57 +1166,8 @@ server <- function(input, output, session) {#
     
   })
   
-  observe({
-    input$select
-    
-    output$resid_plot <- renderPlotly({ 
-      
-      validate(
-        need(input$table01_rows_selected != "",
-             message = "Please select a site in Objective 1.")
-      )
-      validate(
-        need(!is.null(site_data()$data),
-             message = "Please select a site in Objective 1.")
-      )
-      validate(
-        need(!is.null(input$select),
-             message = "Please select at least 1 predictor from the dropdown menu in Objective 4.")
-      )
-      validate(
-        need(length(input$select) <= 3,
-             message = "Please only select up to 3 regressors to fit your model in Objective 4.")
-      )
-      validate(
-        need(plot.stand$stand.tracker == 1,
-             message = "Please standardize your exogenous regressors in Objective 4.")
-      )
-      validate(
-        need(!is.null(actA.arima$arima),
-             message = "Please fit an ARIMA model in Objective 4.")
-      )
-      validate(
-        need(input$generate_pred > 0,
-             message = "Click 'Generate predictions'")
-      )
-      
-      p <- ggplot() +
-        annotate("text", x = 10,  y = 10,
-                 size = 4,
-                 label = "You've chosen new regressors!\nClick 'Fit ARIMA' in Obj. 4 \nto regenerate this plot.") + 
-        theme_void()+
-        theme(panel.grid = element_blank(),
-              axis.line = element_blank())
-      
-      plot.resid$main <- p
-      
-      return(ggplotly(p, dynamicTicks = TRUE))
-      
-    })
-    
-  })
   
-  # Download scatterplot of arima
+  # Download residuals histogram
   output$save_resid_plot <- downloadHandler(
     filename = function() {
       paste("QXX-plot-", Sys.Date(), ".png", sep="")
@@ -1393,7 +1186,7 @@ server <- function(input, output, session) {#
   plot.uc <- reactiveValues(main=NULL)
   
   observe({
-    input$fit_arima
+    input$select
     
     output$uc_plot <- renderPlotly({ 
       
@@ -1486,57 +1279,7 @@ server <- function(input, output, session) {#
     
   })
   
-  observe({
-    input$select
-    
-    output$uc_plot <- renderPlotly({ 
-      
-      validate(
-        need(input$table01_rows_selected != "",
-             message = "Please select a site in Objective 1.")
-      )
-      validate(
-        need(!is.null(site_data()$data),
-             message = "Please select a site in Objective 1.")
-      )
-      validate(
-        need(!is.null(input$select),
-             message = "Please select at least 1 predictor from the dropdown menu in Objective 4.")
-      )
-      validate(
-        need(length(input$select) <= 3,
-             message = "Please only select up to 3 regressors to fit your model in Objective 4.")
-      )
-      validate(
-        need(plot.stand$stand.tracker == 1,
-             message = "Please standardize your exogenous regressors in Objective 4.")
-      )
-      validate(
-        need(!is.null(actA.arima$arima),
-             message = "Please fit an ARIMA model in Objective 4.")
-      )
-      validate(
-        need(input$generate_pred > 0,
-             message = "Click 'Generate predictions'")
-      )
-      
-      p <- ggplot() +
-        annotate("text", x = 10,  y = 10,
-                 size = 4,
-                 label = "Looks like you've chosen new regressors!\nPlease click 'Fit ARIMA' in Obj. 4 to regenerate this plot.") + 
-        theme_void()+
-        theme(panel.grid = element_blank(),
-              axis.line = element_blank())
-      
-      plot.uc$main <- p
-      
-      return(ggplotly(p, dynamicTicks = TRUE))
-      
-    })
-    
-  })
-  
-  # Download scatterplot of arima
+  # Download predictions with uc plot
   output$save_uc_plot <- downloadHandler(
     filename = function() {
       paste("QXX-plot-", Sys.Date(), ".png", sep="")
@@ -1559,7 +1302,7 @@ server <- function(input, output, session) {#
   rmse.text <- reactiveValues(main=NULL)
   
   observe({
-    input$fit_arima
+    input$select
     
     output$rmse_text <- renderText({ 
       
@@ -1625,55 +1368,12 @@ server <- function(input, output, session) {#
     
   })
   
-  observe({
-    input$select
-    
-    output$rmse_text <- renderText({ 
-      
-      validate(
-        need(input$table01_rows_selected != "",
-             message = "Please select a site in Objective 1.")
-      )
-      validate(
-        need(!is.null(site_data()$data),
-             message = "Please select a site in Objective 1.")
-      )
-      validate(
-        need(!is.null(input$select),
-             message = "Please select at least 1 predictor from the dropdown menu in Objective 4.")
-      )
-      validate(
-        need(length(input$select) <= 3,
-             message = "Please only select up to 3 regressors to fit your model in Objective 4.")
-      )
-      validate(
-        need(plot.stand$stand.tracker == 1,
-             message = "Please standardize your exogenous regressors in Objective 4.")
-      )
-      validate(
-        need(!is.null(actA.arima$arima),
-             message = "Please fit an ARIMA model in Objective 4.")
-      )
-      validate(
-        need(input$assess_mod > 0,
-             message = "Click 'Calculate RMSE and ignorance score'")
-      )
-      
-      rmse_out <- paste0("You've selected new regressors! Please click 'Fit ARIMA' in Obj. 4 to recalculate the ignorance score!")
-      
-      rmse.text$main <- rmse_out
-      
-      return(rmse_out)
-      
-    })
-    
-  })
   
   # Calculate ignorance
   ign.text <- reactiveValues(main=NULL)
   
   observe({
-    input$fit_arima
+    input$select
     
     output$ign_text <- renderText({ 
       
@@ -1731,50 +1431,6 @@ server <- function(input, output, session) {#
       }
       
       ign_out <- paste0("Ignorance score: ",round(mean(ign, na.rm = TRUE), 2))
-      
-      ign.text$main <- ign_out
-      
-      return(ign_out)
-      
-    })
-    
-  })
-  
-  observe({
-    input$select
-    
-    output$ign_text <- renderText({ 
-      
-      validate(
-        need(input$table01_rows_selected != "",
-             message = "Please select a site in Objective 1.")
-      )
-      validate(
-        need(!is.null(site_data()$data),
-             message = "Please select a site in Objective 1.")
-      )
-      validate(
-        need(!is.null(input$select),
-             message = "Please select at least 1 predictor from the dropdown menu in Objective 4.")
-      )
-      validate(
-        need(length(input$select) <= 3,
-             message = "Please only select up to 3 regressors to fit your model in Objective 4.")
-      )
-      validate(
-        need(plot.stand$stand.tracker == 1,
-             message = "Please standardize your exogenous regressors in Objective 4.")
-      )
-      validate(
-        need(!is.null(actA.arima$arima),
-             message = "Please fit an ARIMA model in Objective 4.")
-      )
-      validate(
-        need(input$assess_mod > 0,
-             message = "Click 'Calculate RMSE and ignorance score'")
-      )
-      
-      ign_out <- paste0("You've selected new regressors! Please click 'Fit ARIMA' in Obj. 4 to recalculate the ignorance score!")
       
       ign.text$main <- ign_out
       
@@ -2113,11 +1769,11 @@ server <- function(input, output, session) {#
   
   # Update the selectInput with the named list
   observe({
-    updateSelectInput(session, "select_tar_actB", choices = multi.select2$lst)
+    updateSelectizeInput(session, "select_tar_actB", choices = multi.select2$lst)
   })
   
   observe({
-    updateSelectInput(session, "select_reg_actB", choices = multi.select3$lst)
+    updateSelectizeInput(session, "select_reg_actB", choices = multi.select3$lst)
   })
   
   
@@ -4819,12 +4475,12 @@ server <- function(input, output, session) {#
   })
   
   #Bookmarking
-  bookmarkingWhitelist <- c("phy_ic","row_num","run_fc3","load_fc3","assess_fc4","update_fc2",
-                            "assess_fc3","run_fc2","load_fc2","conv_fc","add_lm3","run_qaqc2","add_lm2",
-                            "run_qaqc1","load_fc","submit_ques","run_mod_ann","run_mod_parm",
-                            "run_mod_ic","tabseries1","maintab","nut_uptake2","mort_rate2","phy_init2",
-                            "nut_uptake","mort_rate","phy_init","parm_mort_rate","members2",
-                            "add_newobs","add_obs","add_obs_parm","add_obs_ic","phy_init4","table01_rows_selected")
+  bookmarkingWhitelist <- c("table01_rows_selected","plot_lag","plot_pacf","plot_diff",
+                            "standardize_data","fit_arima","generate_pred","view_resid",
+                            "add_uc","assess_mod","standardize_data2","fit_arima2",
+                            "generate_pred2","view_resid2","add_uc2","assess_mod2",
+                            "fit_addn_mod","view_resid3","plot_pred_models","calc_ign3",
+                            "row_num","select","select_tar_actB","select_reg_actB","n","prop")
 
   observeEvent(input$bookmarkBtn, {
     session$doBookmark()
@@ -4841,20 +4497,43 @@ server <- function(input, output, session) {#
   # Save extra values in state$values when we bookmark
   onBookmark(function(state) {
     state$values$sel_row <- input$table01_rows_selected
+    state$values$sel_reg <- input$select
+    state$values$sel_choices <- multi.select$lst
   })
 
   # Read values from state$values when we restore
   onRestore(function(state) {
+    print(paste("begin onRestore",restoreState()))
     updateTabsetPanel(session, "maintab",
                       selected = "mtab4")
     updateTabsetPanel(session, "tabseries1",
                       selected = "obj1")
-  })
-
-  onRestored(function(state) {
     updateSelectizeInput(session, "row_num", selected = state$values$sel_row)
+    updateSelectizeInput(session, "select", choices = state$values$sel_choices, selected = state$values$sel_reg)
+    multi.select$lst <- state$values$sel_choices
+    restoreState(T)
+    print(paste("end onRestore",restoreState()))
   })
 
+  # onRestored(function(state) {
+  #   print(paste("begin onRestored",restoreState()))
+  #   updateSelectizeInput(session, "row_num", selected = state$values$sel_row)
+  #   updateSelectizeInput(session, "select", choices = state$values$sel_choices, selected = state$values$sel_reg)
+  #   restoreState(T)
+  #   print(paste("end onRestored",restoreState()))
+  #   
+  # })
+
+  # observe({
+  # # Get the list of all inputs
+  # all_inputs <- reactiveValuesToList(input)
+  # 
+  # # Print the list of inputs to the console
+  # input_df <- data.frame(
+  #   Name = names(all_inputs)
+  # )
+  # print(input_df)
+  # })
 
   
   # Remove tool tip from forward and back buttons
