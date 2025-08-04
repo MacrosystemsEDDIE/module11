@@ -6,6 +6,7 @@ cann,frp,ug/L,filterable reactive phosphorus,Free reduced phosphorus (ug/L) is a
 cann,oxygen,mg/L,bottom water dissolved oxygen,Dissolved oxygen (mg/L) is a measure of how much oxygen gas (O2) is dissolved in the water. Low dissolved oxygen in the bottom waters of a water body can lead to the release of additional nutrients in the sediments and therefore exacerbation of harmful phytoplankton blooms.
 cann,temperature,degrees C,water temperature,Water temperature is measured in degrees Celsius.
 cann,flow,m3/s,discharge,Discharge (m3/s) is the measure of the volume of water flowing down the river per unit time.
-bart,nee,gC/m2/day,net ecosystem exchange,Daily mean net ecosystem exchange is the net exchange of carbon dioxide between the air and a terrestrial ecosystem.
-bart,temp,degrees C,air temperature,Air temperature is measured in degrees Celsius
-,,,,
+bart,nee,gC/m2/day,net ecosystem exchange,Daily mean net ecosystem exchange is the net exchange of carbon dioxide between the air and a terrestrial ecosystem. The magnitude of net ecosystem exchange depends on the rates of photosynthesis and respiration of the ecosystem;s vegetation. 
+bart,temp,degrees C,air temperature,Air temperature is measured in degrees Celsius.
+bart,vpd,kPa,vapor pressure deficit,Vapor pressure deficit is a measure of the difference between the current amount of moisture in the air and the amount of moisture the air can hold when it is saturated. A large vapor pressure deficit due to particularly hot or dry conditions can reduce photosynethic rates and plant growth.
+bart,sw,W/m2,shortwave radiation,Shortwave radiation is a measure of the amount of sunlight available for plant photosynthesis.

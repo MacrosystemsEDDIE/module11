@@ -39,8 +39,8 @@ ui <- function(request) {
                       tags$a(href="http://module11.macrosystemseddie.org", 
                              "http://module11.macrosystemseddie.org.", target="_blank"))),
              h2(tags$b("Module 11: Time Series Modeling and Prediction of Environmental Data")),
-             bookmarkButton(id = "bookmarkBtn", label = "Bookmark my progress"),
-             p(tags$em("At any time, use this button to obtain a link that saves your progress."))
+             bookmarkButton(id = "bookmarkBtn", label = "Bookmark my Activity A progress"),
+             p(tags$em("At any time, use this button to obtain a link that saves your progress in Activity A. Bookmarking for Activities B and C is not supported as these activities require users to upload their own data, which we do not store within the app. Please plan to allocate 45-60 minutes to complete Activities B and C."))
              ),
       column(1, align = "right",
              br(),
@@ -187,7 +187,8 @@ ui <- function(request) {
                           tags$li(style="text-align: justify;", module_text["LO1", ]),
                           tags$li(style="text-align: justify;", module_text["LO2", ]),
                           tags$li(style="text-align: justify;", module_text["LO3", ]),
-                          tags$li(style="text-align: justify;", module_text["LO4", ]))
+                          tags$li(style="text-align: justify;", module_text["LO4", ]),
+                          tags$li(style="text-align: justify;", module_text["LO5", ]))
                  )
                ),
                hr(),
@@ -458,6 +459,9 @@ ui <- function(request) {
                                                       selectInput("stat_calc", label = "Select calculation:", choices = stats),
                                                       wellPanel(
                                                         textOutput("out_stats")
+                                                      ),
+                                                      tags$head(
+                                                        tags$style(HTML("#out_stats { font-size: 24px; }")) # Target the ID and set font-size
                                                       )
                                                ),
                                                column(8,
@@ -724,6 +728,9 @@ ui <- function(request) {
                                                       br(),br(),
                                                       wellPanel(textOutput("arima_order")
                                                       ),
+                                                      tags$head(
+                                                        tags$style(HTML("#arima_order { font-size: 24px; }")) # Target the ID and set font-size
+                                                      ),
                                                       br(), br(),
                                                       box(id = "box2", width = 12, status = "primary",
                                                           solidHeader = TRUE,
@@ -932,8 +939,14 @@ ui <- function(request) {
                                                       p(tags$b("RMSE")),
                                                       wellPanel(textOutput("rmse_text")
                                                       ),
+                                                      tags$head(
+                                                        tags$style(HTML("#rmse_text { font-size: 24px; }")) # Target the ID and set font-size
+                                                      ),
                                                       p(tags$b("Ignorance score")),
                                                       wellPanel(textOutput("ign_text")
+                                                      ),
+                                                      tags$head(
+                                                        tags$style(HTML("#ign_text { font-size: 24px; }")) # Target the ID and set font-size
                                                       )
                                                )
                                                
@@ -1169,6 +1182,9 @@ ui <- function(request) {
                                                       br(),br(),
                                                       wellPanel(textOutput("arima_order2")
                                                       ),
+                                                      tags$head(
+                                                        tags$style(HTML("#arima_order2 { font-size: 24px; }")) # Target the ID and set font-size
+                                                      ),
                                                       br(), br(),
                                                       box(id = "box2", width = 12, status = "primary",
                                                           solidHeader = TRUE,
@@ -1306,8 +1322,14 @@ ui <- function(request) {
                                                       p(tags$b("RMSE")),
                                                       wellPanel(textOutput("rmse_text2")
                                                       ),
+                                                      tags$head(
+                                                        tags$style(HTML("#rmse_text2 { font-size: 24px; }")) # Target the ID and set font-size
+                                                      ),
                                                       p(tags$b("Ignorance score")),
                                                       wellPanel(textOutput("ign_text2")
+                                                      ),
+                                                      tags$head(
+                                                        tags$style(HTML("#ign_text2 { font-size: 24px; }")) # Target the ID and set font-size
                                                       )
                                                ),
                                                column(4,
@@ -1364,7 +1386,7 @@ ui <- function(request) {
                                                       p(tags$em("Use the slides and text below to understand the three additional models that you will be fitting to your data.")),
                                                       p(tags$b("Why is model comparison useful?")),
                                                       tags$ul(
-                                                        tags$li("As we saw in Objective 8, simply calculating a single number (such as the ignorance score) to assess your model performance is not very meaningful. As we saw in Objective 8, simply calculating a single number (such as the ignorance score) to assess your model performance is not very meaningful. Comparing across models allows you to better assess model performance; your model can be considered to perform “better” or “worse” than another model.")
+                                                        tags$li("As we saw in Objective 8, simply calculating a single number (such as the ignorance score) to assess your model performance is not very meaningful. Comparing across models allows you to better assess model performance; your model can be considered to perform “better” or “worse” than another model.")
                                                       ),
                                                       p(tags$b("What is a baseline or 'null' model?")),
                                                       tags$ul(
@@ -1405,6 +1427,9 @@ ui <- function(request) {
                                                                    p(tags$i("Hint: use the slide deck above to help you answer the questions.")),
                                                                    p(tags$b(quest["q36", 1])),
                                                                    wellPanel(textOutput("nnetar_order")
+                                                                   ),
+                                                                   tags$head(
+                                                                     tags$style(HTML("#nnetar_order { font-size: 24px; }")) # Target the ID and set font-size
                                                                    ),
                                                                    p(tags$b(quest["q37", 1]))
                                                             )

@@ -56,11 +56,11 @@ q32,Q32. Inspect the plot on the right. How well do you think the model predicti
 q33,Q33. Record the RMSE and ignorance score for your model.
 q34,"Q34. Briefly describe, in your own words, each of the three additional models you will be fitting to your data."
 q34a,a. autoregressive neural network model (NNETAR)
-q34b,b. persistence model
+q34b,b. historical mean model
 q34c,c. day-of-year model (DOY)
 q35,"Q35. Why are baseline or ""null"" models useful when conducting model comparisons?"
 q36,"Q36. How many lags are used as inputs in your fitted NNETAR model, and how many neurons are in the hidden layer? Explain how you know."
-q37,"Q37. Use the interactive plot legend to examine the fit of the persistence model and the DOY model. Typically, the fit of the DOY model is much smoother than the persistence model. Use your understanding of the structure of these two models to explain why."
+q37,"Q37. Use the interactive plot legend to examine the fit of the mean model and the DOY model. Typically, the fit of the DOY model is a curvy line, while the mean model is a flat line. Use your understanding of the structure of these two models to explain why."
 q38,Q38. Which of the models has the smallest standard deviation of the residuals? Which has the largest?
 q39,Q39. Interpret the values of the standard deviation of the residuals for the four models. Which model do you expect to have the largest predictve uncertainty interval when you generate predictions with uncertainty? Explain your reasoning.
 q40,Q40. Which of the models has the largest predictive uncertainty interval? Does this match what you predicted in Q39?
@@ -68,4 +68,4 @@ q41,"Q41. Based on visual inspection of the plot of predictions with uncertainty
 q42,Q42. Record the RMSE and ignorance scores of your four models.
 q43,Q43. Which of your models performs best according to RMSE?
 q44,Q44. Which of your models performs best according to the ignorance score?
-q45,"Q45. Did the more complex models (ARIMA, NNETAR) perform better than the persistence and/or DOY models? What does this result indicate about the importance of exogenous regressors for predicting the target variable in your chosen dataset?"
+q45,"Q45. Did the more complex models (ARIMA, NNETAR) perform better than the historical mean and/or DOY models? What does this result indicate about the importance of exogenous regressors for predicting the target variable in your chosen dataset?"

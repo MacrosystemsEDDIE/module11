@@ -251,10 +251,11 @@ server <- function(input, output, session) {#
     )
     
     units <- site_vars$variable_unit[which(site_vars$variable_id == input$view_var)][1]
+    var_name <- site_vars$variable_name[which(site_vars$variable_id == input$view_var)][1]
     
     p <- ggplot() +
       geom_point(data = site_DT()$data, aes_string(names(site_DT()$data)[1], names(site_DT()$data)[2]), color = "black") +
-      ylab(paste0(input$view_var, " (", units, ")")) +
+      ylab(paste0(var_name, " (", units, ")")) +
       xlab("Time") +
       theme_minimal(base_size = 12)
     
@@ -683,7 +684,7 @@ server <- function(input, output, session) {#
       
       p <- ggplot(data = plot_data)+
         geom_density(aes(x = obs, color = plot_labels, fill = plot_labels), alpha = 0.5)+
-        facet_wrap(facets = vars(plot_labels), nrow = 1, scales = "free_x")+
+        facet_wrap(facets = vars(plot_labels), nrow = 1, scales = "free")+
         theme_bw()+
         theme(legend.position = "none")+
         xlab("observed value")
@@ -747,7 +748,7 @@ server <- function(input, output, session) {#
       
       p <- ggplot(data = plot_data_stand)+
         geom_density(aes(x = zscore, color = plot_labels, fill = plot_labels), alpha = 0.5)+
-        facet_wrap(facets = vars(plot_labels), nrow = 1)+
+        facet_wrap(facets = vars(plot_labels), nrow = 1, scales = "free")+
         theme_bw()+
         theme(legend.position = "none")+
         xlab("standardized value")
@@ -812,9 +813,18 @@ server <- function(input, output, session) {#
              message = "Please click 'Fit ARIMA'.")
       )
       
+      progress <- shiny::Progress$new()
+      # Make sure it closes when we exit this reactive, even if there's an error
+      on.exit(progress$close())
+      progress$set(message = "Fitting ARIMA model",
+                   detail = "Depending on the size of your dataset, it may take a minute to two to fit the model. This window will disappear
+                     when it is done.", value = 0.2)
+      
       row_selected = sites_df[input$table01_rows_selected, ]
       site_id <- row_selected$SiteID
       selected_site_vars <- site_vars[which(site_vars$site_id == row_selected$SiteID),]
+      progress$set(value = 0.5)
+      
       
       if(site_id == "cann"){
         
@@ -833,15 +843,15 @@ server <- function(input, output, session) {#
           #model(`ARIMA` = fable::ARIMA("chla"))
           order_txt <- "Please select at least one predictor to fit the ARIMA."
         } else if(length(input$select) == 1){
-          my.formula <- formula(paste0("chla ~ ",reg_cols[1]))
+          my.formula <- formula(paste0("chla ~ ",reg_cols[1],"+ PDQ(0, 0, 0)"))
           actA.arima$arima <- model_df4 %>%
             model(`ARIMA` = fable::ARIMA(formula = my.formula))
         } else if(length(input$select) == 2){
-          my.formula <- formula(paste0("chla ~ ",reg_cols[1],"+",reg_cols[2]))
+          my.formula <- formula(paste0("chla ~ ",reg_cols[1],"+",reg_cols[2],"+ PDQ(0, 0, 0)"))
           actA.arima$arima <- model_df4 %>%
             model(`ARIMA` = fable::ARIMA(formula = my.formula))
         } else if(length(input$select) == 3){
-          my.formula <- formula(paste0("chla ~ ",reg_cols[1],"+",reg_cols[2],"+",reg_cols[3]))
+          my.formula <- formula(paste0("chla ~ ",reg_cols[1],"+",reg_cols[2],"+",reg_cols[3],"+ PDQ(0, 0, 0)"))
           actA.arima$arima <- model_df4 %>%
             model(`ARIMA` = fable::ARIMA(formula = my.formula))
         }
@@ -865,20 +875,22 @@ server <- function(input, output, session) {#
           #model(`ARIMA` = fable::ARIMA("chla"))
           order_txt <- "Please select at least one predictor to fit the ARIMA."
         } else if(length(input$select) == 1){
-          my.formula <- formula(paste0("nee ~ ",reg_cols[1]))
+          my.formula <- formula(paste0("nee ~ ",reg_cols[1],"+ PDQ(0, 0, 0)"))
           actA.arima$arima <- model_df4 %>%
             model(`ARIMA` = fable::ARIMA(formula = my.formula))
         } else if(length(input$select) == 2){
-          my.formula <- formula(paste0("nee ~ ",reg_cols[1],"+",reg_cols[2]))
+          my.formula <- formula(paste0("nee ~ ",reg_cols[1],"+",reg_cols[2],"+ PDQ(0, 0, 0)"))
           actA.arima$arima <- model_df4 %>%
             model(`ARIMA` = fable::ARIMA(formula = my.formula))
         } else if(length(input$select) == 3){
-          my.formula <- formula(paste0("nee ~ ",reg_cols[1],"+",reg_cols[2],"+",reg_cols[3]))
+          my.formula <- formula(paste0("nee ~ ",reg_cols[1],"+",reg_cols[2],"+",reg_cols[3],"+ PDQ(0, 0, 0)"))
           actA.arima$arima <- model_df4 %>%
             model(`ARIMA` = fable::ARIMA(formula = my.formula))
         }
         
       }
+      
+      progress$set(value = 0.8)
       
       if(length(input$select) >= 1 & length(input$select) <= 3){
         order <- strsplit(as.character(actA.arima$arima$ARIMA), split = " ")[[1]][3]
@@ -896,8 +908,12 @@ server <- function(input, output, session) {#
         order_txt <- "Please select no more than three predictors to fit the ARIMA."
       }
       
+      progress$set(value = 1)
+      
       return(order_txt)
       })
+    
+
 
   })
   
@@ -1074,13 +1090,13 @@ server <- function(input, output, session) {#
         train_data <- as_tsibble(cann_model_data) %>%
           dplyr::slice_head(prop = .8) %>% # using a 70:30 split here
           select(datetime, chla) %>%
-          rename(target = chla) %>%
+          dplyr::rename(target = chla) %>%
           mutate(set = "training data")
         
         test_data <- as_tsibble(cann_model_data) %>%
           dplyr::slice_tail(prop = .2) %>% # using a 70:30 split here
           select(datetime, chla) %>%
-          rename(target = chla) %>%
+          dplyr::rename(target = chla) %>%
           mutate(set = "testing data")
         
         plot_data <- bind_rows(train_data, test_data)
@@ -1096,13 +1112,13 @@ server <- function(input, output, session) {#
         train_data <- as_tsibble(bart_model_data) %>%
           dplyr::slice_head(prop = .8) %>% # using a 70:30 split here
           select(datetime, nee) %>%
-          rename(target = nee) %>%
+          dplyr::rename(target = nee) %>%
           mutate(set = "training data")
         
         test_data <- as_tsibble(bart_model_data) %>%
           dplyr::slice_tail(prop = .2) %>% # using a 70:30 split here
           select(datetime, nee) %>%
-          rename(target = nee) %>%
+          dplyr::rename(target = nee) %>%
           mutate(set = "testing data")
         
         plot_data <- bind_rows(train_data, test_data)
@@ -1185,6 +1201,13 @@ server <- function(input, output, session) {#
              message = "Click 'Generate predictions'")
       )
       
+      progress <- shiny::Progress$new()
+      # Make sure it closes when we exit this reactive, even if there's an error
+      on.exit(progress$close())
+      progress$set(message = "Generating ARIMA predictions",
+                   detail = "Depending on the size of your dataset, it may take a minute to two to generate predictions. This window will disappear
+                     when it is done.", value = 0.2)
+      
       
       row_selected = sites_df[input$table01_rows_selected, ]
       site_id <- row_selected$SiteID
@@ -1194,13 +1217,13 @@ server <- function(input, output, session) {#
         test_data <- as_tsibble(cann_model_data) %>%
           dplyr::slice_tail(prop = .2) %>% # using a 70:30 split here
           select(datetime, chla) %>%
-          rename(target = chla) %>%
+          dplyr::rename(target = chla) %>%
           mutate(set = "testing data")
         
         train_data <- as_tsibble(cann_model_data) %>%
           dplyr::slice_head(prop = .8) %>% # using a 70:30 split here
           select(datetime, chla) %>%
-          rename(target = chla) %>%
+          dplyr::rename(target = chla) %>%
           mutate(set = "training data") 
         
         plot_data <- bind_rows(train_data, test_data)
@@ -1226,13 +1249,13 @@ server <- function(input, output, session) {#
         test_data <- as_tsibble(bart_model_data) %>%
           dplyr::slice_tail(prop = .2) %>% # using a 70:30 split here
           select(datetime, nee) %>%
-          rename(target = nee) %>%
+          dplyr::rename(target = nee) %>%
           mutate(set = "testing data")
         
         train_data <- as_tsibble(bart_model_data) %>%
           dplyr::slice_head(prop = .8) %>% # using a 70:30 split here
           select(datetime, nee) %>%
-          rename(target = nee) %>%
+          dplyr::rename(target = nee) %>%
           mutate(set = "training data") 
         
         plot_data <- bind_rows(train_data, test_data)
@@ -1253,8 +1276,9 @@ server <- function(input, output, session) {#
         
       }
       
+      progress$set(value = 0.5)
       fitted_values <- fitted(actA.arima$arima)
-      pred <- forecast(actA.arima$arima, new_data = new_data)
+      pred <- forecast(actA.arima$arima, new_data = new_data, bootstrap = TRUE, times = 256)
       
       
       p <- ggplot()+
@@ -1268,6 +1292,9 @@ server <- function(input, output, session) {#
         theme_classic()
       
       plot.test.pred$main <- p
+      
+      progress$set(value = 1)
+      
       
       return(ggplotly(p, dynamicTicks = TRUE))
       
@@ -1411,6 +1438,13 @@ server <- function(input, output, session) {#
              message = "Click 'Add uncertainty'")
       )
       
+      progress <- shiny::Progress$new()
+      # Make sure it closes when we exit this reactive, even if there's an error
+      on.exit(progress$close())
+      progress$set(message = "Generating ARIMA predictions",
+                   detail = "Depending on the size of your dataset, it may take a minute to two to generate predictions. This window will disappear
+                     when it is done.", value = 0.2)
+      
       row_selected = sites_df[input$table01_rows_selected, ]
       site_id <- row_selected$SiteID
       
@@ -1419,13 +1453,13 @@ server <- function(input, output, session) {#
         test_data <- as_tsibble(cann_model_data) %>%
           dplyr::slice_tail(prop = .2) %>% # using a 80:20 split here
           select(datetime, chla) %>%
-          rename(target = chla) %>%
+          dplyr::rename(target = chla) %>%
           mutate(set = "testing data")
         
         train_data <- as_tsibble(cann_model_data) %>%
           dplyr::slice_head(prop = .8) %>% # using a 80:20 split here
           select(datetime, chla) %>%
-          rename(target = chla) %>%
+          dplyr::rename(target = chla) %>%
           mutate(set = "training data") 
         
         plot_data <- bind_rows(train_data, test_data)
@@ -1451,13 +1485,13 @@ server <- function(input, output, session) {#
         test_data <- as_tsibble(bart_model_data) %>%
           dplyr::slice_tail(prop = .2) %>% # using a 70:30 split here
           select(datetime, nee) %>%
-          rename(target = nee) %>%
+          dplyr::rename(target = nee) %>%
           mutate(set = "testing data")
         
         train_data <- as_tsibble(bart_model_data) %>%
           dplyr::slice_head(prop = .8) %>% # using a 70:30 split here
           select(datetime, nee) %>%
-          rename(target = nee) %>%
+          dplyr::rename(target = nee) %>%
           mutate(set = "training data") 
         
         plot_data <- bind_rows(train_data, test_data)
@@ -1478,8 +1512,9 @@ server <- function(input, output, session) {#
         
       }
       
+      progress$set(value = 0.5)
       fitted_values <- fitted(actA.arima$arima)
-      pred <- forecast(actA.arima$arima, new_data = new_data, bootstrap = TRUE, times = 500) %>%
+      pred <- forecast(actA.arima$arima, new_data = new_data, bootstrap = TRUE, times = 256) %>%
         hilo()
       
       
@@ -1496,6 +1531,9 @@ server <- function(input, output, session) {#
         theme_classic()
       
       plot.uc$main <- p
+      
+      progress$set(value = 1)
+      
       
       return(ggplotly(p, dynamicTicks = TRUE))
       
@@ -1666,9 +1704,11 @@ server <- function(input, output, session) {#
           select(all_of(col_names)) %>%
           mutate(across(input$select, list(zscore = ~as.numeric(scale(.)))))
         
-        pred <- forecast(actA.arima$arima, new_data = new_data) 
+        pred <- forecast(actA.arima$arima, new_data = new_data, bootstrap = TRUE, times = 256) 
         
-        dist_params <- distributional::parameters(pred$chla)
+        dist_params <- data.frame(mu = mean(pred$chla, na.rm = TRUE),
+                                  sigma = sqrt(distributional::variance(pred$chla, na.rm = TRUE)))
+        
         
         ign <- scoringRules::logs_norm(new_data$chla, dist_params$mu, dist_params$sigma)
         
@@ -1687,9 +1727,10 @@ server <- function(input, output, session) {#
           select(all_of(col_names)) %>%
           mutate(across(input$select, list(zscore = ~as.numeric(scale(.)))))
         
-        pred <- forecast(actA.arima$arima, new_data = new_data) 
+        pred <- forecast(actA.arima$arima, new_data = new_data, bootstrap = TRUE, times = 256) 
         
-        dist_params <- distributional::parameters(pred$nee)
+        dist_params <- data.frame(mu = mean(pred$nee, na.rm = TRUE),
+                                         sigma = sqrt(distributional::variance(pred$nee, na.rm = TRUE)))
         
         ign <- scoringRules::logs_norm(new_data$nee, dist_params$mu, dist_params$sigma)
         
@@ -1704,6 +1745,8 @@ server <- function(input, output, session) {#
     })
     
   })
+  
+  ## Activity B
   
   # Objective 6
   
@@ -2082,7 +2125,7 @@ server <- function(input, output, session) {#
         
       p <- ggplot(data = plot_data)+
         geom_density(aes(x = obs, color = variable_id, fill = variable_id), alpha = 0.5)+
-        facet_wrap(facets = vars(variable_id), nrow = 1, scales = "free_x")+
+        facet_wrap(facets = vars(variable_id), nrow = 1, scales = "free")+
         theme_bw()+
         theme(legend.position = "none")+
         xlab("observed value")
@@ -2137,7 +2180,7 @@ server <- function(input, output, session) {#
       
       p <- ggplot(data = plot_data_stand)+
         geom_density(aes(x = zscore, color = variable_id, fill = variable_id), alpha = 0.5)+
-        facet_wrap(facets = vars(variable_id), nrow = 1)+
+        facet_wrap(facets = vars(variable_id), nrow = 1, scales = "free")+
         theme_bw()+
         theme(legend.position = "none")+
         xlab("standardized value")
@@ -2255,6 +2298,13 @@ server <- function(input, output, session) {#
              message = "Please click 'Fit ARIMA'")
       )
       
+      progress <- shiny::Progress$new()
+      # Make sure it closes when we exit this reactive, even if there's an error
+      on.exit(progress$close())
+      progress$set(message = "Fitting ARIMA model",
+                   detail = "Depending on the size of your dataset, it may take a minute to two to fit the ARIMA model. This window will disappear
+                     when it is done.", value = 0.2)
+      
       dat <- stand.data()
       wide_dat <- dat %>%
         pivot_wider(names_from = "variable", values_from = "observation")
@@ -2269,24 +2319,28 @@ server <- function(input, output, session) {#
         
         reg_cols <- paste0(input$select_reg_actB,"_zscore")
         
+        progress$set(value = 0.5)
+        
         if(length(input$select_reg_actB) == 0){
           #my.arima <- model_df4 %>%
           #model(`ARIMA` = fable::ARIMA("chla"))
           order_txt <- "Please select at least one predictor to fit the ARIMA."
         } else if(length(input$select_reg_actB) == 1){
-          my.formula <- formula(paste0(input$select_tar_actB," ~ ",reg_cols[1]))
+          my.formula <- formula(paste0(input$select_tar_actB," ~ ",reg_cols[1],"+ PDQ(0, 0, 0)"))
           actB.arima$arima <- model_df4 %>%
             model(`ARIMA` = fable::ARIMA(formula = my.formula))
         } else if(length(input$select_reg_actB) == 2){ 
-          my.formula <- formula(paste0(input$select_tar_actB," ~ ",reg_cols[1],"+",reg_cols[2]))
+          my.formula <- formula(paste0(input$select_tar_actB," ~ ",reg_cols[1],"+",reg_cols[2],"+ PDQ(0, 0, 0)"))
           actB.arima$arima <- model_df4 %>%
             model(`ARIMA` = fable::ARIMA(formula = my.formula))
         } else if(length(input$select_reg_actB) == 3){
-          my.formula <- formula(paste0(input$select_tar_actB," ~ ",reg_cols[1],"+",reg_cols[2],"+",reg_cols[3]))
+          my.formula <- formula(paste0(input$select_tar_actB," ~ ",reg_cols[1],"+",reg_cols[2],"+",reg_cols[3],"+ PDQ(0, 0, 0)"))
           actB.arima$arima <- model_df4 %>%
             model(`ARIMA` = fable::ARIMA(formula = my.formula))
         }
       
+        progress$set(value = 0.8)
+        
       if(length(input$select_reg_actB) >= 1 & length(input$select_reg_actB) <= 3){
         order <- strsplit(as.character(actB.arima$arima$ARIMA), split = " ")[[1]][3]
         predictors <- unique(dat$variable[which(dat$variable %in% input$select_reg_actB)])
@@ -2303,6 +2357,8 @@ server <- function(input, output, session) {#
         order_txt <- "Please select no more than three predictors to fit the ARIMA."
       }
       
+        progress$set(value = 1)
+        
       return(order_txt)
     })
   })
@@ -2817,6 +2873,13 @@ server <- function(input, output, session) {#
              message = "Click 'Generate predictions'")
       )
       
+      progress <- shiny::Progress$new()
+      # Make sure it closes when we exit this reactive, even if there's an error
+      on.exit(progress$close())
+      progress$set(message = "Generating ARIMA predictions",
+                   detail = "Depending on the size of your dataset, it may take a minute to two to generate the predictions. This window will disappear
+                     when it is done.", value = 0.2)
+      
       dat <- stand.data()
       
       wide_dat <- dat %>%
@@ -2851,8 +2914,11 @@ server <- function(input, output, session) {#
           mutate(across(input$select_reg_actB, list(zscore = ~as.numeric(scale(.)))))
       
       fitted_values <- fitted(actB.arima$arima)
-      pred <- forecast(actB.arima$arima, new_data = new_data)
       
+      progress$set(value = 0.5)
+      pred <- forecast(actB.arima$arima, new_data = new_data, bootstrap = TRUE, times = 256)
+      
+      progress$set(value = 0.8)
       
       p <- ggplot()+
         xlab("datetime")+
@@ -2865,6 +2931,8 @@ server <- function(input, output, session) {#
         theme_classic()
       
       plot.test.pred2$main <- p
+      progress$set(value = 1)
+      
       
       return(ggplotly(p, dynamicTicks = TRUE))
       
@@ -3142,6 +3210,13 @@ server <- function(input, output, session) {#
              message = "Click 'Add uncertainty'")
       )
       
+      progress <- shiny::Progress$new()
+      # Make sure it closes when we exit this reactive, even if there's an error
+      on.exit(progress$close())
+      progress$set(message = "Generating ARIMA predictions",
+                   detail = "Depending on the size of your dataset, it may take a minute to two to generate the predictions. This window will disappear
+                     when it is done.", value = 0.2)
+      
       dat <- stand.data()
       
       wide_dat <- dat %>%
@@ -3175,9 +3250,12 @@ server <- function(input, output, session) {#
         select(all_of(col_names)) %>%
         mutate(across(input$select_reg_actB, list(zscore = ~as.numeric(scale(.)))))
       
+      progress$set(value = 0.5)
       fitted_values <- fitted(actB.arima$arima)
-      pred <- forecast(actB.arima$arima, new_data = new_data, bootstrap = TRUE, times = 500) %>%
+      pred <- forecast(actB.arima$arima, new_data = new_data, bootstrap = TRUE, times = 256) %>%
         hilo()
+      
+      progress$set(value = 0.8)
       
       p <- ggplot()+
         xlab("datetime")+
@@ -3192,6 +3270,8 @@ server <- function(input, output, session) {#
         theme_classic()
       
       plot.uc2$main <- p
+      
+      progress$set(value = 1)
       
       return(ggplotly(p, dynamicTicks = TRUE))
       
@@ -3341,7 +3421,7 @@ server <- function(input, output, session) {#
         select(all_of(col_names)) %>%
         mutate(across(input$select_reg_actB, list(zscore = ~as.numeric(scale(.)))))
       
-      acc <- forecast(actB.arima$arima, new_data = new_data, bootstrap = TRUE, times = 500) %>%
+      acc <- forecast(actB.arima$arima, new_data = new_data) %>%
         accuracy(data = new_data)
         
         rmse <- acc$RMSE
@@ -3478,7 +3558,7 @@ server <- function(input, output, session) {#
         select(all_of(col_names)) %>%
         mutate(across(input$select_reg_actB, list(zscore = ~as.numeric(scale(.)))))
       
-        pred <- forecast(actB.arima$arima, new_data = new_data, bootstrap = TRUE, times = 500) 
+        pred <- forecast(actB.arima$arima, new_data = new_data, bootstrap = TRUE, times = 256) 
         pred_a <- pred %>% pull(input$select_tar_actB)
         dist_params <- data.frame(mu = mean(pred_a, na.rm = TRUE),
                                   sigma = sqrt(distributional::variance(pred_a, na.rm = TRUE)))
@@ -3564,7 +3644,7 @@ server <- function(input, output, session) {#
   # ARIMA plot ----
   plot.models <- reactiveValues(main=NULL)
   actC.models <- reactiveValues(nnetar = NULL,
-                                rw = NULL,
+                                mean = NULL,
                                 doy = NULL)
   
   observe({
@@ -3613,6 +3693,13 @@ server <- function(input, output, session) {#
              message = "Click 'Fit additional models'")
       )
       
+      progress <- shiny::Progress$new()
+      # Make sure it closes when we exit this reactive, even if there's an error
+      on.exit(progress$close())
+      progress$set(message = "Fitting additional models",
+                   detail = "Depending on the size of your dataset, it may take a minute to two to fit additional models. This window will disappear
+                     when it is done.", value = 0.2)
+      
       
       dat <- stand.data()
       wide_dat <- dat %>%
@@ -3626,13 +3713,13 @@ server <- function(input, output, session) {#
         select(all_of(col_names)) %>%
         mutate(across(input$select_reg_actB, list(zscore = ~as.numeric(scale(.)))))
       
-      # get persistence model
-      rw_cols <- c("datetime",input$select_tar_actB)
-      rw_data <- model_df4 %>%
-        select(all_of(rw_cols))
-      colnames(rw_data) <- c("datetime","target")
-      actC.models$rw = rw_data %>%
-        model(`persistence` = fable::RW(target))
+      # get mean model
+      mean_cols <- c("datetime",input$select_tar_actB)
+      mean_data <- model_df4 %>%
+        select(all_of(mean_cols))
+      colnames(mean_data) <- c("datetime","target")
+      actC.models$mean = mean_data %>%
+        model(`mean` = fable::MEAN(target))
       
       # get DOY model
       doy_cols <- c("doy",input$select_tar_actB)
@@ -3643,6 +3730,8 @@ server <- function(input, output, session) {#
       actC.models$doy <- mgcv::gam(formula = y ~ s(x, bs = "cs"), family = gaussian(),
                           data = doy_data, method = "REML")
       
+      progress$set(value = 0.4)
+      
       # get NNETAR model
       reg_cols <- paste0(input$select_reg_actB,"_zscore")
       
@@ -3651,18 +3740,20 @@ server <- function(input, output, session) {#
         #model(`ARIMA` = fable::ARIMA("chla"))
         order_txt <- "Please select at least one predictor to fit the ARIMA."
       } else if(length(input$select_reg_actB) == 1){
-        my.formula <- formula(paste0(input$select_tar_actB," ~ ",reg_cols[1]))
+        my.formula <- formula(paste0(input$select_tar_actB," ~ ",reg_cols[1],"+ AR(P = 0)"))
         actC.models$nnetar <- model_df4 %>%
           model(`NNETAR` = fable::NNETAR(formula = my.formula))
       } else if(length(input$select_reg_actB) == 2){ 
-        my.formula <- formula(paste0(input$select_tar_actB," ~ ",reg_cols[1],"+",reg_cols[2]))
+        my.formula <- formula(paste0(input$select_tar_actB," ~ ",reg_cols[1],"+",reg_cols[2],"+ AR(P = 0)"))
         actC.models$nnetar <- model_df4 %>%
           model(`NNETAR` = fable::NNETAR(formula = my.formula))
       } else if(length(input$select_reg_actB) == 3){
-        my.formula <- formula(paste0(input$select_tar_actB," ~ ",reg_cols[1],"+",reg_cols[2],"+",reg_cols[3]))
+        my.formula <- formula(paste0(input$select_tar_actB," ~ ",reg_cols[1],"+",reg_cols[2],"+",reg_cols[3],"+ AR(P = 0)"))
         actC.models$nnetar <- model_df4 %>%
           model(`NNETAR` = fable::NNETAR(formula = my.formula))
       }
+      progress$set(value = 0.7)
+      
       
       plot_data <- as_tsibble(wide_dat) %>%
         dplyr::slice_head(prop = input$prop) %>% # using a 70:30 split here
@@ -3673,13 +3764,13 @@ server <- function(input, output, session) {#
       
       fitted_values_arima <- fitted(actB.arima$arima)
       fitted_values_nnetar <- fitted(actC.models$nnetar)
-      fitted_values_rw <- fitted(actC.models$rw)
+      fitted_values_mean <- fitted(actC.models$mean)
       fitted_values_doy <- data.frame(.model = "DOY",
                                       datetime = model_df4$datetime,
                                       .fitted = mgcv::predict.gam(actC.models$doy, doy_data))
       
       plot_fitted <- bind_rows(fitted_values_arima, fitted_values_nnetar) %>%
-        bind_rows(., fitted_values_rw) %>%
+        bind_rows(., fitted_values_mean) %>%
         bind_rows(., fitted_values_doy)
       
       p <- ggplot()+
@@ -3689,10 +3780,12 @@ server <- function(input, output, session) {#
         geom_line(data = plot_fitted, aes(x = datetime, y = .fitted, group = .model, color = .model))+
         labs(color = NULL, fill = NULL)+
         scale_color_manual(values = c("obs" = "black","ARIMA" = "#E69F00","NNETAR" = "#56B4E9",
-                                      "persistence" = "#009E73","DOY" = "#CC79A7"))+
+                                      "mean" = "#009E73","DOY" = "#CC79A7"))+
         theme_classic()
       
       plot.models$main <- p
+      progress$set(value = 1)
+      
       
       return(ggplotly(p, dynamicTicks = TRUE))
       
@@ -3943,9 +4036,9 @@ server <- function(input, output, session) {#
       sd.resid.nn <- round(sd(resid_nn$.resid, na.rm = TRUE),3)
       resid_nn$sd <- paste0("S.D. = ",sd.resid.nn)
       
-      resid_rw <- data.frame(residuals(actC.models$rw))
-      sd.resid.rw <- round(sd(resid_rw$.resid, na.rm = TRUE),3)
-      resid_rw$sd <- paste0("S.D. = ",sd.resid.rw)
+      resid_mn <- data.frame(residuals(actC.models$mean))
+      sd.resid.mn <- round(sd(resid_mn$.resid, na.rm = TRUE),3)
+      resid_mn$sd <- paste0("S.D. = ",sd.resid.mn)
       
       resid_doy <- residuals(actC.models$doy)
       sd.resid.doy <- round(sd(resid_doy, na.rm = TRUE),3)
@@ -3955,7 +4048,7 @@ server <- function(input, output, session) {#
                              sd = paste0("S.D. = ",sd.resid.doy))
       
       resid <- bind_rows(resid_ar, resid_nn) %>%
-        bind_rows(., resid_rw) %>%
+        bind_rows(., resid_mn) %>%
         bind_rows(., resid_do)
       
       p <- ggplot(data = resid)+
@@ -3964,9 +4057,9 @@ server <- function(input, output, session) {#
         theme_bw(base_size = 20)+
         facet_wrap(facets = vars(.model), nrow = 1)+
         scale_color_manual(values = c("ARIMA" = "#E69F00","NNETAR" = "#56B4E9",
-                                      "persistence" = "#009E73","DOY" = "#CC79A7"))+
+                                      "mean" = "#009E73","DOY" = "#CC79A7"))+
         scale_fill_manual(values = c("ARIMA" = "#E69F00","NNETAR" = "#56B4E9",
-                                      "persistence" = "#009E73","DOY" = "#CC79A7"))+
+                                      "mean" = "#009E73","DOY" = "#CC79A7"))+
         geom_text(aes(x = Inf, y = Inf, label = sd),
                   hjust   = 1.05,
                   vjust   = 1.5,
@@ -4067,7 +4160,7 @@ server <- function(input, output, session) {#
   plot.pred.all <- reactiveValues(main=NULL)
   dist_params <- reactiveValues(arima=NULL,
                              nnetar=NULL,
-                             rw=NULL,
+                             mean=NULL,
                              doy=NULL)
   
   observe({
@@ -4164,7 +4257,7 @@ server <- function(input, output, session) {#
         mutate(across(input$select_reg_actB, list(zscore = ~as.numeric(scale(.)))))
       
       # predictions and confidence intervals for fable models
-      pred_arima0 <- forecast(actB.arima$arima, new_data = new_data, bootstrap = TRUE, times = 500) %>%
+      pred_arima0 <- forecast(actB.arima$arima, new_data = new_data, bootstrap = TRUE, times = 256) %>%
         hilo() 
       pred_arima <- pred_arima0 %>%
         mutate(lower = `95%`$lower,
@@ -4174,23 +4267,23 @@ server <- function(input, output, session) {#
       dist_params$arima <- data.frame(mu = mean(pred_a, na.rm = TRUE),
                                        sigma = sqrt(distributional::variance(pred_a, na.rm = TRUE)))
       
-      rw_cols <- c("datetime",input$select_tar_actB)
-      new_rw_data <- new_data %>%
-        select(all_of(rw_cols))
-      colnames(new_rw_data) <- c("datetime","target")
-      pred_rw0 <- forecast(actC.models$rw, new_data = new_rw_data, bootstrap = TRUE, times = 500) %>%
+      mean_cols <- c("datetime",input$select_tar_actB)
+      new_mean_data <- new_data %>%
+        select(all_of(mean_cols))
+      colnames(new_mean_data) <- c("datetime","target")
+      pred_mean0 <- forecast(actC.models$mean, new_data = new_mean_data) %>%
         hilo() 
-      pred_rw <- pred_rw0 %>%
+      pred_mean <- pred_mean0 %>%
         mutate(lower = `95%`$lower,
                upper = `95%`$upper) %>%
         select(.model, datetime, .mean, lower, upper)
-      pred_r <- pred_rw0 %>% pull(target)
-      dist_params$rw <- data.frame(mu = mean(pred_r, na.rm = TRUE),
-                                      sigma = sqrt(distributional::variance(pred_r, na.rm = TRUE)))
+      pred_m <- pred_mean0 %>% pull(target)
+      dist_params$mean <- data.frame(mu = mean(pred_m, na.rm = TRUE),
+                                      sigma = sqrt(distributional::variance(pred_m, na.rm = TRUE)))
       
       
       progress$set(value = 0.5)
-      pred_nnetar0 <- forecast(actC.models$nnetar, new_data = new_data, bootstrap = TRUE, times = 500) %>%
+      pred_nnetar0 <- forecast(actC.models$nnetar, new_data = new_data, bootstrap = TRUE, times = 256) %>%
         hilo() 
       pred_nnetar <- pred_nnetar0 %>%
         mutate(lower = `95%`$lower,
@@ -4207,16 +4300,18 @@ server <- function(input, output, session) {#
         select(any_of(doy_cols))
       colnames(new_doy_data) <- c("x","y")
       pred_gam <- mgcv::predict.gam(actC.models$doy, new_doy_data, se.fit = TRUE)
+      resid_doy <- residuals(actC.models$doy)
+      sd.resid.doy <- round(sd(resid_doy, na.rm = TRUE),3)
       pred_doy <- data.frame(.model = "DOY",
                              datetime = new_data$datetime,
                              .mean = pred_gam[[1]],
-                             upper = pred_gam[[1]] + 2*pred_gam[[2]],
-                             lower = pred_gam[[1]] - 2*pred_gam[[2]])
+                             upper = pred_gam[[1]] + 2*sd.resid.doy,
+                             lower = pred_gam[[1]] - 2*sd.resid.doy)
       dist_params$doy <- data.frame(mu = pred_gam[[1]],
-                                    sigma = pred_gam[[2]])
+                                    sigma = sd.resid.doy)
       
       pred_all <- bind_rows(pred_arima, pred_nnetar) %>%
-        bind_rows(., pred_rw) %>%
+        bind_rows(., pred_mean) %>%
         bind_rows(., pred_doy)
       
       p <- ggplot()+
@@ -4229,9 +4324,9 @@ server <- function(input, output, session) {#
         geom_vline(xintercept = train_test_line)+
         labs(color = NULL, fill = NULL)+
         scale_color_manual(values = c("training data" = "gray","testing data" = "black","ARIMA" = "#E69F00","NNETAR" = "#56B4E9",
-                                      "persistence" = "#009E73","DOY" = "#CC79A7"))+
+                                      "mean" = "#009E73","DOY" = "#CC79A7"))+
         scale_fill_manual(values = c("training data" = "gray","testing data" = "black","ARIMA" = "#E69F00","NNETAR" = "#56B4E9",
-                                      "persistence" = "#009E73","DOY" = "#CC79A7"), guide = "none")+
+                                      "mean" = "#009E73","DOY" = "#CC79A7"), guide = "none")+
         theme_classic()
       
       plot.pred.all$main <- p
@@ -4336,12 +4431,12 @@ server <- function(input, output, session) {#
   # Calculate ignorance
   ign.values <- reactiveValues(arima=NULL,
                                nnetar=NULL,
-                               rw=NULL,
+                               mean=NULL,
                                doy=NULL)
   
   rmse.values <- reactiveValues(arima=NULL,
                                nnetar=NULL,
-                               rw=NULL,
+                               mean=NULL,
                                doy=NULL)
   
   observe({
@@ -4421,8 +4516,8 @@ server <- function(input, output, session) {#
       ign.values$arima <- round(mean(ign_arima, na.rm = TRUE),3)
       ign_nnetar <- scoringRules::logs_norm(new_obs, dist_params$nnetar$mu, dist_params$nnetar$sigma)
       ign.values$nnetar <- round(mean(ign_nnetar, na.rm = TRUE),3)
-      ign_rw <- scoringRules::logs_norm(new_obs, dist_params$rw$mu, dist_params$rw$sigma)
-      ign.values$rw <- round(mean(ign_rw, na.rm = TRUE),3)
+      ign_mean <- scoringRules::logs_norm(new_obs, dist_params$mean$mu, dist_params$mean$sigma)
+      ign.values$mean <- round(mean(ign_mean, na.rm = TRUE),3)
       ign_doy <- scoringRules::logs_norm(new_obs, dist_params$doy$mu, dist_params$doy$sigma)
       ign.values$doy <- round(mean(ign_doy, na.rm = TRUE),3)
       
@@ -4433,14 +4528,14 @@ server <- function(input, output, session) {#
         accuracy(data = new_data)
       rmse.values$nnetar <- round(acc_nnetar$RMSE,3)
       
-      # and for RW
-      rw_cols <- c("datetime",input$select_tar_actB)
-      new_rw_data <- new_data %>%
-        select(all_of(rw_cols))
-      colnames(new_rw_data) <- c("datetime","target")
-      acc_rw <- forecast(actC.models$rw, new_data = new_rw_data) %>%
-        accuracy(data = new_rw_data)
-      rmse.values$rw <- round(acc_rw$RMSE,3)
+      # and for mean
+      mean_cols <- c("datetime",input$select_tar_actB)
+      new_mean_data <- new_data %>%
+        select(all_of(mean_cols))
+      colnames(new_mean_data) <- c("datetime","target")
+      acc_mean <- forecast(actC.models$mean, new_data = new_mean_data) %>%
+        accuracy(data = new_mean_data)
+      rmse.values$mean <- round(acc_mean$RMSE,3)
       
       # and for gam
       # and for gam
@@ -4453,9 +4548,9 @@ server <- function(input, output, session) {#
       acc_doy <- sqrt(mean((new_doy_data$y - pred_gam[[1]])^2))
       rmse.values$doy <- round(acc_doy,3)
       
-      ign.table <- data.frame(Model = c("ARIMA","NNETAR","persistence","DOY"),
-                              RMSE = c(rmse.values$arima, rmse.values$nnetar, rmse.values$rw, rmse.values$doy),
-                              Ignorance = c(ign.values$arima, ign.values$nnetar, ign.values$rw, ign.values$doy))
+      ign.table <- data.frame(Model = c("ARIMA","NNETAR","mean","DOY"),
+                              RMSE = c(rmse.values$arima, rmse.values$nnetar, rmse.values$mean, rmse.values$doy),
+                              Ignorance = c(ign.values$arima, ign.values$nnetar, ign.values$mean, ign.values$doy))
       
       return(ign.table)
       
@@ -4742,10 +4837,7 @@ server <- function(input, output, session) {#
   #Bookmarking
   bookmarkingWhitelist <- c("table01_rows_selected","plot_lag","plot_pacf","plot_diff",
                             "standardize_data","fit_arima","generate_pred","view_resid",
-                            "add_uc","assess_mod","standardize_data2","fit_arima2",
-                            "generate_pred2","view_resid2","add_uc2","assess_mod2",
-                            "fit_addn_mod","view_resid3","plot_pred_models","calc_ign3",
-                            "row_num","select","select_tar_actB","select_reg_actB","n","prop")
+                            "add_uc","assess_mod","row_num","select")
 
   observeEvent(input$bookmarkBtn, {
     session$doBookmark()
@@ -4779,15 +4871,6 @@ server <- function(input, output, session) {#
     restoreState(T)
     print(paste("end onRestore",restoreState()))
   })
-
-  # onRestored(function(state) {
-  #   print(paste("begin onRestored",restoreState()))
-  #   updateSelectizeInput(session, "row_num", selected = state$values$sel_row)
-  #   updateSelectizeInput(session, "select", choices = state$values$sel_choices, selected = state$values$sel_reg)
-  #   restoreState(T)
-  #   print(paste("end onRestored",restoreState()))
-  #   
-  # })
 
   # observe({
   # # Get the list of all inputs
