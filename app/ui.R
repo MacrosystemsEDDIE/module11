@@ -278,7 +278,8 @@ ui <- function(request) {
                           column(6,
                                  h3("Saving your progress"),
                                  p(style="text-align: justify;", "As you go, fill out answers to questions in the final report Word document. Some of the plots you generate in the Shiny app will be needed for the final report. When prompted, be sure to download these plots so you can copy-paste them into the final report."),
-                                 p(style="text-align: justify;", "If you run out of time to finish all the activities you can save your progress and return to it at a later date. Click the 'Bookmark my progress' button at the top of the page and you will obtain a link, which you should save by copy-pasting it at the top of your final report. When you are ready to resume work, paste the link into your web browser, and it will load a Shiny app session that contains your progress."),
+                                 p(style="text-align: justify;", "As you work through Activity A, you can save your progress and return to it at a later date. Click the 'Bookmark my Activity A progress' button at the top of the page and you will obtain a link, which you should save by copy-pasting it at the top of your final report. When you are ready to resume work, paste the link into your web browser, and it will load a Shiny app session that contains your progress."),
+                                 p("Note that you will not be able to save your progress during Activities B and C as these activities require users to upload their own data, which we do not store within the app. Please budget 45-60 minutes to complete Activities B and C."),
                                  br()
                                  )
                           ),
@@ -306,10 +307,17 @@ ui <- function(request) {
                         fluidRow(
                           column(6,
                                  h3("Data sources"),
-                                 p(HTML(paste0('This module will introduce key concepts within ecological forecasting through exploration of data from the following sources:')))
+                                 p(HTML(paste0('This module will introduce key concepts related to time series modeling and prediction of environmental data through exploration of data from the following sources:'))),
+                                 a(
+                                   href = "https://swan.science.uwa.edu.au/",
+                                   img(src = "scevo_logo.png", title = "SCEVO logo", alt = "Logo for the Swan Canning Estuary Virtual Observatory."), target = "_blank"
+                                 )
                           ),
                           column(6, align = "center",
-                                 h3("add logos here")
+                                 a(
+                                   href = "https://www.neonscience.org/",
+                                   img(src = "NSF-NEON-logo.png", title = "NEON - NSF logo", alt = "Logo for the National Ecological Observatory Network."), target = "_blank"
+                                 )
                           )
                         )
                ),
