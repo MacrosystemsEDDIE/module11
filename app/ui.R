@@ -746,7 +746,7 @@ ui <- function(request) {
                                                             column(10, offset = 1,
                                                                    h3("Questions"),
                                                                    p(tags$b(quest["q12", 1])),
-                                                                   p(tags$i("Hint: go back to Objective 3 if you need a reminder about how to interpret the ARIMA(p, d, q) order.")),
+                                                                   p(tags$i("Hint: remember from Objective 3, p indicates the number of lags, d indicates differencing, and q indicates the number of previous error terms included in the model.")),
                                                                    p(tags$b(quest["q12a", 1])),
                                                                    p(tags$b(quest["q12b", 1])),
                                                                    p(tags$b(quest["q12c", 1])),
@@ -923,7 +923,7 @@ ui <- function(request) {
                                                       ),
                                                       p(tags$b("How is the ignorance score interpreted?")),
                                                       tags$ul(
-                                                        tags$li("The lower the ignorance score, the better the prediction. Ignorance scores can range from positive to negative infinity. The smaller the numeric value of the score, regardless of whether it is positive or negative, the more accurate the prediction. So, a score of 2 beats a score of 3, and a score of -3 beats a score of -2.")
+                                                        tags$li("The lower the ignorance score, the better the prediction. Ignorance scores can range from positive to negative infinity. The smaller the numeric value of the score, the more accurate the prediction. So, a score of 2 beats a score of 3, and a score of -3 beats a score of -2.")
                                                       ),
                                                       box(id = "box2", width = 12, status = "primary",
                                                           solidHeader = TRUE,

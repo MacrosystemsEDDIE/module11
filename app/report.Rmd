@@ -54,11 +54,12 @@ model_perf <- data.frame("Model" = c("ARIMA","NNETAR","persistence","DOY"),
 
 In the course of this module, you will:
 
-- Explore relationships between ecological variables from two different environmental case studies.
-- Understand the model structure of four time series models that are commonly applied in ecology and environmental science.
-- Fit time series models using environmental datasets and assess the importance of various ecological variables in making model predictions.
-- Manipulate environmental datasets into standardized formats suitable for training and assessing data-driven models.
-- Compare multiple data-driven models to assess model performance on out-of-sample predictions.
+- Explore relationships between ecological variables from environmental case studies.
+- Understand the structure of four time series models (including machine learning models) that are commonly applied in environmental science.
+- Fit time series models using environmental data and assess the importance of ecological driver variables in making model predictions.
+- Process environmental datasets into standardized formats suitable for training and assessing time series models.
+- Compare multiple time series models to assess their performance on out-of-sample predictions.
+
 
 
 # Summary:
@@ -83,7 +84,7 @@ We will be using ecological data collected by the Swan-Canning Estuary Virtual O
 
 Our focal target variable for the SCEVO dataset will be chlorophyll-a, a measure of aquatic primary productivity. Chlorophyll-a is an important ecosystem variable because it can indicate when a harmful algal bloom is occurring. High levels of chlorophyll-a may indicate a bloom, which can have deleterious effects on water quality through release of toxins, formation of surface scums, and depletion of dissolved oxygen in the water. 
 
-The target variable for the NEON dataset will be net ecosystem exchange (NEE), a measure of carbon dioxide flux from terrestrial ecosystems. NEE indicates whether an ecosystem is emitting or taking up greenhouse gasses, and how this changes over time.
+The target variable for the NEON dataset will be net ecosystem exchange (NEE), a measure of carbon dioxide flux from ecosystems. NEE indicates whether an ecosystem is emitting or taking up greenhouse gasses, and how this changes over time.
   
   
 ## R Shiny App:
@@ -101,10 +102,15 @@ This can be accessed via any internet browser and allows you to navigate through
 \newpage
 
 ## Pre-class activity: Explore environmental case study
-Choose one of the papers describing an environmental case study and use it to answer the questions below. Choose a case study that you will work with for Activity A of the module.
+Choose one of the papers describing an environmental case study and use it to answer the questions below. Choose the case study that you will work with for Activity A of the module.
 \
 
-- Huang, P., Trayler, K., Wang, B., Saeed, A., Oldham, C. E., Busch, B., & Hipsey, M. R. (2019). An integrated modelling system for water quality forecasting in an urban eutrophic estuary: The Swan-Canning Estuary virtual observatory. Journal of Marine Systems, 199, 103218. [https://doi.org/10.1016/j.jmarsys.2019.103218](https://doi.org/10.1016/j.jmarsys.2019.103218)
+**Phytoplankton dynamics in the Canning River, Western Australia**
+Huang, P., Trayler, K., Wang, B., Saeed, A., Oldham, C. E., Busch, B., & Hipsey, M. R. (2019). An integrated modelling system for water quality forecasting in an urban eutrophic estuary: The Swan-Canning Estuary virtual observatory. Journal of Marine Systems, 199, 103218. [https://doi.org/10.1016/j.jmarsys.2019.103218](https://doi.org/10.1016/j.jmarsys.2019.103218)
+
+**Net ecosystem exchange in Bartlett Experimental Forest, NH, USA**
+Jung, Chang Gyo, and Oleksandra Hararuk. "Assimilation of NEON observations into a process‐based carbon cycle model reveals divergent mechanisms of carbon dynamics in temperate deciduous forests." Journal of Geophysical Research: Biogeosciences 127.3 (2022): e2021JG006474.
+[https://doi.org/10.1029/2021JG006474](https://doi.org/10.1029/2021JG006474)
 
 \
 
