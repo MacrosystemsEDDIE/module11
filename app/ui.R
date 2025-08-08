@@ -36,8 +36,8 @@ ui <- function(request) {
       column(11,
              br(),
              p(tags$b("Teaching materials associated with this module can be found at ",
-                      tags$a(href="http://module11.macrosystemseddie.org", 
-                             "http://module11.macrosystemseddie.org.", target="_blank"))),
+                      tags$a(href="https://serc.carleton.edu/dev/eddie/teaching_materials/modules/module11.html", 
+                             "https://serc.carleton.edu/dev/eddie/teaching_materials/modules/module11.html.", target="_blank"))),
              h2(tags$b("Module 11: Time Series Modeling and Prediction of Environmental Data")),
              bookmarkButton(id = "bookmarkBtn", label = "Bookmark my Activity A progress"),
              p(tags$em("At any time, use this button to obtain a link that saves your progress in Activity A. Bookmarking for Activities B and C is not supported as these activities require users to upload their own data, which we do not store within the app. Please plan to allocate 45-60 minutes to complete Activities B and C."))
@@ -260,13 +260,6 @@ ui <- function(request) {
                           ),
                         hr(),
                         fluidRow(
-                          column(10,
-                                 h3("Video guide for this module"),
-                                 HTML('<iframe width="560" height="315" src="https://www.youtube.com/embed/T1-k7VYwsHg" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>')
-                                 )
-                        ),
-                        hr(),
-                        fluidRow(
                           column(6, 
                                  h3("Student Handout"),
                                  p("Within the Introduction and Activities A, B and C tabs there are questions for students to complete as part of this module. These can be completed by writing your answers into the final report template, which can be downloaded as a Word document (.docx) below."),
@@ -363,15 +356,7 @@ ui <- function(request) {
                                                                                           onInitialize = I('function() { this.setValue(""); }'))
                                                                          )
                                                         ),
-                                                        DTOutput("table01", fill = TRUE),
-                                                        fluidRow(
-                                                          column(12,
-                                                                 wellPanel(
-                                                                   h4(tags$b("About Site")),
-                                                                   textOutput("site_info")
-                                                                 )
-                                                          )
-                                                        )
+                                                        DTOutput("table01", fill = TRUE)
                                                  ),
                                                  #** Site map ----
                                                  column(4,
@@ -391,6 +376,15 @@ ui <- function(request) {
                                                ),
                                                hr(),
                                                data.step = 4, data.intro = help_text["objectives", 1], data.position = "top"),
+                                             fluidRow(
+                                               column(12,
+                                                      wellPanel(
+                                                        h4(tags$b("About Site")),
+                                                        textOutput("site_info"),
+                                                        htmlOutput("site_link")
+                                                      )
+                                               )
+                                             ),
                                              fluidRow(
                                                column(12, align = "left",
                                                       box(id = "box3", width = 10, status = "primary",
@@ -587,6 +581,8 @@ ui <- function(request) {
                                                column(6,
                                                       h3("Plot 1-day lag of target variable"),
                                                       p(id = "txt_j", "Let's explore lags and autocorrelation in the target data from your chosen environmental case study."),
+                                                      p("A ",tags$b("lag")," is the time delay between observations in a time series. Because you are working with daily data, we can think about a 1-day lag, a 2-day lag, and so on."),
+                                                      p("Click the button below to plot a 1-day lag of your target variable vs. the 'current' value of that variable:"),
                                                       br(),
                                                       actionButton("plot_lag", "Plot lagged timeseries"),
                                                       br(), br(),
@@ -622,7 +618,8 @@ ui <- function(request) {
                                                           fluidRow(
                                                             column(10, offset = 1,
                                                                    h3("Questions"),
-                                                                   p(tags$b(quest["q9", 1]))
+                                                                   p(tags$b(quest["q9", 1])),
+                                                                   p(tags$i("Hint: Remember, values close to -1 or 1, such as 0.7 or -0.8, indicate strong autocorrelation, which means that lag is likely to be included in a fitted ARIMA model. Values close to 0, such as 0.1 or -0.2, indicate weak autocorrelation."))
                                                             )
                                                           )
                                                       )
@@ -1081,7 +1078,8 @@ ui <- function(request) {
                                                       p("You may select one of the datasets provided with the module to upload. We currently provide one dataset for each case study in the module, typically from a different site than is used in Activity A. ",tags$b("Be warned! Each of the provided datasets has a formatting flaw which you will need to fix before you will be able to successfully re-upload the dataset to the module.")," This is to provide you with practice in 'wrangling' data to meet data standards."),
                                                       wellPanel(
                                                         h4(tags$b("Option 2 Only: About Site")),
-                                                        textOutput("actB_site_info")
+                                                        textOutput("actB_site_info"),
+                                                        htmlOutput("site_link2")
                                                       )
                                                       ),
                                                column(4,

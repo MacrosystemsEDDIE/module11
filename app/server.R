@@ -100,6 +100,24 @@ server <- function(input, output, session) {#
       module_text[row_selected$SiteID, ]
     })
     
+    #** Create hyperlink ----
+    observeEvent(input$table01_rows_selected, {
+      
+      row_selected = sites_df[input$table01_rows_selected, ]
+      site_id <- row_selected$SiteID
+      if(site_id == "bart"){
+      url <- paste0("https://www.neonscience.org/field-sites/field-sites-map/", site_id)
+      }
+      if(site_id == "cann"){
+        url <- paste0("https://swan.science.uwa.edu.au/index.html")
+        
+      }
+      
+      output$site_link <- renderUI({
+        tags$a(href = url, "Click here for more site info", target = "_blank")
+      })
+    })
+    
     #show site photo caption
     output$site_photo_info <- renderText({
       module_text[paste0(row_selected$SiteID,"_photo"), ]
@@ -1522,20 +1540,28 @@ server <- function(input, output, session) {#
         xlab("datetime")+
         ylab(y_lab)+
         geom_point(data = plot_data, aes(x = datetime, y = target, color = set))+
-        geom_ribbon(data = pred, aes(x = datetime, ymin = `95%`$lower, ymax = `95%`$upper), color = "#DDE4E1", fill = "#DDE4E1",
+        geom_ribbon(data = pred, aes(x = datetime, ymin = `95%`$lower, ymax = `95%`$upper, fill = "95% prediction interval"), color = "#DDE4E1",
                     alpha = 0.5)+
-        geom_line(data = pred, aes(x = datetime, y = .mean, group = .model, color = .model))+
+        geom_line(data = pred, aes(x = datetime, y = .mean, group = .model, color = "ARIMA"))+
         geom_vline(xintercept = train_test_line)+
         labs(color = NULL, fill = NULL)+
-        scale_color_manual(values = c("training data" = "#cee3f1",.model = "#446c84","testing data" = "#0d3658"))+
+        scale_color_manual(values = c("training data" = "#cee3f1","ARIMA" = "darkgray","testing data" = "#0d3658"))+
+        scale_fill_manual(values = c("95% prediction interval" = "#DDE4E1"))+
         theme_classic()
       
       plot.uc$main <- p
       
+      p2 <- ggplotly(p, dynamicTicks = TRUE) 
+
+      for (i in 1:length(p2$x$data)){
+        if (!is.null(p2$x$data[[i]]$name)){
+          p2$x$data[[i]]$name =  gsub("\\(","",str_split(p2$x$data[[i]]$name,",")[[1]][1])
+        }
+      }
+      
       progress$set(value = 1)
       
-      
-      return(ggplotly(p, dynamicTicks = TRUE))
+      return(p2)
       
     })
     
@@ -1825,6 +1851,22 @@ server <- function(input, output, session) {#
   #show site info
   output$actB_site_info <- renderText({
     module_text[input$actB_dataset, ]
+  })
+  
+  #** Create hyperlink ----
+  observeEvent(input$actB_dataset, {
+    
+    if(input$actB_dataset == "KonzaPrarieBiologicalStationNEON"){
+      url <- paste0("https://www.neonscience.org/field-sites/field-sites-map/konz")
+    }
+    if(input$actB_dataset == "CanningRiverKentStWeir"){
+      url <- paste0("https://swan.science.uwa.edu.au/index.html")
+      
+    }
+    
+    output$site_link2 <- renderUI({
+      tags$a(href = url, "Click here for more site info", target = "_blank")
+    })
   })
   
   # validation toggle
@@ -3261,19 +3303,28 @@ server <- function(input, output, session) {#
         xlab("datetime")+
         ylab(input$select_tar_actB)+
         geom_point(data = plot_data, aes(x = datetime, y = target, color = set))+
-        geom_ribbon(data = pred, aes(x = datetime, ymin = `95%`$lower, ymax = `95%`$upper), color = "#DDE4E1", fill = "#DDE4E1",
+        geom_ribbon(data = pred, aes(x = datetime, ymin = `95%`$lower, ymax = `95%`$upper, fill = "95% prediction interval"), color = "#DDE4E1",
                     alpha = 0.5)+
-        geom_line(data = pred, aes(x = datetime, y = .mean, group = .model, color = .model))+
+        geom_line(data = pred, aes(x = datetime, y = .mean, group = .model, color = "ARIMA"))+
         geom_vline(xintercept = train_test_line)+
         labs(color = NULL, fill = NULL)+
-        scale_color_manual(values = c("training data" = "#cee3f1",.model = "#446c84","testing data" = "#0d3658"))+
+        scale_color_manual(values = c("training data" = "#cee3f1","ARIMA" = "darkgray","testing data" = "#0d3658"))+
+        scale_fill_manual(values = c("95% prediction interval" = "#DDE4E1"))+
         theme_classic()
       
       plot.uc2$main <- p
       
+      p2 <- ggplotly(p, dynamicTicks = TRUE) 
+
+      for (i in 1:length(p2$x$data)){
+        if (!is.null(p2$x$data[[i]]$name)){
+          p2$x$data[[i]]$name =  gsub("\\(","",str_split(p2$x$data[[i]]$name,",")[[1]][1])
+        }
+      }
+      
       progress$set(value = 1)
       
-      return(ggplotly(p, dynamicTicks = TRUE))
+      return(p2)
       
     })
     

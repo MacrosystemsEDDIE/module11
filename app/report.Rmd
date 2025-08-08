@@ -66,7 +66,7 @@ In the course of this module, you will:
 
 Advances in environmental sensor technology in recent decades permit collection of environmental data at high temporal frequencies (e.g., every 10 minutes) across many ecosystems. These time series of environmental data can be used to gain information about the previous and current state of ecosystems, as well as make predictions about ecosystem states in the future. To help researchers and managers understand the complex patterns that can occur in high-frequency time series data, time series models are commonly applied in ecology and environmental science. These models use statistical and machine learning methods to identify signals in high-frequency environmental data.
 
-In this module, students will apply several different time series and machine learning models to environmental data. They will explore data from an environmental case study of their choice, choose which environmental variables to use to fit a time series model, assess the model, and use it to make predictions. Then, they will fit several other models to the same time series data and compare predictive performance across models. They will also evaluate the ecological implications that can be drawn from each model (e.g., which variables are important for explaining the dynamics of the target variable for prediction).
+In this module, students will apply several different time series and machine learning models to environmental data. They will explore data from an environmental case study of their choice, choose which environmental variables to use to fit a time series model, assess the model, and use it to make predictions. Then, they will process a new dataset into a standardized format, upload it into the module, and fit several other models to compare predictive performance across models. They will also evaluate the ecological implications that can be drawn from each model (e.g., which variables are important for explaining the dynamics of the target variable for prediction).
 
 ## Module overview:
 
@@ -552,6 +552,6 @@ knitr::kable(model_perf)
 **Answer:** 
 \
 
-This module was developed by Lofton, M.E., M.H. Hipsey, K. Kurucz, and C.C. Carey. 31 July 2025. Macrosystems EDDIE: Time Series Modeling and Prediction of Environmental Data. Macrosystems EDDIE Module 11, Version 1. http://module11.macrosystemseddie.org. Module development was supported by NSF grants XX and XX.
+This module was developed by Lofton, M.E., M.H. Hipsey, K. Kurucz, and C.C. Carey. 31 July 2025. Macrosystems EDDIE: Time Series Modeling and Prediction of Environmental Data. Macrosystems EDDIE Module 11, Version 1. http://module11.macrosystemseddie.org. Module development was supported by NSF grants EF 1702506, 1926050, 2318861, DEB 2213550, and OISE 2330211.
 
 This document last modified: 31 July 2025 by MEL.
