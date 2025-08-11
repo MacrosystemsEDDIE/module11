@@ -8,16 +8,16 @@ q3c,c. Latitude
 q3d,d. Longitude
 q3e,f. Elevation (m)
 q4,Q4. What is the desired target variable for prediction in the case study you have chosen? Why is that variable important for ecosystem function and management?
-q5,Q5. Fill out the table in your Word document with the description of site variables:
+q5,Q5. Fill out the table below with the description of site variables:
 q5a,a. Variable name
 q5b,b. Units
 q5c,c. Maximum value
 q5d,d. Minimum value
 q5e,e. Mean value
-q6,"Q6. Describe the relationship between each variable and the target variable. For each variable, write in the table in your Word document whether increases in that variable are associated with increases in the target variable (positive relationship), decreases in the target variable (negative relationship), or no change in the target variable (no relationship). "
+q6,"Q6. Describe the relationship between each driver variable and the target variable. For each variable, write in the table below whether increases in that driver variable are associated with increases in the target variable (positive relationship), decreases in the target variable (negative relationship), or no change in the target variable (no relationship). "
 q7,"Q7. Describe the three components of an ARIMA model (autoregressive, integrated, moving average) in your own words."
 q8,Q8. Observe the plot on the right. Does the target variable exhibit autocorrelation at a 1-day lag? Explain how you know.
-q9,"Q9. Observe the PACF plot on the right. Based on this figure, how many lags of the target variable do you anticipate being included in the fitted ARIMA model? Explain your reasoning."
+q9,"Q9. Observe the PACF (partial autocorrelation function) plot on the right. Based on this figure, how many lags of the target variable do you anticipate being included in the fitted ARIMA model? Explain your reasoning."
 q10,"Q10. Observe the plot on the right. Based on visual inspection, does differencing substantially improve the stationarity of the target variable data? Explain your reasoning."
 q11,"Q11. List up to three exogenous regressors that you would like to include in your fitted ARIMA model. For each regressor, explain why you chose to include it in the model. If you choose not to include any regressors, explain your reasoning."
 q12,"Q12. Examine the (p, d, q) order of your ARIMA model printed above. Interpret the order of your ARIMA. "

@@ -36,8 +36,8 @@ ui <- function(request) {
       column(11,
              br(),
              p(tags$b("Teaching materials associated with this module can be found at ",
-                      tags$a(href="https://serc.carleton.edu/dev/eddie/teaching_materials/modules/module11.html", 
-                             "https://serc.carleton.edu/dev/eddie/teaching_materials/modules/module11.html.", target="_blank"))),
+                      tags$a(href="https://serc.carleton.edu/eddie/teaching_materials/modules/module11.html", 
+                             "https://serc.carleton.edu/eddie/teaching_materials/modules/module11.html.", target="_blank"))),
              h2(tags$b("Module 11: Time Series Modeling and Prediction of Environmental Data")),
              bookmarkButton(id = "bookmarkBtn", label = "Bookmark my Activity A progress"),
              p(tags$em("At any time, use this button to obtain a link that saves your progress in Activity A. Bookmarking for Activities B and C is not supported as these activities require users to upload their own data, which we do not store within the app. Please plan to allocate 45-60 minutes to complete Activities B and C."))
@@ -160,7 +160,9 @@ ui <- function(request) {
                           h2("Time Series Modeling and Prediction of Environmental Data"),
                           h3("Summary"),
                           p(style="text-align: justify;", module_text["intro_eco_forecast", ]),
-                          p(style="text-align: justify;", module_text["this_module", ])
+                          p(style="text-align: justify;", module_text["this_module", ]),
+                          p("Module focal question: ",tags$b("How can we use time series models to understand and predict ecosystem conditions?")),
+                          p(style="text-align: justify;", module_text["goal", ])
                    ),
                    column(5, offset = 1,
                           br(), br(), br(),
