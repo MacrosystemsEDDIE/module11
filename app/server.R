@@ -5267,9 +5267,9 @@ server <- function(input, output, session) {#
   
   observe({
     input$fit_arima2
-    
+
     output$ign_table <- renderDT({ 
-      
+
       validate(
         need(!is.null(input$upload_data),
              message = "Please upload your data in Objective 6.")
@@ -5286,7 +5286,7 @@ server <- function(input, output, session) {#
         need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
              message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
-      
+
       if(input$no_reg1 == FALSE){
         validate(
           need(length(input$select_reg_actB) <= 3,
@@ -5297,7 +5297,7 @@ server <- function(input, output, session) {#
                message = "Please standardize your exogenous regressors.")
         )
       }
-      
+
       validate(
         need(input$prop <= 0.9,
              message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
@@ -5322,39 +5322,39 @@ server <- function(input, output, session) {#
         need(input$calc_ign3 > 0,
              message = "Click 'Calculate RMSE and ignorance scores'")
       )
-      
+
       dat <- stand.data()
-      
+
       wide_dat <- dat %>%
         pivot_wider(names_from = "variable", values_from = "observation")
-      
+
       train_data <- as_tsibble(wide_dat) %>%
-        dplyr::slice_head(prop = input$prop) 
-      
+        dplyr::slice_head(prop = input$prop)
+
       if(input$no_reg1 == FALSE){
-        
+
         col_names <- c("datetime",input$select_tar_actB,input$select_reg_actB)
-        
+
         new_data <- as_tsibble(wide_dat) %>%
           filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
           tsibble::fill_gaps() %>%
           select(all_of(col_names)) %>%
           mutate(across(input$select_reg_actB, list(zscore = ~as.numeric(scale(.)))))
-        
+
       } else if(input$no_reg1 == TRUE){
-        
+
         col_names <- c("datetime",input$select_tar_actB)
-        
+
         new_data <- as_tsibble(wide_dat) %>%
           filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
           tsibble::fill_gaps() %>%
-          select(all_of(col_names)) 
-        
+          select(all_of(col_names))
+
       }
-      
+
       new_obs <- new_data %>%
         pull(input$select_tar_actB)
-      
+
       ign_arima <- scoringRules::logs_norm(new_obs, dist_params$arima$mu, dist_params$arima$sigma)
       ign.values$arima <- round(mean(ign_arima, na.rm = TRUE),3)
       ign_nnetar <- scoringRules::logs_norm(new_obs, dist_params$nnetar$mu, dist_params$nnetar$sigma)
@@ -5363,14 +5363,14 @@ server <- function(input, output, session) {#
       ign.values$mean <- round(mean(ign_mean, na.rm = TRUE),3)
       ign_doy <- scoringRules::logs_norm(new_obs, dist_params$doy$mu, dist_params$doy$sigma)
       ign.values$doy <- round(mean(ign_doy, na.rm = TRUE),3)
-      
+
       acc_arima <- forecast(actB.arima$arima, new_data = new_data) %>%
         accuracy(data = new_data)
       rmse.values$arima <- round(acc_arima$RMSE,3)
       acc_nnetar <- forecast(actC.models$nnetar, new_data = new_data, times = 0) %>%
         accuracy(data = new_data)
       rmse.values$nnetar <- round(acc_nnetar$RMSE,3)
-      
+
       # and for mean
       mean_cols <- c("datetime",input$select_tar_actB)
       new_mean_data <- new_data %>%
@@ -5379,7 +5379,7 @@ server <- function(input, output, session) {#
       acc_mean <- forecast(actC.models$mean, new_data = new_mean_data) %>%
         accuracy(data = new_mean_data)
       rmse.values$mean <- round(acc_mean$RMSE,3)
-      
+
       # and for gam
       doy_cols <- c("doy",input$select_tar_actB)
       new_doy_data <- as.data.frame(new_data) %>%
@@ -5393,7 +5393,7 @@ server <- function(input, output, session) {#
       ign.table <- data.frame(Model = c("ARIMA","NNETAR","mean","DOY"),
                               RMSE = c(rmse.values$arima, rmse.values$nnetar, rmse.values$mean, rmse.values$doy),
                               Ignorance = c(ign.values$arima, ign.values$nnetar, ign.values$mean, ign.values$doy))
-      
+
       return(ign.table)
       
     })
@@ -5405,7 +5405,7 @@ server <- function(input, output, session) {#
     input$select_reg_actB
     input$no_reg1
     
-    output$ign_table <- renderText({ 
+    output$ign_table <- renderDT({ 
       
       validate(
         need(!is.null(input$upload_data),
