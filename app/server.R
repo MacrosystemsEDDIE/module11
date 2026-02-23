@@ -391,6 +391,59 @@ server <- function(input, output, session) {#
     
   })
   
+  # Calculate R2
+  r2.text <- reactiveValues(main=NULL)
+  
+  observe({
+    input$x_var
+    
+    output$r2_text <- renderText({ 
+      
+      validate(
+        need(input$table01_rows_selected != "",
+             message = "Please select a site in Objective 1.")
+      )
+      
+      validate(
+        need(input$x_var != "",
+             message = "Please select an X variable.")
+      )
+      
+      row_selected = sites_df[input$table01_rows_selected, ]
+      site_id <- row_selected$SiteID
+      
+      ref <- site_vars$variable_id[which(site_vars$variable_id == input$x_var)][1]
+      
+      if(site_id == "cann"){
+        r2_data <- site_data()$data[,c("datetime",ref,"chla")]
+        colnames(r2_data) <- c("datetime","x","y")
+        mod <- lm(y~x, data = r2_data)
+        r2 <- summary(mod)$r.squared
+        
+      }
+      if(site_id == "bart"){
+        r2_data <- site_data()$data[,c("datetime",ref,"nee")]
+        colnames(r2_data) <- c("datetime","x","y")
+        mod <- lm(y~x, data = r2_data)
+        r2 <- summary(mod)$r.squared
+        
+      }
+      
+      validate(
+        need(nrow(r2_data) > 0, message = "No variables at matching timesteps. Please select different  X-Y variables.")
+      )
+      
+      r2_out <- paste0("R","<sup>2</sup>",": ",round(mean(r2, na.rm = TRUE), 2))
+      
+      r2.text$main <- r2_out
+      
+      return(r2_out)
+      
+    })
+    
+  })
+  
+  
   # Table for relationships
   rel_ans <- reactiveValues(dt = rel_table) # %>% formatStyle(c(1:3), border = '1px solid #ddd'))
   
@@ -470,6 +523,43 @@ server <- function(input, output, session) {#
       ggsave(file, plot = plot.lag$main, device = device)
     }
   )
+  
+  # Calculate R2 of lag scatterplot
+  # Calculate R2
+  r2.lag.text <- reactiveValues(main=NULL)
+  
+  observe({
+    input$plot_lag
+    
+    output$r2_lag_text <- renderText({ 
+      
+      validate(
+        need(input$table01_rows_selected != "",
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(!is.null(site_data()$data),
+             message = "Please select a site in Objective 1.")
+      )
+      validate(
+        need(input$plot_lag > 0,
+             message = "Click 'Plot lag scatterplot'")
+      )
+      
+      df <- site_data()$ac
+      
+      mod <- lm(target~target_lag, data = df)
+      r2 <- summary(mod)$r.squared
+        
+      r2_out <- paste0("R","<sup>2</sup>",": ",round(mean(r2, na.rm = TRUE), 2))
+      
+      r2.lag.text$main <- r2_out
+      
+      return(r2_out)
+      
+    })
+    
+  })
   
   # PACF plot ----
   plot.pacf <- reactiveValues(main=NULL)
@@ -653,27 +743,27 @@ server <- function(input, output, session) {#
   
   
   # Plot of regressors
-  plot.stand <- reactiveValues(main=NULL,
-                               stand.tracker = 0)
+  plot.stand <- reactiveValues(main=NULL)
   
   observe({
     
-    input$select
-    
     output$standardize_plot <- renderPlotly({
+    
+    validate(
+      need(input$table01_rows_selected != "",
+           message = "Please select a site in Objective 1.")
+    )
+    validate(
+      need(!is.null(site_data()$data),
+           message = "Please select a site in Objective 1.")
+    )
+    validate(
+      need(!is.null(input$select) | input$no_reg == TRUE,
+           message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
+    )
+    
+    if(input$no_reg == FALSE & input$standardize_data == FALSE){
       
-      validate(
-        need(input$table01_rows_selected != "",
-             message = "Please select a site in Objective 1.")
-      )
-      validate(
-        need(!is.null(site_data()$data),
-             message = "Please select a site in Objective 1.")
-      )
-      validate(
-        need(!is.null(input$select),
-             message = "Please select at least 1 predictor from the dropdown menu.")
-      )
       validate(
         need(length(input$select) <= 3,
              message = "Please only select up to 3 regressors to fit your model.")
@@ -699,7 +789,6 @@ server <- function(input, output, session) {#
         left_join(., site_vars, by = "variable_id") %>%
         mutate(plot_labels = paste(variable_name, paste0("(",variable_unit,")"), sep = " "))
       
-      
       p <- ggplot(data = plot_data)+
         geom_density(aes(x = obs, color = plot_labels, fill = plot_labels), alpha = 0.5)+
         facet_wrap(facets = vars(plot_labels), nrow = 1, scales = "free")+
@@ -707,40 +796,13 @@ server <- function(input, output, session) {#
         theme(legend.position = "none")+
         xlab("observed value")
       
-      plot.stand$main <- p
-      plot.stand$stand.tracker <- 0
-      
-      return(ggplotly(p, dynamicTicks = TRUE))
-      
-    })
+    } else if(input$no_reg == FALSE & input$standardize_data == TRUE){
     
-  })
-  
-  observe({
-    
-    input$select
-    
-    if(input$standardize_data > 0){
-    
-    output$standardize_plot <- renderPlotly({
-      
-      validate(
-        need(input$table01_rows_selected != "",
-             message = "Please select a site in Objective 1.")
-      )
-      validate(
-        need(!is.null(site_data()$data),
-             message = "Please select a site in Objective 1.")
-      )
-      validate(
-        need(!is.null(input$select),
-             message = "Please select at least 1 predictor from the dropdown menu.")
-      )
       validate(
         need(length(input$select) <= 3,
              message = "Please only select up to 3 regressors to fit your model.")
       )
-      
+     
       row_selected = sites_df[input$table01_rows_selected, ]
       site_id <- row_selected$SiteID
       selected_site_vars <- site_vars[which(site_vars$site_id == row_selected$SiteID),]
@@ -770,19 +832,24 @@ server <- function(input, output, session) {#
         theme_bw()+
         theme(legend.position = "none")+
         xlab("standardized value")
-      
-      plot.stand$main <- p
-      plot.stand$stand.tracker = 1
-      
-      return(ggplotly(p, dynamicTicks = TRUE))
-
-      
-    })
     
+    } else if(input$no_reg == TRUE) {
+        
+        p <- ggplot() +
+          annotate("text", x = 10,  y = 10,
+                   size = 6,
+                   label = "You've chosen not to include any exogenous regressors.\nYou can move to the next step!") + theme_void()
+      
     }
     
+    plot.stand$main <- p
     
-  })
+    return(ggplotly(p, dynamicTicks = TRUE))
+    
+    })
+    
+  }) %>%
+    bindEvent(input$select, input$no_reg, input$standardize_data)
   
   # Download standardized regressors
   output$save_standardize_plot <- downloadHandler(
@@ -802,8 +869,9 @@ server <- function(input, output, session) {#
   actA.arima <- reactiveValues(arima=NULL)
   
   observe({
-    input$select
     
+    if(input$no_reg == FALSE){
+
     output$arima_order <- renderText({
       
       validate(
@@ -815,15 +883,15 @@ server <- function(input, output, session) {#
              message = "Please select a site in Objective 1.")
       )
       validate(
-        need(!is.null(input$select),
-             message = "Please select at least 1 predictor from the dropdown menu.")
+        need(!is.null(input$select) | input$no_reg == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
       validate(
         need(length(input$select) <= 3,
              message = "Please only select up to 3 regressors to fit your model.")
       )
       validate(
-        need(plot.stand$stand.tracker == 1,
+        need(input$standardize_data == TRUE,
              message = "Please standardize your exogenous regressors.")
       )
       validate(
@@ -931,17 +999,95 @@ server <- function(input, output, session) {#
       return(order_txt)
       })
     
-
-
-  })
+    } else if(input$no_reg == TRUE) {
+      
+      output$arima_order <- renderText({
+        
+        validate(
+          need(input$table01_rows_selected != "",
+               message = "Please select a site in Objective 1.")
+        )
+        validate(
+          need(!is.null(site_data()$data),
+               message = "Please select a site in Objective 1.")
+        )
+        validate(
+          need(input$fit_arima > 0,
+               message = "Please click 'Fit ARIMA'.")
+        )
+        
+        progress <- shiny::Progress$new()
+        # Make sure it closes when we exit this reactive, even if there's an error
+        on.exit(progress$close())
+        progress$set(message = "Fitting ARIMA model",
+                     detail = "Depending on the size of your dataset, it may take a minute to two to fit the model. This window will disappear
+                     when it is done.", value = 0.2)
+        
+        row_selected = sites_df[input$table01_rows_selected, ]
+        site_id <- row_selected$SiteID
+        selected_site_vars <- site_vars[which(site_vars$site_id == row_selected$SiteID),]
+        progress$set(value = 0.5)
+        
+        
+        if(site_id == "cann"){
+          
+          col_names <- c("datetime","chla")
+          
+          model_df4 <- as_tsibble(cann_model_data) %>%
+            dplyr::slice_head(prop = .8) %>% # using a 70:30 split here
+            tsibble::fill_gaps() %>%
+            select(all_of(col_names)) 
+          
+          my.formula <- formula(paste0("chla ~ 0"))
+          
+          actA.arima$arima <- model_df4 %>%
+             model(`ARIMA` = fable::ARIMA(formula = my.formula))
+          
+          order0 <- strsplit(as.character(actA.arima$arima$ARIMA), split = " ")[[1]][1]
+          order <- substr(order0, 2, nchar(order0) - 1)            
+        }
+        
+        if(site_id == "bart"){
+          
+          col_names <- c("datetime","nee")
+          
+          model_df4 <- as_tsibble(bart_model_data) %>%
+            dplyr::slice_head(prop = .8) %>% # using a 70:30 split here
+            tsibble::fill_gaps() %>%
+            select(all_of(col_names)) 
+          
+          my.formula <- formula(paste0("nee ~ 0"))
+          
+          actA.arima$arima <- model_df4 %>%
+            model(`ARIMA` = fable::ARIMA(formula = my.formula))
+          
+          order0 <- strsplit(as.character(actA.arima$arima$ARIMA), split = " ")[[1]][1]
+          order <- substr(order0, 2, nchar(order0) - 1)
+          
+        }
+        
+        progress$set(value = 0.8)
+        
+        order_txt <- paste0("Fitted an ARIMA model using no predictors with order ",order,".")
+        
+        progress$set(value = 1)
+        
+        return(order_txt)
+      })
+      
+    }
+    
+  }) %>%
+    bindEvent(input$select, input$no_reg, input$table01_rows_selected)
   
   
   # ARIMA plot ----
   plot.arima <- reactiveValues(main=NULL)
   
   observe({
-    input$select
     
+    if(input$no_reg == FALSE){
+
     output$arima_plot <- renderPlotly({ 
       
       validate(
@@ -953,15 +1099,15 @@ server <- function(input, output, session) {#
              message = "Please select a site in Objective 1.")
       )
       validate(
-        need(!is.null(input$select),
-             message = "Please select at least 1 predictor from the dropdown menu.")
+        need(!is.null(input$select) | input$no_reg == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
       validate(
         need(length(input$select) <= 3,
              message = "Please only select up to 3 regressors to fit your model.")
       )
       validate(
-        need(plot.stand$stand.tracker == 1,
+        need(input$standardize_data == TRUE,
              message = "Please standardize your exogenous regressors.")
       )
       validate(
@@ -1004,7 +1150,62 @@ server <- function(input, output, session) {#
       
     })
     
-  })
+    } else if(input$no_reg == TRUE){
+      
+      output$arima_plot <- renderPlotly({ 
+        
+        validate(
+          need(input$table01_rows_selected != "",
+               message = "Please select a site in Objective 1.")
+        )
+        validate(
+          need(!is.null(site_data()$data),
+               message = "Please select a site in Objective 1.")
+        )
+        validate(
+          need(input$fit_arima > 0,
+               message = "Click 'Fit ARIMA'")
+        )
+        
+        row_selected = sites_df[input$table01_rows_selected, ]
+        site_id <- row_selected$SiteID
+        
+        if(site_id == "cann"){
+          plot_data <- as_tsibble(cann_model_data) %>%
+            dplyr::slice_head(prop = .8) %>% # using a 70:30 split here
+            select(datetime, chla) 
+          colnames(plot_data) <- c("datetime","target")
+          y_lab = "chlorophyll-a (mg/L)"
+        }
+        if(site_id == "bart"){
+          plot_data <- as_tsibble(bart_model_data) %>%
+            dplyr::slice_head(prop = .8) %>% # using a 70:30 split here
+            select(datetime, nee) 
+          colnames(plot_data) <- c("datetime","target")
+          y_lab = "net ecosystem exchange (gC/m2/day)"
+        }
+        
+        fitted_values <- fitted(actA.arima$arima)
+        
+        p <- ggplot()+
+          xlab("datetime")+
+          ylab(y_lab)+
+          geom_point(data = plot_data, aes(x = datetime, y = target, color = "obs"))+
+          geom_line(data = fitted_values, aes(x = datetime, y = .fitted, group = .model, color = .model))+
+          labs(color = NULL, fill = NULL)+
+          scale_color_manual(values = c("obs" = "#0d3658",.model = "#446c84"))+
+          theme_classic()
+        
+        plot.arima$main <- p
+        
+        return(ggplotly(p, dynamicTicks = TRUE))
+        
+      })
+      
+    }
+    
+  })  %>%
+    bindEvent(input$select, input$no_reg, input$table01_rows_selected)
   
   # Download scatterplot of arima
   output$save_arima_plot <- downloadHandler(
@@ -1024,8 +1225,9 @@ server <- function(input, output, session) {#
   coeff.table <- reactiveValues(main=NULL)
   
   observe({
-    input$select
     
+    if(input$no_reg == FALSE){
+
     output$coeff_table <- renderDT({ 
       
       validate(
@@ -1037,16 +1239,20 @@ server <- function(input, output, session) {#
              message = "Please select a site in Objective 1.")
       )
       validate(
-        need(!is.null(input$select),
-             message = "Please select at least 1 predictor from the dropdown menu.")
-      )
-      validate(
-        need(input$fit_arima > 0,
-             message = "Click 'Fit ARIMA'")
+        need(!is.null(input$select) | input$no_reg == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
       validate(
         need(length(input$select) <= 3,
              message = "Please only select up to 3 regressors to fit your model.")
+      )
+      validate(
+        need(input$standardize_data == TRUE,
+             message = "Please standardize your exogenous regressors.")
+      )
+      validate(
+        need(input$fit_arima > 0,
+             message = "Click 'Fit ARIMA'")
       )
       
       row_selected = sites_df[input$table01_rows_selected, ]
@@ -1065,13 +1271,49 @@ server <- function(input, output, session) {#
       
     },colnames = c("","Model term","Estimate", "Standard error","Term description"))
     
-  })
+    } else if(input$no_reg == TRUE){
+      
+      output$coeff_table <- renderDT({ 
+        
+        validate(
+          need(input$table01_rows_selected != "",
+               message = "Please select a site in Objective 1.")
+        )
+        validate(
+          need(!is.null(site_data()$data),
+               message = "Please select a site in Objective 1.")
+        )
+        validate(
+          need(input$fit_arima > 0,
+               message = "Click 'Fit ARIMA'")
+        )
+        
+        row_selected = sites_df[input$table01_rows_selected, ]
+        site_id <- row_selected$SiteID
+        selected_model_coeffs <- model_coeffs_key[which(model_coeffs_key$site_id == row_selected$SiteID),]
+        
+        model_coeffs_info <- selected_model_coeffs %>%
+          select(term, coeff_description)
+        t <- coefficients(actA.arima$arima %>% select(`ARIMA`))[,c(2:4)]
+        t[,c(2:3)] <- round(t[,c(2:3)], digits = 3)
+        t <- left_join(t,model_coeffs_info, by = "term")
+        
+        coeff.table$main <- t
+        
+        return(t)
+        
+      },colnames = c("","Model term","Estimate", "Standard error","Term description"))
+      
+    }
+    
+  }) %>%
+    bindEvent(input$select, input$no_reg, input$table01_rows_selected)
+  
   
   # Objective 5 ----
   plot.train.test <- reactiveValues(main=NULL)
   
   observe({
-    input$select
     
     output$train_test_plot <- renderPlotly({ 
       
@@ -1084,22 +1326,21 @@ server <- function(input, output, session) {#
              message = "Please select a site in Objective 1.")
       )
       validate(
-        need(!is.null(input$select),
-             message = "Please select at least 1 predictor from the dropdown menu in Objective 4.")
+        need(!is.null(input$select) | input$no_reg == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
       validate(
-        need(length(input$select) <= 3,
+        need(length(input$select) <= 3 | input$no_reg == TRUE,
              message = "Please only select up to 3 regressors to fit your model in Objective 4.")
       )
       validate(
-        need(plot.stand$stand.tracker == 1,
+        need(input$standardize_data == TRUE | input$no_reg == TRUE,
              message = "Please standardize your exogenous regressors in Objective 4.")
       )
       validate(
         need(!is.null(actA.arima$arima),
              message = "Please fit an ARIMA model in Objective 4.")
       )
-      
       
       row_selected = sites_df[input$table01_rows_selected, ]
       site_id <- row_selected$SiteID
@@ -1166,7 +1407,8 @@ server <- function(input, output, session) {#
       
     })
     
-  })
+  }) %>%
+    bindEvent(input$select, input$no_reg, input$table01_rows_selected)
   
   # Download train test plot
   output$save_train_test_plot <- downloadHandler(
@@ -1186,8 +1428,9 @@ server <- function(input, output, session) {#
   plot.test.pred <- reactiveValues(main=NULL)
   
   observe({
-    input$select
     
+    if(input$no_reg == FALSE){
+
     output$test_pred_plot <- renderPlotly({ 
       
       validate(
@@ -1199,15 +1442,15 @@ server <- function(input, output, session) {#
              message = "Please select a site in Objective 1.")
       )
       validate(
-        need(!is.null(input$select),
-             message = "Please select at least 1 predictor from the dropdown menu in Objective 4.")
+        need(!is.null(input$select) | input$no_reg == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
       validate(
         need(length(input$select) <= 3,
              message = "Please only select up to 3 regressors to fit your model in Objective 4.")
       )
       validate(
-        need(plot.stand$stand.tracker == 1,
+        need(input$standardize_data == TRUE,
              message = "Please standardize your exogenous regressors in Objective 4.")
       )
       validate(
@@ -1318,7 +1561,128 @@ server <- function(input, output, session) {#
       
     })
     
-  })
+    } else if(input$no_reg == TRUE){
+      
+      output$test_pred_plot <- renderPlotly({ 
+        
+        validate(
+          need(input$table01_rows_selected != "",
+               message = "Please select a site in Objective 1.")
+        )
+        validate(
+          need(!is.null(site_data()$data),
+               message = "Please select a site in Objective 1.")
+        )
+        validate(
+          need(!is.null(actA.arima$arima),
+               message = "Please fit an ARIMA model in Objective 4.")
+        )
+        validate(
+          need(input$generate_pred > 0,
+               message = "Click 'Generate predictions'")
+        )
+        
+        progress <- shiny::Progress$new()
+        # Make sure it closes when we exit this reactive, even if there's an error
+        on.exit(progress$close())
+        progress$set(message = "Generating ARIMA predictions",
+                     detail = "Depending on the size of your dataset, it may take a minute to two to generate predictions. This window will disappear
+                     when it is done.", value = 0.2)
+        
+        
+        row_selected = sites_df[input$table01_rows_selected, ]
+        site_id <- row_selected$SiteID
+        
+        if(site_id == "cann"){
+          
+          test_data <- as_tsibble(cann_model_data) %>%
+            dplyr::slice_tail(prop = .2) %>% # using a 70:30 split here
+            select(datetime, chla) %>%
+            dplyr::rename(target = chla) %>%
+            mutate(set = "testing data")
+          
+          train_data <- as_tsibble(cann_model_data) %>%
+            dplyr::slice_head(prop = .8) %>% # using a 70:30 split here
+            select(datetime, chla) %>%
+            dplyr::rename(target = chla) %>%
+            mutate(set = "training data") 
+          
+          plot_data <- bind_rows(train_data, test_data)
+          
+          y_lab = "chlorophyll-a (mg/L)"
+          
+          train_test_dates <- train_data %>%
+            pull(datetime)
+          train_test_line <- last(train_test_dates)
+          
+          col_names <- c("datetime","chla")
+          
+          new_data <- as_tsibble(cann_model_data) %>%
+            filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
+            tsibble::fill_gaps() %>%
+            select(all_of(col_names)) 
+          
+        }
+        
+        if(site_id == "bart"){
+          
+          test_data <- as_tsibble(bart_model_data) %>%
+            dplyr::slice_tail(prop = .2) %>% # using a 70:30 split here
+            select(datetime, nee) %>%
+            dplyr::rename(target = nee) %>%
+            mutate(set = "testing data")
+          
+          train_data <- as_tsibble(bart_model_data) %>%
+            dplyr::slice_head(prop = .8) %>% # using a 70:30 split here
+            select(datetime, nee) %>%
+            dplyr::rename(target = nee) %>%
+            mutate(set = "training data") 
+          
+          plot_data <- bind_rows(train_data, test_data)
+          
+          y_lab = "net ecosystem exchange (gC/m2/day)"
+          
+          train_test_dates <- train_data %>%
+            pull(datetime)
+          train_test_line <- last(train_test_dates)
+          
+          col_names <- c("datetime","nee")
+          
+          new_data <- as_tsibble(bart_model_data) %>%
+            filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
+            tsibble::fill_gaps() %>%
+            select(all_of(col_names)) 
+          
+        }
+        
+        progress$set(value = 0.5)
+        fitted_values <- fitted(actA.arima$arima)
+        pred <- forecast(actA.arima$arima, new_data = new_data, bootstrap = TRUE, times = 256)
+        
+        
+        p <- ggplot()+
+          xlab("datetime")+
+          ylab(y_lab)+
+          geom_point(data = plot_data, aes(x = datetime, y = target, color = set))+
+          geom_line(data = pred, aes(x = datetime, y = .mean, group = .model, color = .model))+
+          geom_vline(xintercept = train_test_line)+
+          labs(color = NULL, fill = NULL)+
+          scale_color_manual(values = c("training data" = "#cee3f1",.model = "#446c84","testing data" = "#0d3658"))+
+          theme_classic()
+        
+        plot.test.pred$main <- p
+        
+        progress$set(value = 1)
+        
+        
+        return(ggplotly(p, dynamicTicks = TRUE))
+        
+      })
+      
+    }
+    
+  }) %>%
+    bindEvent(input$select, input$no_reg, input$table01_rows_selected)
   
   # Download test pred plot
   output$save_test_pred_plot <- downloadHandler(
@@ -1343,8 +1707,7 @@ server <- function(input, output, session) {#
   plot.resid <- reactiveValues(main=NULL)
   
   observe({
-    input$select
-    
+
     output$resid_plot <- renderPlotly({ 
       
       validate(
@@ -1356,15 +1719,15 @@ server <- function(input, output, session) {#
              message = "Please select a site in Objective 1.")
       )
       validate(
-        need(!is.null(input$select),
-             message = "Please select at least 1 predictor from the dropdown menu in Objective 4.")
+        need(!is.null(input$select) | input$no_reg == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
       validate(
-        need(length(input$select) <= 3,
+        need(length(input$select) <= 3 | input$no_reg == TRUE,
              message = "Please only select up to 3 regressors to fit your model in Objective 4.")
       )
       validate(
-        need(plot.stand$stand.tracker == 1,
+        need(input$standardize_data == TRUE | input$no_reg == TRUE,
              message = "Please standardize your exogenous regressors in Objective 4.")
       )
       validate(
@@ -1401,7 +1764,8 @@ server <- function(input, output, session) {#
       
     })
     
-  })
+  })  %>%
+    bindEvent(input$select, input$no_reg, input$table01_rows_selected)
   
   
   # Download residuals histogram
@@ -1423,8 +1787,9 @@ server <- function(input, output, session) {#
   plot.uc <- reactiveValues(main=NULL)
   
   observe({
-    input$select
     
+    if(input$no_reg == FALSE){
+
     output$uc_plot <- renderPlotly({ 
       
       validate(
@@ -1436,15 +1801,15 @@ server <- function(input, output, session) {#
              message = "Please select a site in Objective 1.")
       )
       validate(
-        need(!is.null(input$select),
-             message = "Please select at least 1 predictor from the dropdown menu in Objective 4.")
+        need(!is.null(input$select) | input$no_reg == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
       validate(
         need(length(input$select) <= 3,
              message = "Please only select up to 3 regressors to fit your model in Objective 4.")
       )
       validate(
-        need(plot.stand$stand.tracker == 1,
+        need(input$standardize_data == TRUE,
              message = "Please standardize your exogenous regressors in Objective 4.")
       )
       validate(
@@ -1565,7 +1930,139 @@ server <- function(input, output, session) {#
       
     })
     
-  })
+    } else if(input$no_reg == TRUE){
+      
+      output$uc_plot <- renderPlotly({ 
+        
+        validate(
+          need(input$table01_rows_selected != "",
+               message = "Please select a site in Objective 1.")
+        )
+        validate(
+          need(!is.null(site_data()$data),
+               message = "Please select a site in Objective 1.")
+        )
+        validate(
+          need(!is.null(actA.arima$arima),
+               message = "Please fit an ARIMA model in Objective 4.")
+        )
+        validate(
+          need(input$add_uc > 0,
+               message = "Click 'Add uncertainty'")
+        )
+        
+        progress <- shiny::Progress$new()
+        # Make sure it closes when we exit this reactive, even if there's an error
+        on.exit(progress$close())
+        progress$set(message = "Generating ARIMA predictions",
+                     detail = "Depending on the size of your dataset, it may take a minute to two to generate predictions. This window will disappear
+                     when it is done.", value = 0.2)
+        
+        row_selected = sites_df[input$table01_rows_selected, ]
+        site_id <- row_selected$SiteID
+        
+        if(site_id == "cann"){
+          
+          test_data <- as_tsibble(cann_model_data) %>%
+            dplyr::slice_tail(prop = .2) %>% # using a 80:20 split here
+            select(datetime, chla) %>%
+            dplyr::rename(target = chla) %>%
+            mutate(set = "testing data")
+          
+          train_data <- as_tsibble(cann_model_data) %>%
+            dplyr::slice_head(prop = .8) %>% # using a 80:20 split here
+            select(datetime, chla) %>%
+            dplyr::rename(target = chla) %>%
+            mutate(set = "training data") 
+          
+          plot_data <- bind_rows(train_data, test_data)
+          
+          y_lab = "chlorophyll-a (mg/L)"
+          
+          train_test_dates <- train_data %>%
+            pull(datetime)
+          train_test_line <- last(train_test_dates)
+          
+          col_names <- c("datetime","chla")
+          
+          new_data <- as_tsibble(cann_model_data) %>%
+            filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
+            tsibble::fill_gaps() %>%
+            select(all_of(col_names)) 
+          
+        }
+        
+        if(site_id == "bart"){
+          
+          test_data <- as_tsibble(bart_model_data) %>%
+            dplyr::slice_tail(prop = .2) %>% # using a 70:30 split here
+            select(datetime, nee) %>%
+            dplyr::rename(target = nee) %>%
+            mutate(set = "testing data")
+          
+          train_data <- as_tsibble(bart_model_data) %>%
+            dplyr::slice_head(prop = .8) %>% # using a 70:30 split here
+            select(datetime, nee) %>%
+            dplyr::rename(target = nee) %>%
+            mutate(set = "training data") 
+          
+          plot_data <- bind_rows(train_data, test_data)
+          
+          y_lab = "net ecosystem exchange (gC/m2/day)"
+          
+          train_test_dates <- train_data %>%
+            pull(datetime)
+          train_test_line <- last(train_test_dates)
+          
+          col_names <- c("datetime","nee")
+          
+          new_data <- as_tsibble(bart_model_data) %>%
+            filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
+            tsibble::fill_gaps() %>%
+            select(all_of(col_names)) 
+          
+        }
+        
+        progress$set(value = 0.5)
+        fitted_values <- fitted(actA.arima$arima)
+        pred <- forecast(actA.arima$arima, new_data = new_data, bootstrap = TRUE, times = 256) %>%
+          hilo()
+        
+        
+        p <- ggplot()+
+          xlab("datetime")+
+          ylab(y_lab)+
+          geom_point(data = plot_data, aes(x = datetime, y = target, color = set))+
+          geom_ribbon(data = pred, aes(x = datetime, ymin = `95%`$lower, ymax = `95%`$upper, fill = "95% prediction interval"), color = "#DDE4E1",
+                      alpha = 0.5)+
+          geom_line(data = pred, aes(x = datetime, y = .mean, group = .model, color = "ARIMA"))+
+          geom_vline(xintercept = train_test_line)+
+          labs(color = NULL, fill = NULL)+
+          scale_color_manual(values = c("training data" = "#cee3f1","ARIMA" = "darkgray","testing data" = "#0d3658"))+
+          scale_fill_manual(values = c("95% prediction interval" = "#DDE4E1"))+
+          theme_classic()
+        
+        plot.uc$main <- p
+        
+        p2 <- ggplotly(p, dynamicTicks = TRUE) 
+        
+        for (i in 1:length(p2$x$data)){
+          if (!is.null(p2$x$data[[i]]$name)){
+            p2$x$data[[i]]$name =  gsub("\\(","",str_split(p2$x$data[[i]]$name,",")[[1]][1])
+          }
+        }
+        
+        progress$set(value = 1)
+        
+        return(p2)
+        
+      })
+      
+    }
+    
+  }) %>%
+    bindEvent(input$select, input$no_reg, input$table01_rows_selected)
+  
   
   # Download predictions with uc plot
   output$save_uc_plot <- downloadHandler(
@@ -1603,15 +2100,15 @@ server <- function(input, output, session) {#
              message = "Please select a site in Objective 1.")
       )
       validate(
-        need(!is.null(input$select),
-             message = "Please select at least 1 predictor from the dropdown menu in Objective 4.")
+        need(!is.null(input$select) | input$no_reg == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
       validate(
-        need(length(input$select) <= 3,
+        need(length(input$select) <= 3 | input$no_reg == TRUE,
              message = "Please only select up to 3 regressors to fit your model in Objective 4.")
       )
       validate(
-        need(plot.stand$stand.tracker == 1,
+        need(input$standardize_data == TRUE | input$no_reg == TRUE,
              message = "Please standardize your exogenous regressors in Objective 4.")
       )
       validate(
@@ -1633,11 +2130,22 @@ server <- function(input, output, session) {#
         train_data <- as_tsibble(cann_model_data) %>%
           dplyr::slice_head(prop = .8)
         
+        if(input$no_reg == FALSE){
+        
         new_data <- as_tsibble(cann_model_data) %>%
           filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
           tsibble::fill_gaps() %>%
           select(all_of(col_names)) %>%
           mutate(across(input$select, list(zscore = ~as.numeric(scale(.)))))
+        
+        } else if(input$no_reg == TRUE){
+          
+          new_data <- as_tsibble(cann_model_data) %>%
+            filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
+            tsibble::fill_gaps() %>%
+            select(all_of(col_names)) 
+          
+        }
         
         acc <- forecast(actA.arima$arima, new_data = new_data) %>%
           accuracy(data = new_data)
@@ -1653,11 +2161,22 @@ server <- function(input, output, session) {#
         train_data <- as_tsibble(bart_model_data) %>%
           dplyr::slice_head(prop = .8)
         
-        new_data <- as_tsibble(bart_model_data) %>%
-          filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
-          tsibble::fill_gaps() %>%
-          select(all_of(col_names)) %>%
-          mutate(across(input$select, list(zscore = ~as.numeric(scale(.)))))
+        if(input$no_reg == FALSE){
+          
+          new_data <- as_tsibble(bart_model_data) %>%
+            filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
+            tsibble::fill_gaps() %>%
+            select(all_of(col_names)) %>%
+            mutate(across(input$select, list(zscore = ~as.numeric(scale(.)))))
+          
+        } else if(input$no_reg == TRUE){
+          
+          new_data <- as_tsibble(bart_model_data) %>%
+            filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
+            tsibble::fill_gaps() %>%
+            select(all_of(col_names)) 
+          
+        }
         
         acc <- forecast(actA.arima$arima, new_data = new_data) %>%
           accuracy(data = new_data)
@@ -1694,15 +2213,15 @@ server <- function(input, output, session) {#
              message = "Please select a site in Objective 1.")
       )
       validate(
-        need(!is.null(input$select),
-             message = "Please select at least 1 predictor from the dropdown menu in Objective 4.")
+        need(!is.null(input$select) | input$no_reg == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
       validate(
-        need(length(input$select) <= 3,
+        need(length(input$select) <= 3 | input$no_reg == TRUE,
              message = "Please only select up to 3 regressors to fit your model in Objective 4.")
       )
       validate(
-        need(plot.stand$stand.tracker == 1,
+        need(input$standardize_data == TRUE | input$no_reg == TRUE,
              message = "Please standardize your exogenous regressors in Objective 4.")
       )
       validate(
@@ -1724,11 +2243,22 @@ server <- function(input, output, session) {#
         train_data <- as_tsibble(cann_model_data) %>%
           dplyr::slice_head(prop = .8)
         
-        new_data <- as_tsibble(cann_model_data) %>%
-          filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
-          tsibble::fill_gaps() %>%
-          select(all_of(col_names)) %>%
-          mutate(across(input$select, list(zscore = ~as.numeric(scale(.)))))
+        if(input$no_reg == FALSE){
+          
+          new_data <- as_tsibble(cann_model_data) %>%
+            filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
+            tsibble::fill_gaps() %>%
+            select(all_of(col_names)) %>%
+            mutate(across(input$select, list(zscore = ~as.numeric(scale(.)))))
+          
+        } else if(input$no_reg == TRUE){
+          
+          new_data <- as_tsibble(cann_model_data) %>%
+            filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
+            tsibble::fill_gaps() %>%
+            select(all_of(col_names)) 
+          
+        }
         
         pred <- forecast(actA.arima$arima, new_data = new_data, bootstrap = TRUE, times = 256) 
         
@@ -1747,11 +2277,22 @@ server <- function(input, output, session) {#
         train_data <- as_tsibble(bart_model_data) %>%
           dplyr::slice_head(prop = .8)
         
-        new_data <- as_tsibble(bart_model_data) %>%
-          filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
-          tsibble::fill_gaps() %>%
-          select(all_of(col_names)) %>%
-          mutate(across(input$select, list(zscore = ~as.numeric(scale(.)))))
+        if(input$no_reg == FALSE){
+          
+          new_data <- as_tsibble(bart_model_data) %>%
+            filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
+            tsibble::fill_gaps() %>%
+            select(all_of(col_names)) %>%
+            mutate(across(input$select, list(zscore = ~as.numeric(scale(.)))))
+          
+        } else if(input$no_reg == TRUE){
+          
+          new_data <- as_tsibble(bart_model_data) %>%
+            filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
+            tsibble::fill_gaps() %>%
+            select(all_of(col_names)) 
+          
+        }
         
         pred <- forecast(actA.arima$arima, new_data = new_data, bootstrap = TRUE, times = 256) 
         
@@ -2128,12 +2669,9 @@ server <- function(input, output, session) {#
   
   
   # Plot of regressors
-  plot.stand2 <- reactiveValues(main=NULL,
-                               stand.tracker = 0)
+  plot.stand2 <- reactiveValues(main=NULL)
   
   observe({
-    
-    input$select_reg_actB
     
     output$standardize_plot2 <- renderPlotly({
       
@@ -2146,9 +2684,12 @@ server <- function(input, output, session) {#
              message = "Please correct your data format in Objective 6.")
       )
       validate(
-        need(!is.null(input$select_reg_actB),
-             message = "Please select at least 1 predictor from the dropdown menu.")
+        need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
+      
+      if(input$no_reg1 == FALSE & input$standardize_data2 == FALSE){
+        
       validate(
         need(length(input$select_reg_actB) <= 3,
              message = "Please only select up to 3 regressors to fit your model.")
@@ -2172,70 +2713,52 @@ server <- function(input, output, session) {#
         theme(legend.position = "none")+
         xlab("observed value")
       
+
+      } else if(input$no_reg1 == FALSE & input$standardize_data2 == TRUE){
+        
+        validate(
+          need(length(input$select_reg_actB) <= 3,
+               message = "Please only select up to 3 regressors to fit your model.")
+        )
+        
+        dat <- stand.data()
+        wide_dat <- dat %>%
+          pivot_wider(names_from = "variable", values_from = "observation")
+        
+        col_names <- c(input$select_reg_actB)
+        
+        plot_data_stand <- wide_dat %>%
+          dplyr::slice_head(prop = .7) %>% # using a 70:30 split here
+          select(all_of(col_names)) %>%
+          pivot_longer(cols = everything(), names_to = "variable_id", values_to = "obs") %>%
+          group_by(variable_id) %>%
+          mutate(zscore = as.numeric(scale(obs))) %>%
+          ungroup()
+        
+        p <- ggplot(data = plot_data_stand)+
+          geom_density(aes(x = zscore, color = variable_id, fill = variable_id), alpha = 0.5)+
+          facet_wrap(facets = vars(variable_id), nrow = 1, scales = "free")+
+          theme_bw()+
+          theme(legend.position = "none")+
+          xlab("standardized value")
+        
+      } else if(input$no_reg1 == TRUE) {
+        
+        p <- ggplot() +
+          annotate("text", x = 10,  y = 10,
+                   size = 6,
+                   label = "You've chosen not to include any exogenous regressors.\nYou can move to the next step!") + theme_void()
+      }
+      
       plot.stand2$main <- p
-      plot.stand2$stand.tracker <- 0
-      
-      
+
       return(ggplotly(p, dynamicTicks = TRUE))
       
     })
     
     
-  })
-  
-  observe({
-    
-    input$standardize_data2
-    
-    output$standardize_plot2 <- renderPlotly({
-      
-      validate(
-        need(!is.null(input$upload_data),
-             message = "Please upload your data in Objective 6.")
-      )
-      validate(
-        need(valid$main == TRUE,
-             message = "Please correct your data format in Objective 6.")
-      )
-      validate(
-        need(!is.null(input$select_reg_actB),
-             message = "Please select at least 1 predictor from the dropdown menu.")
-      )
-      validate(
-        need(length(input$select_reg_actB) <= 3,
-             message = "Please only select up to 3 regressors to fit your model.")
-      )
-      
-      dat <- stand.data()
-      wide_dat <- dat %>%
-        pivot_wider(names_from = "variable", values_from = "observation")
-      
-      col_names <- c(input$select_reg_actB)
-      
-      plot_data_stand <- wide_dat %>%
-        dplyr::slice_head(prop = .7) %>% # using a 70:30 split here
-        select(all_of(col_names)) %>%
-        pivot_longer(cols = everything(), names_to = "variable_id", values_to = "obs") %>%
-        group_by(variable_id) %>%
-        mutate(zscore = as.numeric(scale(obs))) %>%
-        ungroup()
-      
-      p <- ggplot(data = plot_data_stand)+
-        geom_density(aes(x = zscore, color = variable_id, fill = variable_id), alpha = 0.5)+
-        facet_wrap(facets = vars(variable_id), nrow = 1, scales = "free")+
-        theme_bw()+
-        theme(legend.position = "none")+
-        xlab("standardized value")
-      
-      plot.stand2$main <- p
-      plot.stand2$stand.tracker = 1
-      
-      return(ggplotly(p, dynamicTicks = TRUE))
-      
-    })
-    
-    
-  })
+  }) %>%
+    bindEvent(input$select_reg_actB, input$no_reg1, input$standardize_data2)
   
   # Download standardized regressors
   output$save_standardize_plot2 <- downloadHandler(
@@ -2271,15 +2794,17 @@ server <- function(input, output, session) {#
              message = "Please select a target variable from the dropdown menu.")
       )
       validate(
-        need(!is.null(input$select_reg_actB),
-             message = "Please select at least 1 predictor from the dropdown menu.")
+        need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
+      
+      if(input$no_reg1 == FALSE){
       validate(
         need(length(input$select_reg_actB) <= 3,
              message = "Please only select up to 3 regressors to fit your model.")
       )
       validate(
-        need(plot.stand2$stand.tracker == 1,
+        need(input$standardize_data2 == TRUE,
              message = "Please standardize your exogenous regressors.")
       )
       
@@ -2297,10 +2822,26 @@ server <- function(input, output, session) {#
       
       actB.arima$nrow_model_df <- nrow(model_df4)
       
-  })
+      } else if(input$no_reg1 == TRUE){
+        dat <- stand.data()
+        wide_dat <- dat %>%
+          pivot_wider(names_from = "variable", values_from = "observation")
+        
+        col_names <- c("datetime",input$select_tar_actB)
+        
+        model_df4 <- as_tsibble(wide_dat) %>%
+          dplyr::slice_head(prop = input$prop) %>% # using a 70:30 split here
+          tsibble::fill_gaps() %>%
+          select(all_of(col_names)) 
+        
+        actB.arima$nrow_model_df <- nrow(model_df4)
+      }
+      
+  }) 
   
   observe({
-    input$fit_arima2
+    input$fit_arima2 
+    
     output$arima_order2 <- renderText({
       
       validate(
@@ -2312,9 +2853,11 @@ server <- function(input, output, session) {#
              message = "Please correct your data format in Objective 6.")
       )
       validate(
-        need(!is.null(input$select_tar_actB),
-             message = "Please select a target variable from the dropdown menu.")
+        need(!is.null(input$select_tar_actB) | input$no_reg1 == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
+      
+      if(input$no_reg1 == FALSE){
       validate(
         need(!is.null(input$select_reg_actB),
              message = "Please select at least 1 predictor from the dropdown menu.")
@@ -2324,7 +2867,7 @@ server <- function(input, output, session) {#
              message = "Please only select up to 3 regressors to fit your model.")
       )
       validate(
-        need(plot.stand2$stand.tracker == 1,
+        need(input$standardize_data2 == TRUE,
              message = "Please standardize your exogenous regressors.")
       )
       validate(
@@ -2398,16 +2941,65 @@ server <- function(input, output, session) {#
       } else if(length(input$select) > 3){
         order_txt <- "Please select no more than three predictors to fit the ARIMA."
       }
+        
+      } else if(input$no_reg1 == TRUE){
+        
+        validate(
+          need(input$prop <= 0.9,
+               message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less).")
+        )
+        validate(
+          need(actB.arima$nrow_model_df >= 60,
+               message = "You are using fewer than 60 data points for model training. Please select a larger proportion of your data for training.")
+        )
+        validate(
+          need(input$fit_arima2 > 0,
+               message = "Please click 'Fit ARIMA'")
+        )
+        
+        progress <- shiny::Progress$new()
+        # Make sure it closes when we exit this reactive, even if there's an error
+        on.exit(progress$close())
+        progress$set(message = "Fitting ARIMA model",
+                     detail = "Depending on the size of your dataset, it may take a minute to two to fit the ARIMA model. This window will disappear
+                     when it is done.", value = 0.2)
+        
+        dat <- stand.data()
+        wide_dat <- dat %>%
+          pivot_wider(names_from = "variable", values_from = "observation")
+        
+        col_names <- c("datetime",input$select_tar_actB)
+        
+        model_df4 <- as_tsibble(wide_dat) %>%
+          dplyr::slice_head(prop = input$prop) %>% # using a 70:30 split here
+          tsibble::fill_gaps() %>%
+          select(all_of(col_names)) 
+        
+        progress$set(value = 0.5)
+        
+          my.formula <- formula(paste0(input$select_tar_actB," ~ 0 + PDQ(0, 0, 0)"))
+          actB.arima$arima <- model_df4 %>%
+            model(`ARIMA` = fable::ARIMA(formula = my.formula))
+        
+        progress$set(value = 0.8)
+        
+          order0 <- strsplit(as.character(actB.arima$arima$ARIMA), split = " ")[[1]][1]
+          order <- substr(order0, 2, nchar(order0) - 1)
+         
+          order_txt <- paste0("Fitted an ARIMA model to predict ",input$select_tar_actB," using no predictors with order ",order,".")
+        
+      }
       
         progress$set(value = 1)
         
       return(order_txt)
     })
-  })
+  }) 
   
   # Reset ARIMA order text when change selected variables
   observe({
     input$select_reg_actB
+    input$no_reg1
     output$arima_order2 <- renderText({
       
       validate(
@@ -2423,17 +3015,21 @@ server <- function(input, output, session) {#
              message = "Please select a target variable from the dropdown menu.")
       )
       validate(
-        need(!is.null(input$select_reg_actB),
-             message = "Please select at least 1 predictor from the dropdown menu.")
+        need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
+      
+      if(input$no_reg1 == FALSE){
       validate(
         need(length(input$select_reg_actB) <= 3,
              message = "Please only select up to 3 regressors to fit your model.")
       )
       validate(
-        need(plot.stand2$stand.tracker == 1,
+        need(input$standardize_data2 == TRUE,
              message = "Please standardize your exogenous regressors.")
       )
+      }
+      
       validate(
         need(input$prop <= 0.9,
              message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less).")
@@ -2469,17 +3065,21 @@ server <- function(input, output, session) {#
              message = "Please select a target variable from the dropdown menu.")
       )
       validate(
-        need(!is.null(input$select_reg_actB),
-             message = "Please select at least 1 predictor from the dropdown menu.")
+        need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
-      validate(
-        need(length(input$select_reg_actB) <= 3,
-             message = "Please only select up to 3 regressors to fit your model.")
-      )
-      validate(
-        need(plot.stand2$stand.tracker == 1,
-             message = "Please standardize your exogenous regressors.")
-      )
+      
+      if(input$no_reg1 == FALSE){
+        validate(
+          need(length(input$select_reg_actB) <= 3,
+               message = "Please only select up to 3 regressors to fit your model.")
+        )
+        validate(
+          need(input$standardize_data2 == TRUE,
+               message = "Please standardize your exogenous regressors.")
+        )
+      }
+      
       validate(
         need(input$prop <= 0.9,
              message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less).")
@@ -2526,6 +3126,7 @@ server <- function(input, output, session) {#
   
   observe({
     input$select_reg_actB
+    input$no_reg1
     
     output$arima_plot2 <- renderPlotly({ 
       
@@ -2542,17 +3143,21 @@ server <- function(input, output, session) {#
              message = "Please select a target variable from the dropdown menu.")
       )
       validate(
-        need(!is.null(input$select_reg_actB),
-             message = "Please select at least 1 predictor from the dropdown menu.")
+        need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
-      validate(
-        need(length(input$select_reg_actB) <= 3,
-             message = "Please only select up to 3 regressors to fit your model.")
-      )
-      validate(
-        need(plot.stand2$stand.tracker == 1,
-             message = "Please standardize your exogenous regressors.")
-      )
+      
+      if(input$no_reg1 == FALSE){
+        validate(
+          need(length(input$select_reg_actB) <= 3,
+               message = "Please only select up to 3 regressors to fit your model.")
+        )
+        validate(
+          need(input$standardize_data2 == TRUE,
+               message = "Please standardize your exogenous regressors.")
+        )
+      }
+      
       validate(
         need(input$prop <= 0.9,
              message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less).")
@@ -2617,17 +3222,21 @@ server <- function(input, output, session) {#
              message = "Please select a target variable from the dropdown menu.")
       )
       validate(
-        need(!is.null(input$select_reg_actB),
-             message = "Please select at least 1 predictor from the dropdown menu.")
+        need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
-      validate(
-        need(length(input$select_reg_actB) <= 3,
-             message = "Please only select up to 3 regressors to fit your model.")
-      )
-      validate(
-        need(plot.stand2$stand.tracker == 1,
-             message = "Please standardize your exogenous regressors.")
-      )
+      
+      if(input$no_reg1 == FALSE){
+        validate(
+          need(length(input$select_reg_actB) <= 3,
+               message = "Please only select up to 3 regressors to fit your model.")
+        )
+        validate(
+          need(input$standardize_data2 == TRUE,
+               message = "Please standardize your exogenous regressors.")
+        )
+      }
+      
       validate(
         need(input$prop <= 0.9,
              message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less).")
@@ -2654,6 +3263,7 @@ server <- function(input, output, session) {#
   
   observe({
     input$select_reg_actB
+    input$no_reg1
     
     output$coeff_table2 <- renderDT({ 
       
@@ -2670,17 +3280,21 @@ server <- function(input, output, session) {#
              message = "Please select a target variable from the dropdown menu.")
       )
       validate(
-        need(!is.null(input$select_reg_actB),
-             message = "Please select at least 1 predictor from the dropdown menu.")
+        need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
-      validate(
-        need(length(input$select_reg_actB) <= 3,
-             message = "Please only select up to 3 regressors to fit your model.")
-      )
-      validate(
-        need(plot.stand2$stand.tracker == 1,
-             message = "Please standardize your exogenous regressors.")
-      )
+      
+      if(input$no_reg1 == FALSE){
+        validate(
+          need(length(input$select_reg_actB) <= 3,
+               message = "Please only select up to 3 regressors to fit your model.")
+        )
+        validate(
+          need(input$standardize_data2 == TRUE,
+               message = "Please standardize your exogenous regressors.")
+        )
+      }
+      
       validate(
         need(input$prop <= 0.9,
              message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less).")
@@ -2725,17 +3339,20 @@ server <- function(input, output, session) {#
              message = "Please select a target variable from the dropdown menu in Objective 7.")
       )
       validate(
-        need(!is.null(input$select_reg_actB),
-             message = "Please select at least 1 predictor from the dropdown menu in Objective 7.")
+        need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
-      validate(
-        need(length(input$select_reg_actB) <= 3,
-             message = "Please only select up to 3 regressors to fit your model in Objective 7.")
-      )
-      validate(
-        need(plot.stand2$stand.tracker == 1,
-             message = "Please standardize your exogenous regressors in Objective 7.")
-      )
+      
+      if(input$no_reg1 == FALSE){
+        validate(
+          need(length(input$select_reg_actB) <= 3,
+               message = "Please only select up to 3 regressors to fit your model.")
+        )
+        validate(
+          need(input$standardize_data2 == TRUE,
+               message = "Please standardize your exogenous regressors.")
+        )
+      }
       validate(
         need(input$prop <= 0.9,
              message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
@@ -2796,6 +3413,7 @@ server <- function(input, output, session) {#
   observe({
     input$select_tar_actB
     input$select_reg_actB
+    input$no_reg1
     
     output$train_test_plot2 <- renderPlotly({ 
       
@@ -2812,17 +3430,21 @@ server <- function(input, output, session) {#
              message = "Please select a target variable from the dropdown menu in Objective 7.")
       )
       validate(
-        need(!is.null(input$select_reg_actB),
-             message = "Please select at least 1 predictor from the dropdown menu in Objective 7.")
+        need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
-      validate(
-        need(length(input$select_reg_actB) <= 3,
-             message = "Please only select up to 3 regressors to fit your model in Objective 7.")
-      )
-      validate(
-        need(plot.stand2$stand.tracker == 1,
-             message = "Please standardize your exogenous regressors in Objective 7.")
-      )
+      
+      if(input$no_reg1 == FALSE){
+        validate(
+          need(length(input$select_reg_actB) <= 3,
+               message = "Please only select up to 3 regressors to fit your model.")
+        )
+        validate(
+          need(input$standardize_data2 == TRUE,
+               message = "Please standardize your exogenous regressors.")
+        )
+      }
+      
       validate(
         need(input$prop <= 0.9,
              message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
@@ -2887,17 +3509,20 @@ server <- function(input, output, session) {#
              message = "Please select a target variable from the dropdown menu in Objective 7.")
       )
       validate(
-        need(!is.null(input$select_reg_actB),
-             message = "Please select at least 1 predictor from the dropdown menu in Objective 7.")
+        need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
-      validate(
-        need(length(input$select_reg_actB) <= 3,
-             message = "Please only select up to 3 regressors to fit your model in Objective 7.")
-      )
-      validate(
-        need(plot.stand2$stand.tracker == 1,
-             message = "Please standardize your exogenous regressors in Objective 7.")
-      )
+      
+      if(input$no_reg1 == FALSE){
+        validate(
+          need(length(input$select_reg_actB) <= 3,
+               message = "Please only select up to 3 regressors to fit your model.")
+        )
+        validate(
+          need(input$standardize_data2 == TRUE,
+               message = "Please standardize your exogenous regressors.")
+        )
+      }
       validate(
         need(input$prop <= 0.9,
              message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
@@ -2945,8 +3570,8 @@ server <- function(input, output, session) {#
         pull(datetime)
       train_test_line <- last(train_test_dates)
       
-      fitted_values <- fitted(actB.arima$arima)
-      
+      if(input$no_reg1 == FALSE){
+        
         col_names <- c("datetime",input$select_tar_actB,input$select_reg_actB)
         
         new_data <- as_tsibble(wide_dat) %>%
@@ -2954,6 +3579,17 @@ server <- function(input, output, session) {#
           tsibble::fill_gaps() %>%
           select(all_of(col_names)) %>%
           mutate(across(input$select_reg_actB, list(zscore = ~as.numeric(scale(.)))))
+        
+      } else if(input$no_reg1 == TRUE){
+        
+        col_names <- c("datetime",input$select_tar_actB)
+        
+        new_data <- as_tsibble(wide_dat) %>%
+          filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
+          tsibble::fill_gaps() %>%
+          select(all_of(col_names)) 
+        
+      }
       
       fitted_values <- fitted(actB.arima$arima)
       
@@ -2985,6 +3621,7 @@ server <- function(input, output, session) {#
   observe({
     input$select_tar_actB
     input$select_reg_actB
+    input$no_reg1
     
     output$test_pred_plot2 <- renderPlotly({ 
       
@@ -3001,17 +3638,21 @@ server <- function(input, output, session) {#
              message = "Please select a target variable from the dropdown menu in Objective 7.")
       )
       validate(
-        need(!is.null(input$select_reg_actB),
-             message = "Please select at least 1 predictor from the dropdown menu in Objective 7.")
+        need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
-      validate(
-        need(length(input$select_reg_actB) <= 3,
-             message = "Please only select up to 3 regressors to fit your model in Objective 7.")
-      )
-      validate(
-        need(plot.stand2$stand.tracker == 1,
-             message = "Please standardize your exogenous regressors in Objective 7.")
-      )
+      
+      if(input$no_reg1 == FALSE){
+        validate(
+          need(length(input$select_reg_actB) <= 3,
+               message = "Please only select up to 3 regressors to fit your model.")
+        )
+        validate(
+          need(input$standardize_data2 == TRUE,
+               message = "Please standardize your exogenous regressors.")
+        )
+      }
+      
       validate(
         need(input$prop <= 0.9,
              message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
@@ -3081,17 +3722,21 @@ server <- function(input, output, session) {#
              message = "Please select a target variable from the dropdown menu in Objective 7.")
       )
       validate(
-        need(!is.null(input$select_reg_actB),
-             message = "Please select at least 1 predictor from the dropdown menu in Objective 7.")
+        need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
-      validate(
-        need(length(input$select_reg_actB) <= 3,
-             message = "Please only select up to 3 regressors to fit your model in Objective 7.")
-      )
-      validate(
-        need(plot.stand2$stand.tracker == 1,
-             message = "Please standardize your exogenous regressors in Objective 7.")
-      )
+      
+      if(input$no_reg1 == FALSE){
+        validate(
+          need(length(input$select_reg_actB) <= 3,
+               message = "Please only select up to 3 regressors to fit your model.")
+        )
+        validate(
+          need(input$standardize_data2 == TRUE,
+               message = "Please standardize your exogenous regressors.")
+        )
+      }
+      
       validate(
         need(input$prop <= 0.9,
              message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
@@ -3129,6 +3774,7 @@ server <- function(input, output, session) {#
   observe({
     input$select_tar_actB
     input$select_reg_actB
+    input$no_reg1
     
     output$resid_plot2 <- renderPlotly({ 
       
@@ -3224,17 +3870,21 @@ server <- function(input, output, session) {#
              message = "Please select a target variable from the dropdown menu in Objective 7.")
       )
       validate(
-        need(!is.null(input$select_reg_actB),
-             message = "Please select at least 1 predictor from the dropdown menu in Objective 7.")
+        need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
-      validate(
-        need(length(input$select_reg_actB) <= 3,
-             message = "Please only select up to 3 regressors to fit your model in Objective 7.")
-      )
-      validate(
-        need(plot.stand2$stand.tracker == 1,
-             message = "Please standardize your exogenous regressors in Objective 7.")
-      )
+      
+      if(input$no_reg1 == FALSE){
+        validate(
+          need(length(input$select_reg_actB) <= 3,
+               message = "Please only select up to 3 regressors to fit your model.")
+        )
+        validate(
+          need(input$standardize_data2 == TRUE,
+               message = "Please standardize your exogenous regressors.")
+        )
+      }
+      
       validate(
         need(input$prop <= 0.9,
              message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
@@ -3282,15 +3932,26 @@ server <- function(input, output, session) {#
         pull(datetime)
       train_test_line <- last(train_test_dates)
       
-      fitted_values <- fitted(actB.arima$arima)
-      
-      col_names <- c("datetime",input$select_tar_actB,input$select_reg_actB)
-      
-      new_data <- as_tsibble(wide_dat) %>%
-        filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
-        tsibble::fill_gaps() %>%
-        select(all_of(col_names)) %>%
-        mutate(across(input$select_reg_actB, list(zscore = ~as.numeric(scale(.)))))
+      if(input$no_reg1 == FALSE){
+        
+        col_names <- c("datetime",input$select_tar_actB,input$select_reg_actB)
+        
+        new_data <- as_tsibble(wide_dat) %>%
+          filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
+          tsibble::fill_gaps() %>%
+          select(all_of(col_names)) %>%
+          mutate(across(input$select_reg_actB, list(zscore = ~as.numeric(scale(.)))))
+        
+      } else if(input$no_reg1 == TRUE){
+        
+        col_names <- c("datetime",input$select_tar_actB)
+        
+        new_data <- as_tsibble(wide_dat) %>%
+          filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
+          tsibble::fill_gaps() %>%
+          select(all_of(col_names)) 
+        
+      }
       
       progress$set(value = 0.5)
       fitted_values <- fitted(actB.arima$arima)
@@ -3333,6 +3994,7 @@ server <- function(input, output, session) {#
   observe({
     input$select_tar_actB
     input$select_reg_actB
+    input$no_reg1
     
     output$uc_plot2 <- renderPlotly({ 
       
@@ -3349,17 +4011,21 @@ server <- function(input, output, session) {#
              message = "Please select a target variable from the dropdown menu in Objective 7.")
       )
       validate(
-        need(!is.null(input$select_reg_actB),
-             message = "Please select at least 1 predictor from the dropdown menu in Objective 7.")
+        need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
-      validate(
-        need(length(input$select_reg_actB) <= 3,
-             message = "Please only select up to 3 regressors to fit your model in Objective 7.")
-      )
-      validate(
-        need(plot.stand2$stand.tracker == 1,
-             message = "Please standardize your exogenous regressors in Objective 7.")
-      )
+      
+      if(input$no_reg1 == FALSE){
+        validate(
+          need(length(input$select_reg_actB) <= 3,
+               message = "Please only select up to 3 regressors to fit your model.")
+        )
+        validate(
+          need(input$standardize_data2 == TRUE,
+               message = "Please standardize your exogenous regressors.")
+        )
+      }
+      
       validate(
         need(input$prop <= 0.9,
              message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
@@ -3428,17 +4094,21 @@ server <- function(input, output, session) {#
              message = "Please select a target variable from the dropdown menu in Objective 7.")
       )
       validate(
-        need(!is.null(input$select_reg_actB),
-             message = "Please select at least 1 predictor from the dropdown menu in Objective 7.")
+        need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
-      validate(
-        need(length(input$select_reg_actB) <= 3,
-             message = "Please only select up to 3 regressors to fit your model in Objective 7.")
-      )
-      validate(
-        need(plot.stand2$stand.tracker == 1,
-             message = "Please standardize your exogenous regressors in Objective 7.")
-      )
+      
+      if(input$no_reg1 == FALSE){
+        validate(
+          need(length(input$select_reg_actB) <= 3,
+               message = "Please only select up to 3 regressors to fit your model.")
+        )
+        validate(
+          need(input$standardize_data2 == TRUE,
+               message = "Please standardize your exogenous regressors.")
+        )
+      }
+      
       validate(
         need(input$prop <= 0.9,
              message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
@@ -3464,13 +4134,26 @@ server <- function(input, output, session) {#
       train_data <- as_tsibble(wide_dat) %>%
         dplyr::slice_head(prop = input$prop) 
       
-      col_names <- c("datetime",input$select_tar_actB,input$select_reg_actB)
-      
-      new_data <- as_tsibble(wide_dat) %>%
-        filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
-        tsibble::fill_gaps() %>%
-        select(all_of(col_names)) %>%
-        mutate(across(input$select_reg_actB, list(zscore = ~as.numeric(scale(.)))))
+      if(input$no_reg1 == FALSE){
+        
+        col_names <- c("datetime",input$select_tar_actB,input$select_reg_actB)
+        
+        new_data <- as_tsibble(wide_dat) %>%
+          filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
+          tsibble::fill_gaps() %>%
+          select(all_of(col_names)) %>%
+          mutate(across(input$select_reg_actB, list(zscore = ~as.numeric(scale(.)))))
+        
+      } else if(input$no_reg1 == TRUE){
+        
+        col_names <- c("datetime",input$select_tar_actB)
+        
+        new_data <- as_tsibble(wide_dat) %>%
+          filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
+          tsibble::fill_gaps() %>%
+          select(all_of(col_names)) 
+        
+      }
       
       acc <- forecast(actB.arima$arima, new_data = new_data) %>%
         accuracy(data = new_data)
@@ -3489,6 +4172,8 @@ server <- function(input, output, session) {#
   
   observe({
     input$select_reg_actB
+    input$no_reg1
+    input$select_tar_actB
     
     output$rmse_text2 <- renderText({ 
       
@@ -3505,17 +4190,21 @@ server <- function(input, output, session) {#
              message = "Please select a target variable from the dropdown menu in Objective 7.")
       )
       validate(
-        need(!is.null(input$select_reg_actB),
-             message = "Please select at least 1 predictor from the dropdown menu in Objective 7.")
+        need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
-      validate(
-        need(length(input$select_reg_actB) <= 3,
-             message = "Please only select up to 3 regressors to fit your model in Objective 7.")
-      )
-      validate(
-        need(plot.stand2$stand.tracker == 1,
-             message = "Please standardize your exogenous regressors in Objective 7.")
-      )
+      
+      if(input$no_reg1 == FALSE){
+        validate(
+          need(length(input$select_reg_actB) <= 3,
+               message = "Please only select up to 3 regressors to fit your model.")
+        )
+        validate(
+          need(input$standardize_data2 == TRUE,
+               message = "Please standardize your exogenous regressors.")
+        )
+      }
+      
       validate(
         need(input$prop <= 0.9,
              message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
@@ -3565,17 +4254,21 @@ server <- function(input, output, session) {#
              message = "Please select a target variable from the dropdown menu in Objective 7.")
       )
       validate(
-        need(!is.null(input$select_reg_actB),
-             message = "Please select at least 1 predictor from the dropdown menu in Objective 7.")
+        need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
-      validate(
-        need(length(input$select_reg_actB) <= 3,
-             message = "Please only select up to 3 regressors to fit your model in Objective 7.")
-      )
-      validate(
-        need(plot.stand2$stand.tracker == 1,
-             message = "Please standardize your exogenous regressors in Objective 7.")
-      )
+      
+      if(input$no_reg1 == FALSE){
+        validate(
+          need(length(input$select_reg_actB) <= 3,
+               message = "Please only select up to 3 regressors to fit your model.")
+        )
+        validate(
+          need(input$standardize_data2 == TRUE,
+               message = "Please standardize your exogenous regressors.")
+        )
+      }
+      
       validate(
         need(input$prop <= 0.9,
              message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
@@ -3601,13 +4294,26 @@ server <- function(input, output, session) {#
       train_data <- as_tsibble(wide_dat) %>%
         dplyr::slice_head(prop = input$prop) 
 
-      col_names <- c("datetime",input$select_tar_actB,input$select_reg_actB)
-      
-      new_data <- as_tsibble(wide_dat) %>%
-        filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
-        tsibble::fill_gaps() %>%
-        select(all_of(col_names)) %>%
-        mutate(across(input$select_reg_actB, list(zscore = ~as.numeric(scale(.)))))
+      if(input$no_reg1 == FALSE){
+        
+        col_names <- c("datetime",input$select_tar_actB,input$select_reg_actB)
+        
+        new_data <- as_tsibble(wide_dat) %>%
+          filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
+          tsibble::fill_gaps() %>%
+          select(all_of(col_names)) %>%
+          mutate(across(input$select_reg_actB, list(zscore = ~as.numeric(scale(.)))))
+        
+      } else if(input$no_reg1 == TRUE){
+        
+        col_names <- c("datetime",input$select_tar_actB)
+        
+        new_data <- as_tsibble(wide_dat) %>%
+          filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
+          tsibble::fill_gaps() %>%
+          select(all_of(col_names)) 
+        
+      }
       
         pred <- forecast(actB.arima$arima, new_data = new_data, bootstrap = TRUE, times = 256) 
         pred_a <- pred %>% pull(input$select_tar_actB)
@@ -3632,6 +4338,7 @@ server <- function(input, output, session) {#
   observe({
     input$select_tar_actB
     input$select_reg_actB
+    input$no_reg1
     
     output$ign_text2 <- renderText({ 
       
@@ -3648,17 +4355,21 @@ server <- function(input, output, session) {#
              message = "Please select a target variable from the dropdown menu in Objective 7.")
       )
       validate(
-        need(!is.null(input$select_reg_actB),
-             message = "Please select at least 1 predictor from the dropdown menu in Objective 7.")
+        need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
-      validate(
-        need(length(input$select_reg_actB) <= 3,
-             message = "Please only select up to 3 regressors to fit your model in Objective 7.")
-      )
-      validate(
-        need(plot.stand2$stand.tracker == 1,
-             message = "Please standardize your exogenous regressors in Objective 7.")
-      )
+      
+      if(input$no_reg1 == FALSE){
+        validate(
+          need(length(input$select_reg_actB) <= 3,
+               message = "Please only select up to 3 regressors to fit your model.")
+        )
+        validate(
+          need(input$standardize_data2 == TRUE,
+               message = "Please standardize your exogenous regressors.")
+        )
+      }
+      
       validate(
         need(input$prop <= 0.9,
              message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
@@ -3700,7 +4411,7 @@ server <- function(input, output, session) {#
   
   observe({
     input$fit_arima2
-    
+
     output$plot_models <- renderPlotly({ 
       
       validate(
@@ -3716,17 +4427,21 @@ server <- function(input, output, session) {#
              message = "Please select a target variable from the dropdown menu.")
       )
       validate(
-        need(!is.null(input$select_reg_actB),
-             message = "Please select at least 1 predictor from the dropdown menu.")
+        need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
-      validate(
-        need(length(input$select_reg_actB) <= 3,
-             message = "Please only select up to 3 regressors to fit your model.")
-      )
-      validate(
-        need(plot.stand2$stand.tracker == 1,
-             message = "Please standardize your exogenous regressors.")
-      )
+      
+      if(input$no_reg1 == FALSE){
+        validate(
+          need(length(input$select_reg_actB) <= 3,
+               message = "Please only select up to 3 regressors to fit your model.")
+        )
+        validate(
+          need(input$standardize_data2 == TRUE,
+               message = "Please standardize your exogenous regressors.")
+        )
+      }
+      
       validate(
         need(input$prop <= 0.9,
              message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less).")
@@ -3756,13 +4471,22 @@ server <- function(input, output, session) {#
       wide_dat <- dat %>%
         pivot_wider(names_from = "variable", values_from = "observation")
       
-      col_names <- c("datetime",input$select_tar_actB,input$select_reg_actB)
+      if(input$no_reg1 == FALSE){
+        col_names <- c("datetime",input$select_tar_actB,input$select_reg_actB)
       
-      model_df4 <- as_tsibble(wide_dat) %>%
-        dplyr::slice_head(prop = input$prop) %>% # using a 70:30 split here
-        tsibble::fill_gaps() %>%
-        select(all_of(col_names)) %>%
-        mutate(across(input$select_reg_actB, list(zscore = ~as.numeric(scale(.)))))
+        model_df4 <- as_tsibble(wide_dat) %>%
+          dplyr::slice_head(prop = input$prop) %>% # using a 70:30 split here
+          tsibble::fill_gaps() %>%
+          select(all_of(col_names)) %>%
+          mutate(across(input$select_reg_actB, list(zscore = ~as.numeric(scale(.)))))
+      } else if(input$no_reg1 == TRUE){
+        col_names <- c("datetime",input$select_tar_actB)
+        
+        model_df4 <- as_tsibble(wide_dat) %>%
+          dplyr::slice_head(prop = input$prop) %>% # using a 70:30 split here
+          tsibble::fill_gaps() %>%
+          select(all_of(col_names)) 
+      }
       
       # get mean model
       mean_cols <- c("datetime",input$select_tar_actB)
@@ -3786,10 +4510,10 @@ server <- function(input, output, session) {#
       # get NNETAR model
       reg_cols <- paste0(input$select_reg_actB,"_zscore")
       
-      if(length(input$select_reg_actB) == 0){
-        #my.arima <- model_df4 %>%
-        #model(`ARIMA` = fable::ARIMA("chla"))
-        order_txt <- "Please select at least one predictor to fit the ARIMA."
+      if(input$no_reg1 == TRUE){
+        my.formula <- formula(paste0(input$select_tar_actB," ~ AR(P = 0)"))
+        actC.models$nnetar <- model_df4 %>%
+          model(`NNETAR` = fable::NNETAR(formula = my.formula))
       } else if(length(input$select_reg_actB) == 1){
         my.formula <- formula(paste0(input$select_tar_actB," ~ ",reg_cols[1],"+ AR(P = 0)"))
         actC.models$nnetar <- model_df4 %>%
@@ -3846,6 +4570,8 @@ server <- function(input, output, session) {#
   
   observe({
     input$select_reg_actB
+    input$select_tar_actB
+    input$no_reg1
     
     output$plot_models <- renderPlotly({ 
       
@@ -3862,17 +4588,21 @@ server <- function(input, output, session) {#
              message = "Please select a target variable from the dropdown menu.")
       )
       validate(
-        need(!is.null(input$select_reg_actB),
-             message = "Please select at least 1 predictor from the dropdown menu.")
+        need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
-      validate(
-        need(length(input$select_reg_actB) <= 3,
-             message = "Please only select up to 3 regressors to fit your model.")
-      )
-      validate(
-        need(plot.stand2$stand.tracker == 1,
-             message = "Please standardize your exogenous regressors.")
-      )
+      
+      if(input$no_reg1 == FALSE){
+        validate(
+          need(length(input$select_reg_actB) <= 3,
+               message = "Please only select up to 3 regressors to fit your model.")
+        )
+        validate(
+          need(input$standardize_data2 == TRUE,
+               message = "Please standardize your exogenous regressors.")
+        )
+      }
+      
       validate(
         need(input$prop <= 0.9,
              message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less).")
@@ -3893,7 +4623,7 @@ server <- function(input, output, session) {#
       p <- ggplot() +
         annotate("text", x = 10,  y = 10,
                  size = 6,
-                 label = "Looks like you've chosen new regressors!\nPlease click 'Fit ARIMA' in Obj. 7 to regenerate this plot.") + 
+                 label = "Looks like you've chosen new regressors!\nPlease click 'Fit ARIMA' in Obj. 7 to regenerate this plot!") + 
         theme_void()+
         theme(panel.grid = element_blank(),
               axis.line = element_blank())
@@ -3937,17 +4667,21 @@ server <- function(input, output, session) {#
              message = "Please select a target variable from the dropdown menu.")
       )
       validate(
-        need(!is.null(input$select_reg_actB),
-             message = "Please select at least 1 predictor from the dropdown menu.")
+        need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
-      validate(
-        need(length(input$select_reg_actB) <= 3,
-             message = "Please only select up to 3 regressors to fit your model.")
-      )
-      validate(
-        need(plot.stand2$stand.tracker == 1,
-             message = "Please standardize your exogenous regressors.")
-      )
+      
+      if(input$no_reg1 == FALSE){
+        validate(
+          need(length(input$select_reg_actB) <= 3,
+               message = "Please only select up to 3 regressors to fit your model.")
+        )
+        validate(
+          need(input$standardize_data2 == TRUE,
+               message = "Please standardize your exogenous regressors.")
+        )
+      }
+      
       validate(
         need(input$prop <= 0.9,
              message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less).")
@@ -3965,17 +4699,23 @@ server <- function(input, output, session) {#
              message = "Click 'Fit additional models'")
       )
       
-      
-      order <- as.character(actC.models$nnetar$NNETAR)
+      if(input$no_reg1 == TRUE){
+        order0 <- as.character(actC.models$nnetar$NNETAR)
+        order <- substr(order0, 2, nchar(order0) - 1)
+      } else {
+        order <- as.character(actC.models$nnetar$NNETAR)
+      }
       order_txt <- paste0("Fitted a ",order, " model.")
       
       return(order_txt)
     })
   })
   
-  # Reset ARIMA order text when change selected variables
+  # Reset NNETAR order text when change selected variables
   observe({
     input$select_reg_actB
+    input$select_tar_actB
+    input$no_reg1
     output$nnetar_order <- renderText({
       
       validate(
@@ -3991,17 +4731,21 @@ server <- function(input, output, session) {#
              message = "Please select a target variable from the dropdown menu.")
       )
       validate(
-        need(!is.null(input$select_reg_actB),
-             message = "Please select at least 1 predictor from the dropdown menu.")
+        need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
-      validate(
-        need(length(input$select_reg_actB) <= 3,
-             message = "Please only select up to 3 regressors to fit your model.")
-      )
-      validate(
-        need(plot.stand2$stand.tracker == 1,
-             message = "Please standardize your exogenous regressors.")
-      )
+      
+      if(input$no_reg1 == FALSE){
+        validate(
+          need(length(input$select_reg_actB) <= 3,
+               message = "Please only select up to 3 regressors to fit your model.")
+        )
+        validate(
+          need(input$standardize_data2 == TRUE,
+               message = "Please standardize your exogenous regressors.")
+        )
+      }
+      
       validate(
         need(input$prop <= 0.9,
              message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less).")
@@ -4047,17 +4791,21 @@ server <- function(input, output, session) {#
              message = "Please select a target variable from the dropdown menu in Objective 7.")
       )
       validate(
-        need(!is.null(input$select_reg_actB),
-             message = "Please select at least 1 predictor from the dropdown menu in Objective 7.")
+        need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
-      validate(
-        need(length(input$select_reg_actB) <= 3,
-             message = "Please only select up to 3 regressors to fit your model in Objective 7.")
-      )
-      validate(
-        need(plot.stand2$stand.tracker == 1,
-             message = "Please standardize your exogenous regressors in Objective 7.")
-      )
+      
+      if(input$no_reg1 == FALSE){
+        validate(
+          need(length(input$select_reg_actB) <= 3,
+               message = "Please only select up to 3 regressors to fit your model.")
+        )
+        validate(
+          need(input$standardize_data2 == TRUE,
+               message = "Please standardize your exogenous regressors.")
+        )
+      }
+      
       validate(
         need(input$prop <= 0.9,
              message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
@@ -4129,6 +4877,7 @@ server <- function(input, output, session) {#
   observe({
     input$select_tar_actB
     input$select_reg_actB
+    input$no_reg1
     
     output$resid_plot3 <- renderPlotly({ 
       
@@ -4145,17 +4894,21 @@ server <- function(input, output, session) {#
              message = "Please select a target variable from the dropdown menu in Objective 7.")
       )
       validate(
-        need(!is.null(input$select_reg_actB),
-             message = "Please select at least 1 predictor from the dropdown menu in Objective 7.")
+        need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
-      validate(
-        need(length(input$select_reg_actB) <= 3,
-             message = "Please only select up to 3 regressors to fit your model in Objective 7.")
-      )
-      validate(
-        need(plot.stand2$stand.tracker == 1,
-             message = "Please standardize your exogenous regressors in Objective 7.")
-      )
+      
+      if(input$no_reg1 == FALSE){
+        validate(
+          need(length(input$select_reg_actB) <= 3,
+               message = "Please only select up to 3 regressors to fit your model.")
+        )
+        validate(
+          need(input$standardize_data2 == TRUE,
+               message = "Please standardize your exogenous regressors.")
+        )
+      }
+      
       validate(
         need(input$prop <= 0.9,
              message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
@@ -4232,17 +4985,20 @@ server <- function(input, output, session) {#
              message = "Please select a target variable from the dropdown menu in Objective 7.")
       )
       validate(
-        need(!is.null(input$select_reg_actB),
-             message = "Please select at least 1 predictor from the dropdown menu in Objective 7.")
+        need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
-      validate(
-        need(length(input$select_reg_actB) <= 3,
-             message = "Please only select up to 3 regressors to fit your model in Objective 7.")
-      )
-      validate(
-        need(plot.stand2$stand.tracker == 1,
-             message = "Please standardize your exogenous regressors in Objective 7.")
-      )
+      
+      if(input$no_reg1 == FALSE){
+        validate(
+          need(length(input$select_reg_actB) <= 3,
+               message = "Please only select up to 3 regressors to fit your model.")
+        )
+        validate(
+          need(input$standardize_data2 == TRUE,
+               message = "Please standardize your exogenous regressors.")
+        )
+      }
       validate(
         need(input$prop <= 0.9,
              message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
@@ -4298,6 +5054,8 @@ server <- function(input, output, session) {#
         pull(datetime)
       train_test_line <- last(train_test_dates)
       
+      if(input$no_reg1 == FALSE){
+      
       col_names <- c("datetime",input$select_tar_actB,input$select_reg_actB)
       
       new_data <- as_tsibble(wide_dat) %>%
@@ -4306,6 +5064,18 @@ server <- function(input, output, session) {#
         tidyr::fill(., .direction = "down") %>%
         select(all_of(col_names)) %>%
         mutate(across(input$select_reg_actB, list(zscore = ~as.numeric(scale(.)))))
+      
+      } else if(input$no_reg1 == TRUE){
+        
+        col_names <- c("datetime",input$select_tar_actB)
+        
+        new_data <- as_tsibble(wide_dat) %>%
+          filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
+          tsibble::fill_gaps() %>%
+          tidyr::fill(., .direction = "down") %>%
+          select(all_of(col_names)) 
+        
+      }
       
       # predictions and confidence intervals for fable models
       pred_arima0 <- forecast(actB.arima$arima, new_data = new_data, bootstrap = TRUE, times = 256) %>%
@@ -4384,15 +5154,15 @@ server <- function(input, output, session) {#
       progress$set(value = 1)
       
       p1 <- ggplotly(p, dynamicTicks = TRUE) 
-      p2 <- style(p1, showlegend = FALSE, traces = 3:6)
+      #p2 <- style(p1, showlegend = FALSE, traces = 3:6)
       
-      for (i in 1:length(p2$x$data)){
-        if (!is.null(p2$x$data[[i]]$name)){
-          p2$x$data[[i]]$name =  gsub("\\(","",str_split(p2$x$data[[i]]$name,",")[[1]][1])
+      for (i in 1:length(p1$x$data)){
+        if (!is.null(p1$x$data[[i]]$name)){
+          p1$x$data[[i]]$name =  gsub("\\(","",str_split(p1$x$data[[i]]$name,",")[[1]][1])
         }
       }
       
-      return(p2)
+      return(p1)
       
     })
     
@@ -4401,6 +5171,7 @@ server <- function(input, output, session) {#
   observe({
     input$select_tar_actB
     input$select_reg_actB
+    input$no_reg1
     
     output$pred_all_plot <- renderPlotly({ 
       
@@ -4417,17 +5188,21 @@ server <- function(input, output, session) {#
              message = "Please select a target variable from the dropdown menu in Objective 7.")
       )
       validate(
-        need(!is.null(input$select_reg_actB),
-             message = "Please select at least 1 predictor from the dropdown menu in Objective 7.")
+        need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
-      validate(
-        need(length(input$select_reg_actB) <= 3,
-             message = "Please only select up to 3 regressors to fit your model in Objective 7.")
-      )
-      validate(
-        need(plot.stand2$stand.tracker == 1,
-             message = "Please standardize your exogenous regressors in Objective 7.")
-      )
+      
+      if(input$no_reg1 == FALSE){
+        validate(
+          need(length(input$select_reg_actB) <= 3,
+               message = "Please only select up to 3 regressors to fit your model.")
+        )
+        validate(
+          need(input$standardize_data2 == TRUE,
+               message = "Please standardize your exogenous regressors.")
+        )
+      }
+      
       validate(
         need(input$prop <= 0.9,
              message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
@@ -4452,7 +5227,7 @@ server <- function(input, output, session) {#
       p <- ggplot() +
         annotate("text", x = 10,  y = 10,
                  size = 4,
-                 label = "Looks like you've chosen new regressors!\nPlease click 'Fit ARIMA' in Obj. 7 and 'Fit additional models' in Obj. 8 to regenerate this plot.") + 
+                 label = "Looks like you've chosen new regressors!\nPlease click 'Fit ARIMA' in Obj. 7 and 'Fit additional models' in Obj. 9 to regenerate this plot.") + 
         theme_void()+
         theme(panel.grid = element_blank(),
               axis.line = element_blank())
@@ -4508,17 +5283,21 @@ server <- function(input, output, session) {#
              message = "Please select a target variable from the dropdown menu in Objective 7.")
       )
       validate(
-        need(!is.null(input$select_reg_actB),
-             message = "Please select at least 1 predictor from the dropdown menu in Objective 7.")
+        need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
-      validate(
-        need(length(input$select_reg_actB) <= 3,
-             message = "Please only select up to 3 regressors to fit your model in Objective 7.")
-      )
-      validate(
-        need(plot.stand2$stand.tracker == 1,
-             message = "Please standardize your exogenous regressors in Objective 7.")
-      )
+      
+      if(input$no_reg1 == FALSE){
+        validate(
+          need(length(input$select_reg_actB) <= 3,
+               message = "Please only select up to 3 regressors to fit your model.")
+        )
+        validate(
+          need(input$standardize_data2 == TRUE,
+               message = "Please standardize your exogenous regressors.")
+        )
+      }
+      
       validate(
         need(input$prop <= 0.9,
              message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
@@ -4533,7 +5312,7 @@ server <- function(input, output, session) {#
       )
       validate(
         need(!is.null(actC.models$nnetar),
-             message = "Please fit additional models in Objective 8.")
+             message = "Please fit additional models in Objective 9.")
       )
       validate(
         need(!is.null(dist_params$nnetar),
@@ -4552,13 +5331,26 @@ server <- function(input, output, session) {#
       train_data <- as_tsibble(wide_dat) %>%
         dplyr::slice_head(prop = input$prop) 
       
-      col_names <- c("datetime",input$select_tar_actB,input$select_reg_actB)
-      
-      new_data <- as_tsibble(wide_dat) %>%
-        filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
-        tsibble::fill_gaps() %>%
-        select(all_of(col_names)) %>%
-        mutate(across(input$select_reg_actB, list(zscore = ~as.numeric(scale(.)))))
+      if(input$no_reg1 == FALSE){
+        
+        col_names <- c("datetime",input$select_tar_actB,input$select_reg_actB)
+        
+        new_data <- as_tsibble(wide_dat) %>%
+          filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
+          tsibble::fill_gaps() %>%
+          select(all_of(col_names)) %>%
+          mutate(across(input$select_reg_actB, list(zscore = ~as.numeric(scale(.)))))
+        
+      } else if(input$no_reg1 == TRUE){
+        
+        col_names <- c("datetime",input$select_tar_actB)
+        
+        new_data <- as_tsibble(wide_dat) %>%
+          filter(!datetime %in% train_data$datetime) %>% # using a 70:30 split here
+          tsibble::fill_gaps() %>%
+          select(all_of(col_names)) 
+        
+      }
       
       new_obs <- new_data %>%
         pull(input$select_tar_actB)
@@ -4589,7 +5381,6 @@ server <- function(input, output, session) {#
       rmse.values$mean <- round(acc_mean$RMSE,3)
       
       # and for gam
-      # and for gam
       doy_cols <- c("doy",input$select_tar_actB)
       new_doy_data <- as.data.frame(new_data) %>%
         mutate(doy = yday(datetime)) %>%
@@ -4612,6 +5403,7 @@ server <- function(input, output, session) {#
   observe({
     input$select_tar_actB
     input$select_reg_actB
+    input$no_reg1
     
     output$ign_table <- renderText({ 
       
@@ -4628,17 +5420,21 @@ server <- function(input, output, session) {#
              message = "Please select a target variable from the dropdown menu in Objective 7.")
       )
       validate(
-        need(!is.null(input$select_reg_actB),
-             message = "Please select at least 1 predictor from the dropdown menu in Objective 7.")
+        need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
       )
-      validate(
-        need(length(input$select_reg_actB) <= 3,
-             message = "Please only select up to 3 regressors to fit your model in Objective 7.")
-      )
-      validate(
-        need(plot.stand2$stand.tracker == 1,
-             message = "Please standardize your exogenous regressors in Objective 7.")
-      )
+      
+      if(input$no_reg1 == FALSE){
+        validate(
+          need(length(input$select_reg_actB) <= 3,
+               message = "Please only select up to 3 regressors to fit your model.")
+        )
+        validate(
+          need(input$standardize_data2 == TRUE,
+               message = "Please standardize your exogenous regressors.")
+        )
+      }
+      
       validate(
         need(input$prop <= 0.9,
              message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
@@ -4653,7 +5449,7 @@ server <- function(input, output, session) {#
       )
       validate(
         need(!is.null(actC.models$nnetar),
-             message = "Please fit additional models in Objective 8.")
+             message = "Please fit additional models in Objective 9.")
       )
       validate(
         need(!is.null(dist_params$nnetar),
@@ -4887,8 +5683,8 @@ server <- function(input, output, session) {#
   
   #Bookmarking
   bookmarkingWhitelist <- c("table01_rows_selected","plot_lag","plot_pacf","plot_diff",
-                            "standardize_data","fit_arima","generate_pred","view_resid",
-                            "add_uc","assess_mod","row_num","select")
+                            "fit_arima","generate_pred","view_resid",
+                            "add_uc","assess_mod","row_num","select","no_reg")
 
   observeEvent(input$bookmarkBtn, {
     session$doBookmark()

@@ -40,6 +40,7 @@ fitted(my.doy)
 reg_cols <- paste0(c("frp","flow"),"_zscore")
 
 my.formula <- formula(paste0("chla ~ ",reg_cols[1],"+",reg_cols[2]))
+my.formula <- formula(paste0("chla ~ 0"))
 
 my.arima <- model_df4 %>%
   model(`ARIMA` = fable::ARIMA(formula = my.formula)) # get errors if include all variables due to small data size
@@ -53,7 +54,12 @@ resid <- bind_rows(resid_ar, resid_rw)
 ggplot(data = resid, aes(x = .resid, group = .model, color = .model))+
   geom_density()
 
+# with regressors
 strsplit(as.character(my.arima$ARIMA), split = " ")[[1]][3]
+
+# without regressors
+my_string <- strsplit(as.character(my.arima$ARIMA), split = " ")[[1]][1]
+substr(my_string, 2, nchar(my_string) - 1)
 
 gg_tsresiduals(my.arima %>% select(`ARIMA`))
 p+theme_bw()

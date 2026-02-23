@@ -1,6 +1,7 @@
 ﻿site_id,term,coeff_description
 cann,ar1,term for 1-timestep lag
 cann,ar2,term for 2-timestep lag
+cann,ar3,term for 3-timestep lag
 cann,frp_zscore,standardized filterable reduced phosphorus
 cann,don_zscore,standardized dissolved organic nitrogen
 cann,oxygen_zscore,standardized bottom water dissolved oxygen

@@ -430,6 +430,7 @@ ui <- function(request) {
                                              fluidRow(
                                                column(8, offset = 2,
                                                       h3("Variable descriptions"),
+                                                      h4("All variables used in this module are aggregated to daily means."),
                                                       DT::DTOutput("var_desc")
                                                )
                                              ),
@@ -486,13 +487,25 @@ ui <- function(request) {
                                              fluidRow(
                                                column(4,
                                                       h3("Investigate variable relationships"),
-                                                      p("For Q. 6 you will explore the relationship between the target variable for prediction and the other variables at this site. You may or may not discover any relationships between these variables."),
+                                                      p("For Q6 you will explore the relationship between the target variable for prediction and the other variables at this site. You may or may not discover any relationships between these variables."),
                                                       selectizeInput("x_var", "Select X variable",
                                                                      choices = NULL,
                                                                      options = list(
                                                                        placeholder = 'Please select a variable',
                                                                        onInitialize = I('function() { this.setValue(""); }'))
-                                                                     )
+                                                                     ),
+                                                      br(),
+                                                      p(HTML(paste0("To help you answer Q6, the R",tags$sup("2")," between the X variable you have chosen and the target variable for your focal site is displayed below."))),
+                                                      p(HTML(paste0("R",tags$sup("2")," (also called the coefficient of determination) ranges between 0-1 and measures how well an independent variable (here, the X variable you have selected to plot) explains variance in a dependent variable (here, the target variable) in a regression model."))),
+                                                      p(HTML(paste0("The higher the R",tags$sup("2"),", the better the independent variable explains the dependent variable."))),
+                                                      h4(tags$div(
+                                                        HTML(paste("R", tags$sup(2), sep = ""))
+                                                      )),
+                                                      wellPanel(htmlOutput("r2_text")
+                                                      ),
+                                                      tags$head(
+                                                        tags$style(HTML("#r2_text { font-size: 24px; }")) # Target the ID and set font-size
+                                                      )
                                                ),
                                                #** Comparison Plot ----
                                                column(6,
@@ -586,14 +599,25 @@ ui <- function(request) {
                                                       p("A ",tags$b("lag")," is the time delay between observations in a time series. Because you are working with daily data, we can think about a 1-day lag, a 2-day lag, and so on."),
                                                       p("Click the button below to plot a 1-day lag of your target variable vs. the 'current' value of that variable:"),
                                                       br(),
-                                                      actionButton("plot_lag", "Plot lagged timeseries"),
+                                                      actionButton("plot_lag", "Plot lag scatterplot"),
                                                       br(), br(),
+                                                      p(HTML(paste0("To help you answer Q9, the R",tags$sup("2")," between the one-day lag and the current value of the target variable for your focal site is displayed below."))),
+                                                      p(HTML(paste0("Remember, R",tags$sup("2")," varies between 0-1 and the higher the R",tags$sup("2"),", the better the independent variable (in this case, the one-day lag) explains the dependent variable (in this case, the current value of the target variable)."))),
+                                                      h4(tags$div(
+                                                        HTML(paste("R", tags$sup(2), sep = ""))
+                                                      )),
+                                                      wellPanel(htmlOutput("r2_lag_text")
+                                                      ),
+                                                      tags$head(
+                                                        tags$style(HTML("#r2_lag_text { font-size: 24px; }")) # Target the ID and set font-size
+                                                      ),
                                                       box(id = "box2", width = 12, status = "primary",
                                                           solidHeader = TRUE,
                                                           fluidRow(
                                                             column(10, offset = 1,
                                                                    h3("Questions"),
-                                                                   p(tags$b(quest["q8", 1]))
+                                                                   p(tags$b(quest["q8", 1])),
+                                                                   p(HTML(paste0(tags$b("Q9. Compare the R",tags$sup("2")," value between the one-day lag and the current value of your target variable with the R",tags$sup("2")," values you received when investigating relationships between environmental variables and the target variables in Objective 2, Q6. Which R",tags$sup("2")," value is the highest, and what does this mean about the relative importance of the one-day lag vs. environmental variables in predicting your target variable?"))))
                                                             )
                                                           )
                                                       )
@@ -620,7 +644,7 @@ ui <- function(request) {
                                                           fluidRow(
                                                             column(10, offset = 1,
                                                                    h3("Questions"),
-                                                                   p(tags$b(quest["q9", 1])),
+                                                                   p(tags$b(quest["q10", 1])),
                                                                    p(tags$i("Hint: Remember, values close to -1 or 1, such as 0.7 or -0.8, indicate strong autocorrelation, which means that lag is likely to be included in a fitted ARIMA model. Values close to 0, such as 0.1 or -0.2, indicate weak autocorrelation."))
                                                             )
                                                           )
@@ -638,7 +662,7 @@ ui <- function(request) {
                                                column(6,
                                                       h3("Differenced time series"),
                                                       p("Recall that the ",tags$b("integrated")," component of an ARIMA model refers to whether or not the time series is differenced to achieve ",tags$b("stationarity")," in the data."),
-                                                      p(tags$b("Stationarity"), " data are data whose mean and variance do not vary over time. If data are not stationarity, one method for achieving stationarity is ",tags$b("differencing,"), " or subtracting each value in the time series from the value after it."),
+                                                      p(tags$b("Stationary"), " data are data whose mean and variance do not vary over time. If data are not stationarity, one method for achieving stationarity is ",tags$b("differencing,"), " or subtracting each value in the time series from the value after it."),
                                                       p("Let's plot the differenced time series of the target varible for your chosen environmental case study and see whether we think differencing improves the stationarity of the data."),
                                                       actionButton("plot_diff",label = "Plot differenced data"),
                                                       br(),br(),
@@ -647,7 +671,7 @@ ui <- function(request) {
                                                           fluidRow(
                                                             column(10, offset = 1,
                                                                    h3("Questions"),
-                                                                   p(tags$b(quest["q10", 1])),
+                                                                   p(tags$b(quest["q11", 1])),
                                                                    p(tags$i("Hint: look at slide 5 in the slide deck at the top of this objective page to see examples of non-stationary and stationary data."))
                                                             )
                                                           )
@@ -681,10 +705,10 @@ ui <- function(request) {
                                              hr(),
                                              fluidRow(
                                                column(6,
-                                                      h3("Select exogenous regressors"),
+                                                      h3("Decide whether to include exogenous regressors"),
                                                       p("Optionally, ARIMA models may include ",tags$b("exogenous regressors,")," which are variables other than the target variable that a modeler believes may help explain patterns in the target variable. For example, if your target variable is chlorophyll-a concentrations in a river, you may hypothesize that nutrient concentrations may help explain patterns in chlorophyll-a."),
                                                       p("Before fitting an ARIMA model to the target variable from your environmental case study, consider whether you would like to include any exogenous regressors in the model. For simplicity, we will limit ourselves to a maximum of 3 regressors."),
-                                                      p(tags$i("Choose your regressors using the dropdown menu on the right and then answer Q. 11"))
+                                                      p(tags$i("Choose your regressors using the dropdown menu on the right and then answer Q12."))
                                                       ),
                                                column(6,
                                                       br(),br(),
@@ -694,12 +718,13 @@ ui <- function(request) {
                                                         choices = NULL, 
                                                         multiple = TRUE 
                                                       ),
+                                                      checkboxInput("no_reg", "I choose not to include any exogenous regressors", value = FALSE, width = NULL),
                                                       box(id = "box2", width = 12, status = "primary",
                                                           solidHeader = TRUE,
                                                           fluidRow(
                                                             column(10, offset = 1,
                                                                    h3("Questions"),
-                                                                   p(tags$b(quest["q11", 1])),
+                                                                   p(tags$b(quest["q12", 1])),
                                                                    p(tags$i("Hint: go back to Objective 2 and see whether there appear to be any relationships between the target variable and other variables in your dataset."))
                                                             )
                                                           )
@@ -716,7 +741,7 @@ ui <- function(request) {
                                                       p("The ",tags$b("z-score")," reports the number of standard deviations between a data point and the mean of the data. Converting our regressors to z-scores will put them all on the same scale, allowing us to compare their importance in the fitted ARIMA model later."),
                                                       br(),
                                                       p(tags$i("Click 'Standardize data' to standardize the exogenous regressors you have chosen.")),
-                                                      actionButton("standardize_data","Standardize data")
+                                                      checkboxInput("standardize_data","Standardize data", value = FALSE, width = NULL)
                                                       ),
                                                column(8,
                                                       wellPanel(
@@ -744,12 +769,12 @@ ui <- function(request) {
                                                           fluidRow(
                                                             column(10, offset = 1,
                                                                    h3("Questions"),
-                                                                   p(tags$b(quest["q12", 1])),
+                                                                   p(tags$b(quest["q13", 1])),
                                                                    p(tags$i("Hint: remember from Objective 3, p indicates the number of lags, d indicates differencing, and q indicates the number of previous error terms included in the model.")),
-                                                                   p(tags$b(quest["q12a", 1])),
-                                                                   p(tags$b(quest["q12b", 1])),
-                                                                   p(tags$b(quest["q12c", 1])),
-                                                                   p(tags$b(quest["q12d", 1]))
+                                                                   p(tags$b(quest["q13a", 1])),
+                                                                   p(tags$b(quest["q13b", 1])),
+                                                                   p(tags$b(quest["q13c", 1])),
+                                                                   p(tags$b(quest["q13d", 1]))
                                                             )
                                                           )
                                                       )
@@ -774,9 +799,9 @@ ui <- function(request) {
                                                           fluidRow(
                                                             column(10, offset = 1,
                                                                    h3("Questions"),
-                                                                   p(tags$b(quest["q13", 1])),
                                                                    p(tags$b(quest["q14", 1])),
                                                                    p(tags$b(quest["q15", 1])),
+                                                                   p(tags$b(quest["q16", 1])),
                                                                    p(tags$i("Hint! It may be helpful to compare the values of your model terms with other students in the class who chose the same case study as you but selected different exogenous regressors for their models. This will help you gain an understanding of whether the magnitudes of your estimated model parameters are relatively large or small."))
                                                             )
                                                           )
@@ -832,7 +857,7 @@ ui <- function(request) {
                                                           fluidRow(
                                                             column(10, offset = 1,
                                                                    h3("Questions"),
-                                                                   p(tags$b(quest["q16", 1]))
+                                                                   p(tags$b(quest["q17", 1]))
                                                             )
                                                           )
                                                       )
@@ -858,7 +883,7 @@ ui <- function(request) {
                                                           fluidRow(
                                                             column(10, offset = 1,
                                                                    h3("Questions"),
-                                                                   p(tags$b(quest["q17", 1]))
+                                                                   p(tags$b(quest["q18", 1]))
                                                             )
                                                           )
                                                       )
@@ -894,10 +919,10 @@ ui <- function(request) {
                                                           fluidRow(
                                                             column(10, offset = 1,
                                                                    h3("Questions"),
-                                                                   p(tags$b(quest["q18", 1])),
                                                                    p(tags$b(quest["q19", 1])),
                                                                    p(tags$b(quest["q20", 1])),
-                                                                   p(tags$i("Hint: there is no right or wrong answer to Q20. For example, for some environmental variables, negative values are not possible, and so uncertainty bounds that cross 0 might affect our interpretation of model predictive skill. But for other variables, negative values are acceptable. So answers to Q20 will vary."))
+                                                                   p(tags$b(quest["q21", 1])),
+                                                                   p(tags$i("Hint: there is no right or wrong answer to Q21. For example, for some environmental variables, negative values are not possible, and so uncertainty bounds that cross 0 might affect our interpretation of model predictive skill. But for other variables, negative values are acceptable. So answers to Q21 will vary."))
                                                             )
                                                           )
                                                       )
@@ -929,9 +954,9 @@ ui <- function(request) {
                                                           fluidRow(
                                                             column(10, offset = 1,
                                                                    h3("Questions"),
-                                                                   p(tags$b(quest["q21", 1])),
                                                                    p(tags$b(quest["q22", 1])),
-                                                                   p(tags$b(quest["q23", 1]))
+                                                                   p(tags$b(quest["q23", 1])),
+                                                                   p(tags$b(quest["q24", 1]))
                                                             )
                                                           )
                                                       )
@@ -1010,7 +1035,7 @@ ui <- function(request) {
                                                           fluidRow(
                                                             column(10, offset = 1,
                                                                    h3("Questions"),
-                                                                   p(tags$b(quest["q24", 1]))
+                                                                   p(tags$b(quest["q25", 1]))
                                                             )
                                                           )
                                                       )
@@ -1059,12 +1084,12 @@ ui <- function(request) {
                                                           fluidRow(
                                                             column(10, offset = 1,
                                                                    h3("Questions"),
-                                                                   p(tags$b(quest["q25", 1])),
                                                                    p(tags$b(quest["q26", 1])),
-                                                                   p(tags$b(quest["q26a", 1])),
-                                                                   p(tags$b(quest["q26b", 1])),
-                                                                   p(tags$b(quest["q26c", 1])),
-                                                                   p(tags$b(quest["q26d", 1]))
+                                                                   p(tags$b(quest["q27", 1])),
+                                                                   p(tags$b(quest["q27a", 1])),
+                                                                   p(tags$b(quest["q27b", 1])),
+                                                                   p(tags$b(quest["q27c", 1])),
+                                                                   p(tags$b(quest["q27d", 1]))
                                                             )
                                                           )
                                                       )
@@ -1134,7 +1159,7 @@ ui <- function(request) {
                                                       p("You will need to identify your target variable (the variable you wish to predict) before fitting the model."),
                                                       p("In addition, consider whether you would like to include any exogenous regressors in the model."),
                                                       p(tags$b("For simplicity and ease of model interpretation, you are limited to selecting no more than three exogenous regressors at a time for fitting your model")),
-                                                      p(tags$i("Choose your target variable and regressors using the dropdown menus on the right and then answer Q27 and Q28."))
+                                                      p(tags$i("Choose your target variable and regressors using the dropdown menus on the right and then answer Q28 and Q29."))
                                                ),
                                                column(6,
                                                       br(),br(),
@@ -1150,13 +1175,14 @@ ui <- function(request) {
                                                         choices = NULL, 
                                                         multiple = TRUE 
                                                       ),
+                                                      checkboxInput("no_reg1", "I choose not to include any exogenous regressors", value = FALSE, width = NULL),
                                                       box(id = "box2", width = 12, status = "primary",
                                                           solidHeader = TRUE,
                                                           fluidRow(
                                                             column(10, offset = 1,
                                                                    h3("Questions"),
-                                                                   p(tags$b(quest["q27", 1])),
-                                                                   p(tags$b(quest["q28", 1]))
+                                                                   p(tags$b(quest["q28", 1])),
+                                                                   p(tags$b(quest["q29", 1]))
                                                             )
                                                           )
                                                       )
@@ -1168,7 +1194,7 @@ ui <- function(request) {
                                                       h3("Standardize exogenous regressors"),
                                                       p("As a reminder, we standardize our regressors by calculating z-scores to ensure that we can compare across model coefficient values when interpreting our ARIMA. For further information, go back to Objective 4."),
                                                       p(tags$i("Click 'Standardize data' to standardize the exogenous regressors you have chosen.")),
-                                                      actionButton("standardize_data2","Standardize data")
+                                                      checkboxInput("standardize_data2","Standardize data", value = FALSE, width = NULL)
                                                ),
                                                column(8,
                                                       wellPanel(
@@ -1199,11 +1225,11 @@ ui <- function(request) {
                                                           fluidRow(
                                                             column(10, offset = 1,
                                                                    h3("Questions"),
-                                                                   p(tags$b(quest["q29", 1])),
                                                                    p(tags$b(quest["q30", 1])),
-                                                                   p(tags$b(quest["q30a", 1])),
-                                                                   p(tags$b(quest["q30b", 1])),
-                                                                   p(tags$b(quest["q30c", 1]))
+                                                                   p(tags$b(quest["q31", 1])),
+                                                                   p(tags$b(quest["q31a", 1])),
+                                                                   p(tags$b(quest["q31b", 1])),
+                                                                   p(tags$b(quest["q31c", 1]))
                                                             )
                                                           )
                                                       )
@@ -1228,7 +1254,7 @@ ui <- function(request) {
                                                           fluidRow(
                                                             column(10, offset = 1,
                                                                    h3("Questions"),
-                                                                   p(tags$b(quest["q31", 1]))
+                                                                   p(tags$b(quest["q32", 1]))
                                                             )
                                                           )
                                                       )
@@ -1311,7 +1337,7 @@ ui <- function(request) {
                                                           fluidRow(
                                                             column(10, offset = 1,
                                                                    h3("Questions"),
-                                                                   p(tags$b(quest["q32", 1]))
+                                                                   p(tags$b(quest["q33", 1]))
                                                             )
                                                           )
                                                       )
@@ -1347,7 +1373,7 @@ ui <- function(request) {
                                                           fluidRow(
                                                             column(10, offset = 1,
                                                                    h3("Questions"),
-                                                                   p(tags$b(quest["q33", 1]))
+                                                                   p(tags$b(quest["q34", 1]))
                                                             )
                                                           )
                                                       )
@@ -1405,11 +1431,11 @@ ui <- function(request) {
                                                           fluidRow(
                                                             column(10, offset = 1,
                                                                    h3("Questions"),
-                                                                   p(tags$b(quest["q34", 1])),
-                                                                   p(tags$b(quest["q34a", 1])),
-                                                                   p(tags$b(quest["q34b", 1])),
-                                                                   p(tags$b(quest["q34c", 1])),
-                                                                   p(tags$b(quest["q35", 1]))
+                                                                   p(tags$b(quest["q35", 1])),
+                                                                   p(tags$b(quest["q35a", 1])),
+                                                                   p(tags$b(quest["q35b", 1])),
+                                                                   p(tags$b(quest["q35c", 1])),
+                                                                   p(tags$b(quest["q36", 1]))
                                                             )
                                                           )
                                                       )
@@ -1433,13 +1459,13 @@ ui <- function(request) {
                                                             column(10, offset = 1,
                                                                    h3("Questions"),
                                                                    p(tags$i("Hint: use the slide deck above to help you answer the questions.")),
-                                                                   p(tags$b(quest["q36", 1])),
+                                                                   p(tags$b(quest["q37", 1])),
                                                                    wellPanel(textOutput("nnetar_order")
                                                                    ),
                                                                    tags$head(
                                                                      tags$style(HTML("#nnetar_order { font-size: 24px; }")) # Target the ID and set font-size
                                                                    ),
-                                                                   p(tags$b(quest["q37", 1]))
+                                                                   p(tags$b(quest["q38", 1]))
                                                             )
                                                           )
                                                       )
@@ -1487,8 +1513,8 @@ ui <- function(request) {
                                                             column(10, offset = 1,
                                                                    h3("Questions"),
                                                                    p(tags$i("Hint: the standard deviation of the residuals for each model is printed in the top right corner of each panel of the plot above.")),
-                                                                   p(tags$b(quest["q38", 1])),
-                                                                   p(tags$b(quest["q39", 1]))
+                                                                   p(tags$b(quest["q39", 1])),
+                                                                   p(tags$b(quest["q40", 1]))
                                                             )
                                                           )
                                                       )
@@ -1506,8 +1532,8 @@ ui <- function(request) {
                                                           fluidRow(
                                                             column(10, offset = 1,
                                                                    h3("Questions"),
-                                                                   p(tags$b(quest["q40", 1])),
-                                                                   p(tags$b(quest["q41", 1]))
+                                                                   p(tags$b(quest["q41", 1])),
+                                                                   p(tags$b(quest["q42", 1]))
                                                             )
                                                           )
                                                       )
@@ -1530,10 +1556,10 @@ ui <- function(request) {
                                                           fluidRow(
                                                             column(10, offset = 1,
                                                                    h3("Questions"),
-                                                                   p(tags$b(quest["q42", 1])),
                                                                    p(tags$b(quest["q43", 1])),
                                                                    p(tags$b(quest["q44", 1])),
-                                                                   p(tags$b(quest["q45", 1]))
+                                                                   p(tags$b(quest["q45", 1])),
+                                                                   p(tags$b(quest["q46", 1]))
                                                             )
                                                           )
                                                       )
