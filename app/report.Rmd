@@ -229,7 +229,7 @@ knitr::kable(env_var_rel)
 
 *Figure 1. Target variable vs. one-day lag of environmental case study target variable*  
 
-9. `r substr(quest["q9", ], 4, nchar(quest["q9", ]))`
+9. Compare the R^2^ value between the one-day lag and the current value of your target variable with the R^2^ values you received when investigating relationships between environmental variables and the target variables in Objective 2, Q6. Which R^2^ value is the highest, and what does this mean about the relative importance of the one-day lag vs. environmental variables in predicting your target variable?
 \
 **Answer:**
 \
@@ -267,19 +267,19 @@ knitr::kable(env_var_rel)
 
 13. `r substr(quest["q13", ], 5, nchar(quest["q13", ]))`  
 \
-    a.  `r substr(quest["q13a", ], 4, nchar(quest["q13a", ]))`:   
+    a.  `r substr(quest["q13a", ], 4, nchar(quest["q13a", ]))`   
     \
     **Answer:**
     \
-    b.  `r substr(quest["q13b", ], 4, nchar(quest["q13b", ]))`:   
+    b.  `r substr(quest["q13b", ], 4, nchar(quest["q13b", ]))`   
     \
     **Answer:**
     \
-    c.  `r substr(quest["q13c", ], 4, nchar(quest["q13c", ]))`:   
+    c.  `r substr(quest["q13c", ], 4, nchar(quest["q13c", ]))`   
     \
     **Answer:**
     \
-    d.  `r substr(quest["q13d", ], 4, nchar(quest["q13d", ]))`:   
+    d.  `r substr(quest["q13d", ], 4, nchar(quest["q13d", ]))`   
     \
     **Answer:**
     \

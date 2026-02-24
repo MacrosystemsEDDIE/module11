@@ -170,9 +170,9 @@ server <- function(input, output, session) {#
   # variable description table
   output$var_desc <- renderDT({
     row_selected = sites_df[input$table01_rows_selected, ]
-    var_desc <- site_vars[which(site_vars$site_id == row_selected$SiteID), c("variable_name", "variable_description")]
-    colnames(var_desc) <- c("Variable name", "Description")
-    datatable(var_desc, rownames = FALSE, options = list(pageLength = 4))
+    var_desc <- site_vars[which(site_vars$site_id == row_selected$SiteID), c("variable_name", "variable_unit","variable_description")]
+    colnames(var_desc) <- c("Variable name","Variable unit", "Description")
+    datatable(var_desc, rownames = FALSE, options = list(pageLength = 7))
   })
   
   # Read in site data 
@@ -854,7 +854,13 @@ server <- function(input, output, session) {#
   
   
   # Fit ARIMA with selected variables
-  actA.arima <- reactiveValues(arima=NULL)
+  actA.arima <- reactiveValues(arima=NULL,
+                               model_refit_tt = FALSE,
+                               model_refit_pred = FALSE,
+                               model_refit_resid = FALSE,
+                               model_refit_preduc = FALSE,
+                               model_refit_rmse = FALSE,
+                               model_refit_ign = FALSE)
   
   observe({
     
@@ -1065,6 +1071,71 @@ server <- function(input, output, session) {#
       
     }
     
+    
+  }) %>%
+    bindEvent(input$fit_arima)
+  
+  observe({
+    
+    if(input$no_reg == FALSE){
+      
+      output$arima_order <- renderText({
+        
+        validate(
+          need(input$table01_rows_selected != "",
+               message = "Please select a site in Objective 1.")
+        )
+        validate(
+          need(!is.null(site_data()$data),
+               message = "Please select a site in Objective 1.")
+        )
+        validate(
+          need(!is.null(input$select) | input$no_reg == TRUE,
+               message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
+        )
+        validate(
+          need(length(input$select) <= 3,
+               message = "Please only select up to 3 regressors to fit your model.")
+        )
+        validate(
+          need(input$standardize_data == TRUE,
+               message = "Please standardize your exogenous regressors.")
+        )
+        validate(
+          need(input$fit_arima > 0,
+               message = "Please click 'Fit ARIMA'.")
+        )
+        
+        order_txt <- "You've changed your model structure! Please click 'Fit ARIMA' to refit your model."
+        
+        return(order_txt)
+      })
+      
+    } else if(input$no_reg == TRUE) {
+      
+      output$arima_order <- renderText({
+        
+        validate(
+          need(input$table01_rows_selected != "",
+               message = "Please select a site in Objective 1.")
+        )
+        validate(
+          need(!is.null(site_data()$data),
+               message = "Please select a site in Objective 1.")
+        )
+        validate(
+          need(input$fit_arima > 0,
+               message = "Please click 'Fit ARIMA'.")
+        )
+        
+        order_txt <- "You've changed your model structure! Please click 'Fit ARIMA' to refit your model."
+        
+        return(order_txt)
+      })
+      
+    }
+    
+    
   }) %>%
     bindEvent(input$select, input$no_reg, input$table01_rows_selected)
   
@@ -1073,6 +1144,8 @@ server <- function(input, output, session) {#
   plot.arima <- reactiveValues(main=NULL)
   
   observe({
+    
+    message(paste0("model_refit_tt pre-refit in obj. 4",actA.arima$model_refit_tt))
     
     if(input$no_reg == FALSE){
 
@@ -1192,6 +1265,96 @@ server <- function(input, output, session) {#
       
     }
     
+    actA.arima$model_refit_tt = TRUE
+    actA.arima$model_refit_pred = TRUE
+    actA.arima$model_refit_resid = TRUE
+    actA.arima$model_refit_preduc = TRUE
+    actA.arima$model_refit_rmse = TRUE
+    actA.arima$model_refit_ign = TRUE
+    
+    message(paste0("model_refit_tt post-refit in obj. 4",actA.arima$model_refit_tt))
+    
+  })  %>%
+    bindEvent(input$fit_arima)
+  
+  observe({
+    
+    if(input$no_reg == FALSE){
+      
+      output$arima_plot <- renderPlotly({ 
+        
+        validate(
+          need(input$table01_rows_selected != "",
+               message = "Please select a site in Objective 1.")
+        )
+        validate(
+          need(!is.null(site_data()$data),
+               message = "Please select a site in Objective 1.")
+        )
+        validate(
+          need(!is.null(input$select) | input$no_reg == TRUE,
+               message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
+        )
+        validate(
+          need(length(input$select) <= 3,
+               message = "Please only select up to 3 regressors to fit your model.")
+        )
+        validate(
+          need(input$standardize_data == TRUE,
+               message = "Please standardize your exogenous regressors.")
+        )
+        validate(
+          need(input$fit_arima > 0,
+               message = "Click 'Fit ARIMA'")
+        )
+        
+        p <- ggplot() +
+          annotate("text", x = 10,  y = 10,
+                   size = 6,
+                   label = "You've changed your model structure! \nPlease click 'Fit ARIMA' to refit your model \nand regenerate this plot.") + 
+          theme_void()+
+          theme(panel.grid = element_blank(),
+                axis.line = element_blank())
+        
+        plot.arima$main <- p
+        
+        return(ggplotly(p, dynamicTicks = TRUE))
+        
+      })
+      
+    } else if(input$no_reg == TRUE){
+      
+      output$arima_plot <- renderPlotly({ 
+        
+        validate(
+          need(input$table01_rows_selected != "",
+               message = "Please select a site in Objective 1.")
+        )
+        validate(
+          need(!is.null(site_data()$data),
+               message = "Please select a site in Objective 1.")
+        )
+        validate(
+          need(input$fit_arima > 0,
+               message = "Click 'Fit ARIMA'")
+        )
+        
+        p <- ggplot() +
+          annotate("text", x = 10,  y = 10,
+                   size = 6,
+                   label = "You've changed your model structure! \nPlease click 'Fit ARIMA' to refit your model \nand regenerate this plot.") + 
+          theme_void()+
+          theme(panel.grid = element_blank(),
+                axis.line = element_blank())
+        
+        plot.arima$main <- p
+        
+        return(ggplotly(p, dynamicTicks = TRUE))
+        
+      })
+      
+    }
+    
   })  %>%
     bindEvent(input$select, input$no_reg, input$table01_rows_selected)
   
@@ -1281,6 +1444,75 @@ server <- function(input, output, session) {#
     }
     
   }) %>%
+    bindEvent(input$fit_arima)
+  
+  observe({
+    
+    if(input$no_reg == FALSE){
+      
+      output$coeff_table <- renderDT({ 
+        
+        validate(
+          need(input$table01_rows_selected != "",
+               message = "Please select a site in Objective 1.")
+        )
+        validate(
+          need(!is.null(site_data()$data),
+               message = "Please select a site in Objective 1.")
+        )
+        validate(
+          need(!is.null(input$select) | input$no_reg == TRUE,
+               message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
+        )
+        validate(
+          need(length(input$select) <= 3,
+               message = "Please only select up to 3 regressors to fit your model.")
+        )
+        validate(
+          need(input$standardize_data == TRUE,
+               message = "Please standardize your exogenous regressors.")
+        )
+        validate(
+          need(input$fit_arima > 0,
+               message = "Click 'Fit ARIMA'")
+        )
+        
+        t <- data.frame(Message = "You've changed your model! Please click 'Fit ARIMA' to regenerate this table.")
+        
+        coeff.table$main <- t
+        
+        return(t)
+        
+      })
+      
+    } else if(input$no_reg == TRUE){
+      
+      output$coeff_table <- renderDT({ 
+        
+        validate(
+          need(input$table01_rows_selected != "",
+               message = "Please select a site in Objective 1.")
+        )
+        validate(
+          need(!is.null(site_data()$data),
+               message = "Please select a site in Objective 1.")
+        )
+        validate(
+          need(input$fit_arima > 0,
+               message = "Click 'Fit ARIMA'")
+        )
+        
+        t <- data.frame(Message = "You've changed your model! Please click 'Fit ARIMA' to regenerate this table.")
+        
+        coeff.table$main <- t
+        
+        return(t)
+        
+      })
+      
+    }
+    
+  }) %>%
     bindEvent(input$select, input$no_reg, input$table01_rows_selected)
   
   
@@ -1288,6 +1520,10 @@ server <- function(input, output, session) {#
   plot.train.test <- reactiveValues(main=NULL)
   
   observe({
+    
+    message(paste0("model_refit_tt pre-plot in obj. 5",actA.arima$model_refit_tt))
+    
+    if(actA.arima$model_refit_tt == TRUE){
     
     output$train_test_plot <- renderPlotly({ 
       
@@ -1381,13 +1617,63 @@ server <- function(input, output, session) {#
       
     })
     
+    actA.arima$model_refit_tt = FALSE
+    
+    } else {
+      
+      output$train_test_plot <- renderPlotly({ 
+        
+        validate(
+          need(input$table01_rows_selected != "",
+               message = "Please select a site in Objective 1.")
+        )
+        validate(
+          need(!is.null(site_data()$data),
+               message = "Please select a site in Objective 1.")
+        )
+        validate(
+          need(!is.null(input$select) | input$no_reg == TRUE,
+               message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
+        )
+        validate(
+          need(length(input$select) <= 3 | input$no_reg == TRUE,
+               message = "Please only select up to 3 regressors to fit your model in Objective 4.")
+        )
+        validate(
+          need(input$standardize_data == TRUE | input$no_reg == TRUE,
+               message = "Please standardize your exogenous regressors in Objective 4.")
+        )
+        validate(
+          need(!is.null(actA.arima$arima),
+               message = "Please fit an ARIMA model in Objective 4.")
+        )
+        
+        p <- ggplot() +
+          annotate("text", x = 10,  y = 10,
+                   size = 6,
+                   label = "You've changed your model structure! \nPlease navigate to the Obj. 4 tab and click 'Fit ARIMA' to \n regenerate this plot.") + 
+          theme_void()+
+          theme(panel.grid = element_blank(),
+                axis.line = element_blank())
+        
+        plot.train.test$main <- p
+        
+        return(ggplotly(p, dynamicTicks = TRUE))
+        
+      })
+    }
+    
+    message(paste0("model_refit_tt post-plot in obj. 5",actA.arima$model_refit_tt))
+    
   }) %>%
-    bindEvent(input$select, input$no_reg, input$table01_rows_selected)
+    bindEvent(input$fit_arima, input$select, input$no_reg, input$table01_rows_selected)
   
   # predictions on testing data plot
   plot.test.pred <- reactiveValues(main=NULL)
   
   observe({
+    
+    if(actA.arima$model_refit_pred == TRUE){
     
     if(input$no_reg == FALSE){
 
@@ -1640,9 +1926,100 @@ server <- function(input, output, session) {#
       })
       
     }
+      
+      actA.arima$model_refit_pred = FALSE
+      
+    } else {
+      
+      if(input$no_reg == FALSE){
+        
+        output$test_pred_plot <- renderPlotly({ 
+          
+          validate(
+            need(input$table01_rows_selected != "",
+                 message = "Please select a site in Objective 1.")
+          )
+          validate(
+            need(!is.null(site_data()$data),
+                 message = "Please select a site in Objective 1.")
+          )
+          validate(
+            need(!is.null(input$select) | input$no_reg == TRUE,
+                 message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
+          )
+          validate(
+            need(length(input$select) <= 3,
+                 message = "Please only select up to 3 regressors to fit your model in Objective 4.")
+          )
+          validate(
+            need(input$standardize_data == TRUE,
+                 message = "Please standardize your exogenous regressors in Objective 4.")
+          )
+          validate(
+            need(!is.null(actA.arima$arima),
+                 message = "Please fit an ARIMA model in Objective 4.")
+          )
+          validate(
+            need(input$generate_pred > 0,
+                 message = "Click 'Generate predictions'")
+          )
+          
+          p <- ggplot() +
+            annotate("text", x = 10,  y = 10,
+                     size = 6,
+                     label = "You've changed your model structure! \nPlease navigate to the Obj. 4 tab and click 'Fit ARIMA' to \n regenerate this plot.") + 
+            theme_void()+
+            theme(panel.grid = element_blank(),
+                  axis.line = element_blank())
+          
+          plot.test.pred$main <- p
+          
+          return(ggplotly(p, dynamicTicks = TRUE))
+          
+        })
+        
+      } else if(input$no_reg == TRUE){
+        
+        output$test_pred_plot <- renderPlotly({ 
+          
+          validate(
+            need(input$table01_rows_selected != "",
+                 message = "Please select a site in Objective 1.")
+          )
+          validate(
+            need(!is.null(site_data()$data),
+                 message = "Please select a site in Objective 1.")
+          )
+          validate(
+            need(!is.null(actA.arima$arima),
+                 message = "Please fit an ARIMA model in Objective 4.")
+          )
+          validate(
+            need(input$generate_pred > 0,
+                 message = "Click 'Generate predictions'")
+          )
+          
+          p <- ggplot() +
+            annotate("text", x = 10,  y = 10,
+                     size = 6,
+                     label = "You've changed your model structure! \nPlease navigate to the Obj. 4 tab and click 'Fit ARIMA' to \n regenerate this plot.") + 
+            theme_void()+
+            theme(panel.grid = element_blank(),
+                  axis.line = element_blank())
+          
+          plot.test.pred$main <- p
+          
+          
+          return(ggplotly(p, dynamicTicks = TRUE))
+          
+        })
+        
+      }
+      
+    }
     
   }) %>%
-    bindEvent(input$select, input$no_reg, input$table01_rows_selected)
+    bindEvent(input$fit_arima, input$select, input$no_reg, input$table01_rows_selected)
   
   # Download test pred plot
   output$save_test_pred_plot <- downloadHandler(
@@ -1667,6 +2044,8 @@ server <- function(input, output, session) {#
   plot.resid <- reactiveValues(main=NULL)
   
   observe({
+    
+    if(actA.arima$model_refit_resid == TRUE){
 
     output$resid_plot <- renderPlotly({ 
       
@@ -1724,14 +2103,67 @@ server <- function(input, output, session) {#
       
     })
     
+    actA.arima$model_refit_resid = FALSE
+    
+    } else {
+      
+      output$resid_plot <- renderPlotly({ 
+        
+        validate(
+          need(input$table01_rows_selected != "",
+               message = "Please select a site in Objective 1.")
+        )
+        validate(
+          need(!is.null(site_data()$data),
+               message = "Please select a site in Objective 1.")
+        )
+        validate(
+          need(!is.null(input$select) | input$no_reg == TRUE,
+               message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
+        )
+        validate(
+          need(length(input$select) <= 3 | input$no_reg == TRUE,
+               message = "Please only select up to 3 regressors to fit your model in Objective 4.")
+        )
+        validate(
+          need(input$standardize_data == TRUE | input$no_reg == TRUE,
+               message = "Please standardize your exogenous regressors in Objective 4.")
+        )
+        validate(
+          need(!is.null(actA.arima$arima),
+               message = "Please fit an ARIMA model in Objective 4.")
+        )
+        validate(
+          need(input$view_resid > 0,
+               message = "Click 'View residuals'")
+        )
+        
+        p <- ggplot() +
+          annotate("text", x = 10,  y = 10,
+                   size = 3,
+                   label = "You've changed your model structure! \nPlease navigate to the Obj. 4 tab and click 'Fit ARIMA' to \n regenerate this plot.") + 
+          theme_void()+
+          theme(panel.grid = element_blank(),
+                axis.line = element_blank())
+        
+        plot.resid$main <- p
+        
+        return(ggplotly(p, dynamicTicks = TRUE))
+        
+      })
+      
+    }
+    
   })  %>%
-    bindEvent(input$select, input$no_reg, input$table01_rows_selected)
+    bindEvent(input$fit_arima, input$select, input$no_reg, input$table01_rows_selected)
   
   # Predictions with uncertainty plot
   # Residuals plot
   plot.uc <- reactiveValues(main=NULL)
   
   observe({
+    
+    if(actA.arima$model_refit_preduc == TRUE){
     
     if(input$no_reg == FALSE){
 
@@ -2004,9 +2436,115 @@ server <- function(input, output, session) {#
       })
       
     }
+      
+      actA.arima$model_refit_preduc = FALSE
+      
+    } else {
+      
+      if(input$no_reg == FALSE){
+        
+        output$uc_plot <- renderPlotly({ 
+          
+          validate(
+            need(input$table01_rows_selected != "",
+                 message = "Please select a site in Objective 1.")
+          )
+          validate(
+            need(!is.null(site_data()$data),
+                 message = "Please select a site in Objective 1.")
+          )
+          validate(
+            need(!is.null(input$select) | input$no_reg == TRUE,
+                 message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
+          )
+          validate(
+            need(length(input$select) <= 3,
+                 message = "Please only select up to 3 regressors to fit your model in Objective 4.")
+          )
+          validate(
+            need(input$standardize_data == TRUE,
+                 message = "Please standardize your exogenous regressors in Objective 4.")
+          )
+          validate(
+            need(!is.null(actA.arima$arima),
+                 message = "Please fit an ARIMA model in Objective 4.")
+          )
+          validate(
+            need(input$add_uc > 0,
+                 message = "Click 'Add uncertainty'")
+          )
+          
+          p <- ggplot() +
+            annotate("text", x = 10,  y = 10,
+                     size = 6,
+                     label = "You've changed your model structure! \nPlease navigate to the Obj. 4 tab and click 'Fit ARIMA' to \n regenerate this plot.") + 
+            theme_void()+
+            theme(panel.grid = element_blank(),
+                  axis.line = element_blank())
+          
+          plot.uc$main <- p
+          
+          p2 <- ggplotly(p, dynamicTicks = TRUE) 
+          
+          for (i in 1:length(p2$x$data)){
+            if (!is.null(p2$x$data[[i]]$name)){
+              p2$x$data[[i]]$name =  gsub("\\(","",str_split(p2$x$data[[i]]$name,",")[[1]][1])
+            }
+          }
+          
+          return(p2)
+          
+        })
+        
+      } else if(input$no_reg == TRUE){
+        
+        output$uc_plot <- renderPlotly({ 
+          
+          validate(
+            need(input$table01_rows_selected != "",
+                 message = "Please select a site in Objective 1.")
+          )
+          validate(
+            need(!is.null(site_data()$data),
+                 message = "Please select a site in Objective 1.")
+          )
+          validate(
+            need(!is.null(actA.arima$arima),
+                 message = "Please fit an ARIMA model in Objective 4.")
+          )
+          validate(
+            need(input$add_uc > 0,
+                 message = "Click 'Add uncertainty'")
+          )
+          
+          p <- ggplot() +
+            annotate("text", x = 10,  y = 10,
+                     size = 6,
+                     label = "You've changed your model structure! \nPlease navigate to the Obj. 4 tab and click 'Fit ARIMA' to \n regenerate this plot.") + 
+            theme_void()+
+            theme(panel.grid = element_blank(),
+                  axis.line = element_blank())
+          
+          plot.uc$main <- p
+          
+          p2 <- ggplotly(p, dynamicTicks = TRUE) 
+          
+          for (i in 1:length(p2$x$data)){
+            if (!is.null(p2$x$data[[i]]$name)){
+              p2$x$data[[i]]$name =  gsub("\\(","",str_split(p2$x$data[[i]]$name,",")[[1]][1])
+            }
+          }
+          
+          return(p2)
+          
+        })
+        
+      }
+      
+    }
     
   }) %>%
-    bindEvent(input$select, input$no_reg, input$table01_rows_selected)
+    bindEvent(input$fit_arima, input$select, input$no_reg, input$table01_rows_selected)
   
   
   # Download predictions with uc plot
@@ -2032,8 +2570,9 @@ server <- function(input, output, session) {#
   rmse.text <- reactiveValues(main=NULL)
   
   observe({
-    input$select
     
+    if(actA.arima$model_refit_rmse == TRUE){
+
     output$rmse_text <- renderText({ 
       
       validate(
@@ -2138,15 +2677,62 @@ server <- function(input, output, session) {#
       
     })
     
-  })
+    actA.arima$model_refit_rmse = FALSE
+    
+    } else {
+      
+      output$rmse_text <- renderText({ 
+        
+        validate(
+          need(input$table01_rows_selected != "",
+               message = "Please select a site in Objective 1.")
+        )
+        validate(
+          need(!is.null(site_data()$data),
+               message = "Please select a site in Objective 1.")
+        )
+        validate(
+          need(!is.null(input$select) | input$no_reg == TRUE,
+               message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
+        )
+        validate(
+          need(length(input$select) <= 3 | input$no_reg == TRUE,
+               message = "Please only select up to 3 regressors to fit your model in Objective 4.")
+        )
+        validate(
+          need(input$standardize_data == TRUE | input$no_reg == TRUE,
+               message = "Please standardize your exogenous regressors in Objective 4.")
+        )
+        validate(
+          need(!is.null(actA.arima$arima),
+               message = "Please fit an ARIMA model in Objective 4.")
+        )
+        validate(
+          need(input$assess_mod > 0,
+               message = "Click 'Calculate RMSE and ignorance score'")
+        )
+        
+        rmse_out <- paste0("You've changed your model structure! Please navigate to the Obj. 4 tab and click 'Fit ARIMA' to recalculate RMSE.")
+        
+        rmse.text$main <- rmse_out
+        
+        return(rmse_out)
+        
+      })
+      
+    }
+    
+  }) %>%
+    bindEvent(input$fit_arima, input$select, input$no_reg, input$table01_rows_selected)
   
   
   # Calculate ignorance
   ign.text <- reactiveValues(main=NULL)
   
   observe({
-    input$select
     
+    if(actA.arima$model_refit_ign == TRUE){
+
     output$ign_text <- renderText({ 
       
       validate(
@@ -2256,7 +2842,52 @@ server <- function(input, output, session) {#
       
     })
     
-  })
+    actA.arima$model_refit_ign = FALSE
+    
+    } else {
+      
+      output$ign_text <- renderText({ 
+        
+        validate(
+          need(input$table01_rows_selected != "",
+               message = "Please select a site in Objective 1.")
+        )
+        validate(
+          need(!is.null(site_data()$data),
+               message = "Please select a site in Objective 1.")
+        )
+        validate(
+          need(!is.null(input$select) | input$no_reg == TRUE,
+               message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
+        )
+        validate(
+          need(length(input$select) <= 3 | input$no_reg == TRUE,
+               message = "Please only select up to 3 regressors to fit your model in Objective 4.")
+        )
+        validate(
+          need(input$standardize_data == TRUE | input$no_reg == TRUE,
+               message = "Please standardize your exogenous regressors in Objective 4.")
+        )
+        validate(
+          need(!is.null(actA.arima$arima),
+               message = "Please fit an ARIMA model in Objective 4.")
+        )
+        validate(
+          need(input$assess_mod > 0,
+               message = "Click 'Calculate RMSE and ignorance score'")
+        )
+        
+        ign_out <- paste0("You've changed your model structure! Please navigate to the Obj. 4 tab and click 'Fit ARIMA' to recalculate the ignorance score.")
+        
+        ign.text$main <- ign_out
+        
+        return(ign_out)
+        
+      })
+    }
+    
+  }) %>%
+    bindEvent(input$fit_arima, input$select, input$no_reg, input$table01_rows_selected)
   
   ## Activity B
   
@@ -2710,67 +3341,6 @@ server <- function(input, output, session) {#
                                nrow_model_df = 31)
   
   observe({
-    input$prop
-
-      validate(
-        need(!is.null(input$upload_data),
-             message = "Please upload your data in Objective 6.")
-      )
-      validate(
-        need(valid$main == TRUE,
-             message = "Please correct your data format in Objective 6.")
-      )
-      validate(
-        need(!is.null(input$select_tar_actB),
-             message = "Please select a target variable from the dropdown menu.")
-      )
-      validate(
-        need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
-             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
-      )
-      
-      if(input$no_reg1 == FALSE){
-      validate(
-        need(length(input$select_reg_actB) <= 3,
-             message = "Please only select up to 3 regressors to fit your model.")
-      )
-      validate(
-        need(input$standardize_data2 == TRUE,
-             message = "Please standardize your exogenous regressors.")
-      )
-      
-      dat <- stand.data()
-      wide_dat <- dat %>%
-        pivot_wider(names_from = "variable", values_from = "observation")
-      
-      col_names <- c("datetime",input$select_tar_actB,input$select_reg_actB)
-      
-      model_df4 <- as_tsibble(wide_dat) %>%
-        dplyr::slice_head(prop = input$prop) %>% # using a 70:30 split here
-        tsibble::fill_gaps() %>%
-        select(all_of(col_names)) %>%
-        mutate(across(input$select_reg_actB, list(zscore = ~as.numeric(scale(.)))))
-      
-      actB.arima$nrow_model_df <- nrow(model_df4)
-      
-      } else if(input$no_reg1 == TRUE){
-        dat <- stand.data()
-        wide_dat <- dat %>%
-          pivot_wider(names_from = "variable", values_from = "observation")
-        
-        col_names <- c("datetime",input$select_tar_actB)
-        
-        model_df4 <- as_tsibble(wide_dat) %>%
-          dplyr::slice_head(prop = input$prop) %>% # using a 70:30 split here
-          tsibble::fill_gaps() %>%
-          select(all_of(col_names)) 
-        
-        actB.arima$nrow_model_df <- nrow(model_df4)
-      }
-      
-  }) 
-  
-  observe({
     input$fit_arima2 
     
     output$arima_order2 <- renderText({
@@ -2805,6 +3375,23 @@ server <- function(input, output, session) {#
         need(input$prop <= 0.9,
              message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less).")
       )
+      
+      dat <- stand.data()
+      wide_dat <- dat %>%
+        pivot_wider(names_from = "variable", values_from = "observation")
+      
+      col_names <- c("datetime",input$select_tar_actB,input$select_reg_actB)
+      
+      model_df4 <- as_tsibble(wide_dat) %>%
+        dplyr::slice_head(prop = input$prop) %>% # using a 70:30 split here
+        tsibble::fill_gaps() %>%
+        select(all_of(col_names)) %>%
+        mutate(across(input$select_reg_actB, list(zscore = ~as.numeric(scale(.)))))
+      
+      actB.arima$nrow_model_df <- nrow(model_df4)
+      
+      message(actB.arima$nrow_model_df)
+      
       validate(
         need(actB.arima$nrow_model_df >= 60,
              message = "You are using fewer than 60 data points for model training. Please select a larger proportion of your data for training.")
@@ -2879,6 +3466,22 @@ server <- function(input, output, session) {#
           need(input$prop <= 0.9,
                message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less).")
         )
+        
+        dat <- stand.data()
+        wide_dat <- dat %>%
+          pivot_wider(names_from = "variable", values_from = "observation")
+        
+        col_names <- c("datetime",input$select_tar_actB)
+        
+        model_df4 <- as_tsibble(wide_dat) %>%
+          dplyr::slice_head(prop = input$prop) %>% # using a 70:30 split here
+          tsibble::fill_gaps() %>%
+          select(all_of(col_names)) 
+        
+        actB.arima$nrow_model_df <- nrow(model_df4)
+        
+        message(actB.arima$nrow_model_df)
+        
         validate(
           need(actB.arima$nrow_model_df >= 60,
                message = "You are using fewer than 60 data points for model training. Please select a larger proportion of your data for training.")
@@ -2931,6 +3534,7 @@ server <- function(input, output, session) {#
   observe({
     input$select_reg_actB
     input$no_reg1
+    input$select_tar_actB
     output$arima_order2 <- renderText({
       
       validate(
@@ -2959,6 +3563,34 @@ server <- function(input, output, session) {#
         need(input$standardize_data2 == TRUE,
              message = "Please standardize your exogenous regressors.")
       )
+      
+      dat <- stand.data()
+      wide_dat <- dat %>%
+        pivot_wider(names_from = "variable", values_from = "observation")
+      
+      col_names <- c("datetime",input$select_tar_actB,input$select_reg_actB)
+      
+      model_df4 <- as_tsibble(wide_dat) %>%
+        dplyr::slice_head(prop = input$prop) %>% # using a 70:30 split here
+        tsibble::fill_gaps() %>%
+        select(all_of(col_names)) %>%
+        mutate(across(input$select_reg_actB, list(zscore = ~as.numeric(scale(.)))))
+      
+      actB.arima$nrow_model_df <- nrow(model_df4)
+      
+      } else {
+        dat <- stand.data()
+        wide_dat <- dat %>%
+          pivot_wider(names_from = "variable", values_from = "observation")
+        
+        col_names <- c("datetime",input$select_tar_actB)
+        
+        model_df4 <- as_tsibble(wide_dat) %>%
+          dplyr::slice_head(prop = input$prop) %>% # using a 70:30 split here
+          tsibble::fill_gaps() %>%
+          select(all_of(col_names)) 
+        
+        actB.arima$nrow_model_df <- nrow(model_df4)
       }
       
       validate(
@@ -5176,7 +5808,7 @@ server <- function(input, output, session) {#
     },
     content = function(file) {
       device <- function(..., width, height) {
-        grDevices::png(..., width = 8, height = 4,
+        grDevices::png(..., width = 12, height = 4,
                        res = 200, units = "in")
       }
       ggsave(file, plot = plot.resid3$main, device = device)
