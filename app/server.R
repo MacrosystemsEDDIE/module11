@@ -252,7 +252,8 @@ server <- function(input, output, session) {#
       need(input$table01_rows_selected != "",
            message = "Please select a site in Objective 1.")
     )
-    df <- site_DT()$data
+    df <- datatable(site_DT()$data %>%
+                      arrange(datetime))
    return(df)
   })
   

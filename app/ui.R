@@ -440,6 +440,7 @@ ui <- function(request) {
                                                column(4,
                                                       h3("Data Table"),
                                                       p("This is a Shiny data table. It is interactive and allows you to navigate through the data table by searching or clicking through the different pages."),
+                                                      p(tags$i("Note that some days may have missing data.")),
                                                       DT::DTOutput("site_datatable")
                                                ),
                                                #** Plot of data ----
