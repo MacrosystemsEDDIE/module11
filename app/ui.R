@@ -489,6 +489,7 @@ ui <- function(request) {
                                                column(4,
                                                       h3("Investigate variable relationships"),
                                                       p("For Q6 you will explore the relationship between the target variable for prediction and the other variables at this site. You may or may not discover any relationships between these variables."),
+                                                      p("Often, even if previous research indicates that one variable can influence another in a particular laboratory or ecological setting, relationships between environmental variables at different sites in the real world are weak or nonexistent."),
                                                       selectizeInput("x_var", "Select X variable",
                                                                      choices = NULL,
                                                                      options = list(
@@ -598,6 +599,7 @@ ui <- function(request) {
                                                       h3("Plot 1-day lag of target variable"),
                                                       p(id = "txt_j", "Let's explore lags and autocorrelation in the target data from your chosen environmental case study."),
                                                       p("A ",tags$b("lag")," is the time delay between observations in a time series. Because you are working with daily data, we can think about a 1-day lag, a 2-day lag, and so on."),
+                                                      p("Lags of environmental variables are often very good predictors of current values of that variable."),
                                                       p("Click the button below to plot a 1-day lag of your target variable vs. the 'current' value of that variable:"),
                                                       br(),
                                                       actionButton("plot_lag", "Plot lag scatterplot"),
@@ -726,7 +728,7 @@ ui <- function(request) {
                                                             column(10, offset = 1,
                                                                    h3("Questions"),
                                                                    p(tags$b(quest["q12", 1])),
-                                                                   p(tags$i("Hint: go back to Objective 2 and see whether there appear to be any relationships between the target variable and other variables in your dataset."))
+                                                                   p(tags$i("Hint: go back to Objective 2 and see whether there appear to be any relationships between the target variable and other variables in your dataset. Then, revisit Objective 3 and assess the strength of the autocorrelation in your dataset. Use this information to help you decide whether you think it is worthwhile to include exogenous regressors in your model."))
                                                             )
                                                           )
                                                       )
@@ -747,8 +749,7 @@ ui <- function(request) {
                                                column(8,
                                                       wellPanel(
                                                         plotlyOutput("standardize_plot"),
-                                                      ),
-                                                      downloadButton("save_standardize_plot", "Download plot", icon = icon("download"))
+                                                      )
                                                       )
                                              ),
                                              hr(),
@@ -783,8 +784,7 @@ ui <- function(request) {
                                                column(6,
                                                       wellPanel(
                                                         plotlyOutput("arima_plot"),
-                                                      ),
-                                                      downloadButton("save_arima_plot", "Download plot", icon = icon("download"))
+                                                      )
                                                       )
                                              ),
                                              hr(),
@@ -803,7 +803,7 @@ ui <- function(request) {
                                                                    p(tags$b(quest["q14", 1])),
                                                                    p(tags$b(quest["q15", 1])),
                                                                    p(tags$b(quest["q16", 1])),
-                                                                   p(tags$i("Hint! It may be helpful to compare the values of your model terms with other students in the class who chose the same case study as you but selected different exogenous regressors for their models. This will help you gain an understanding of whether the magnitudes of your estimated model parameters are relatively large or small."))
+                                                                   p(tags$i("Hint: It may be helpful to compare the values of your model terms with other students in the class who chose the same case study as you but selected different exogenous regressors for their models. This will help you gain an understanding of whether the magnitudes of your estimated model parameters are relatively large or small."))
                                                             )
                                                           )
                                                       )
@@ -841,8 +841,7 @@ ui <- function(request) {
                                                column(8,
                                                       wellPanel(
                                                         plotlyOutput("train_test_plot"),
-                                                      ),
-                                                      downloadButton("save_train_test_plot", "Download plot", icon = icon("download"))
+                                                      )
                                                       )
                                              ),
                                              hr(),
@@ -904,8 +903,7 @@ ui <- function(request) {
                                                       br(),br(),
                                                       wellPanel(
                                                         plotlyOutput("resid_plot"),
-                                                      ),
-                                                      downloadButton("save_resid_plot", "Download plot", icon = icon("download"))
+                                                      )
                                                       ),
                                                column(8,
                                                       actionButton("add_uc",label = "Add uncertainty"),
@@ -1158,7 +1156,7 @@ ui <- function(request) {
                                                column(6,
                                                       h3("Identify target variable and select exogenous regressors"),
                                                       p("You will need to identify your target variable (the variable you wish to predict) before fitting the model."),
-                                                      p("In addition, consider whether you would like to include any exogenous regressors in the model."),
+                                                      p("In addition, consider whether you would like to include any exogenous regressors in the model. Use your understanding of your own dataset and/or the information you learned in Activity A to help you decide whether it is worthwhile to include exogenous regressors in the model."),
                                                       p(tags$b("For simplicity and ease of model interpretation, you are limited to selecting no more than three exogenous regressors at a time for fitting your model")),
                                                       p(tags$i("Choose your target variable and regressors using the dropdown menus on the right and then answer Q28 and Q29."))
                                                ),
@@ -1200,8 +1198,7 @@ ui <- function(request) {
                                                column(8,
                                                       wellPanel(
                                                         plotlyOutput("standardize_plot2"),
-                                                      ),
-                                                      downloadButton("save_standardize_plot2", "Download plot", icon = icon("download"))
+                                                      )
                                                )
                                              ),
                                              hr(),
@@ -1212,6 +1209,7 @@ ui <- function(request) {
                                                       p(tags$b("For these reasons, we require that you select a proportion that includes at least 60 data points for model training and reserves at least 10% of your data for model testing.")),
                                                       numericInput("prop", "Proportion of data to use for training:", value = 0.7, min = 0, max = 1, step = 0.1),
                                                       p("Click the button below to fit an ARIMA model to the target variable from your selected environmental case study, including the regressors you have chosen above."),
+                                                      #p("For simplicity today, we are not including seasonality terms in this ARIMA model."),
                                                       p(tags$b("Important Note! We are only using the training data (based on the train/test split you chose above) to fit the ARIMA model. This leaves the testing data to be used for model assessment in Objective 8.")),
                                                       actionButton("fit_arima2",label = "Fit ARIMA"),
                                                       br(),br(),
@@ -1230,7 +1228,8 @@ ui <- function(request) {
                                                                    p(tags$b(quest["q31", 1])),
                                                                    p(tags$b(quest["q31a", 1])),
                                                                    p(tags$b(quest["q31b", 1])),
-                                                                   p(tags$b(quest["q31c", 1]))
+                                                                   p(tags$b(quest["q31c", 1])),
+                                                                   p(tags$b(quest["q31d", 1]))
                                                             )
                                                           )
                                                       )
@@ -1238,8 +1237,7 @@ ui <- function(request) {
                                                column(6,
                                                       wellPanel(
                                                         plotlyOutput("arima_plot2"),
-                                                      ),
-                                                      downloadButton("save_arima_plot2", "Download plot", icon = icon("download"))
+                                                      )
                                                )
                                              ),
                                              hr(),
@@ -1288,13 +1286,12 @@ ui <- function(request) {
                                                column(4,
                                                       h3("Training vs. testing data"),
                                                       p("The figure on the right shows both the training and testing data of your target dataset, as well as the fitted values from your ARIMA model, generated using the training dataset only."),
-                                                      p("Recall that you chose the proportion of your data to use for training vs. testing in Objective 7")
+                                                      p("Recall that you chose the proportion of your data to use for training vs. testing in Objective 7.")
                                                ),
                                                column(8,
                                                       wellPanel(
                                                         plotlyOutput("train_test_plot2"),
-                                                      ),
-                                                      downloadButton("save_train_test_plot2", "Download plot", icon = icon("download"))
+                                                      )
                                                )
                                              ),
                                              hr(),
@@ -1308,8 +1305,7 @@ ui <- function(request) {
                                                column(8,
                                                       wellPanel(
                                                         plotlyOutput("test_pred_plot2"),
-                                                      ),
-                                                      downloadButton("save_test_pred_plot2", "Download plot", icon = icon("download"))
+                                                      )
                                                )
                                              ),
                                              hr(),
@@ -1322,8 +1318,7 @@ ui <- function(request) {
                                                       br(),br(),
                                                       wellPanel(
                                                         plotlyOutput("resid_plot2"),
-                                                      ),
-                                                      downloadButton("save_resid_plot2", "Download plot", icon = icon("download"))
+                                                      )
                                                ),
                                                column(8,
                                                       actionButton("add_uc2",label = "Add uncertainty"),

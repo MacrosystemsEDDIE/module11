@@ -53,7 +53,7 @@ q31b,b. How many lags are included in the model? How do you know?
 q31c,c. Are the data differenced to fit the model? How do you know?
 q31d,d. How many timesteps of previous errors are included in the model? How do you know?
 q32,"Q32. Which term is most important in your fitted model (i.e., has the greatest absolute value)?"
-q33,Q33. Inspect the plot on the right. How well do you think the model predictions fit the observations in the test dataset? Explain your reasoning.
+q33,Q33. Inspect the plot above. How well do you think the model predictions with uncertainty fit the observations in the test dataset? Explain your reasoning.
 q34,Q34. Record the RMSE and ignorance score for your model.
 q35,"Q35. Briefly describe, in your own words, each of the three additional models you will be fitting to your data."
 q35a,a. autoregressive neural network model (NNETAR)

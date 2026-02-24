@@ -234,16 +234,21 @@ knitr::kable(env_var_rel)
 **Answer:**
 \
 
-**Please download the plot associated with Q9 and copy-paste it into your report below.**
-
-*Figure 2. Partial autocorrelation of environmental case study target variable*  
-
 10. `r substr(quest["q10", ], 5, nchar(quest["q10", ]))`
 \
 **Answer:**
 \
 
 **Please download the plot associated with Q10 and copy-paste it into your report below.**
+
+*Figure 2. Partial autocorrelation of environmental case study target variable*  
+
+11. `r substr(quest["q11", ], 5, nchar(quest["q11", ]))`
+\
+**Answer:**
+\
+
+**Please download the plot associated with Q11 and copy-paste it into your report below.**
 
 *Figure 3. Differenced time series of environmental case study target variable*  
 
@@ -255,34 +260,29 @@ knitr::kable(env_var_rel)
 
 ***
 
-11. `r substr(quest["q11", ], 5, nchar(quest["q11", ]))` 
+12. `r substr(quest["q12", ], 5, nchar(quest["q12", ]))` 
 \
 **Answer:**
 \
 
-12. `r substr(quest["q12", ], 5, nchar(quest["q12", ]))`  
+13. `r substr(quest["q13", ], 5, nchar(quest["q13", ]))`  
 \
-    a.  `r substr(quest["q12a", ], 4, nchar(quest["q12a", ]))`:   
+    a.  `r substr(quest["q13a", ], 4, nchar(quest["q13a", ]))`:   
     \
     **Answer:**
     \
-    b.  `r substr(quest["q12b", ], 4, nchar(quest["q12b", ]))`:   
+    b.  `r substr(quest["q13b", ], 4, nchar(quest["q13b", ]))`:   
     \
     **Answer:**
     \
-    c.  `r substr(quest["q12c", ], 4, nchar(quest["q12c", ]))`:   
+    c.  `r substr(quest["q13c", ], 4, nchar(quest["q13c", ]))`:   
     \
     **Answer:**
     \
-    d.  `r substr(quest["q12d", ], 4, nchar(quest["q12d", ]))`:   
+    d.  `r substr(quest["q13d", ], 4, nchar(quest["q13d", ]))`:   
     \
     **Answer:**
     \
-\
-
-13. `r substr(quest["q13", ], 5, nchar(quest["q13", ]))` 
-\
-**Answer:**
 \
 
 14. `r substr(quest["q14", ], 5, nchar(quest["q14", ]))` 
@@ -295,6 +295,11 @@ knitr::kable(env_var_rel)
 **Answer:**
 \
 
+16. `r substr(quest["q16", ], 5, nchar(quest["q16", ]))` 
+\
+**Answer:**
+\
+
 
 ## Objective 5: Assess model fit\
 
@@ -303,19 +308,14 @@ knitr::kable(env_var_rel)
 
 ***
 
-16. `r substr(quest["q16", ], 5, nchar(quest["q16", ]))`
-\
-**Answer:**
-\
-
-**Please download the plot associated with Q16 and copy-paste it into your report below.**
-
-*Figure 4. ARIMA predictions of out-of-sample observations of the environmental case study target variable* 
-
 17. `r substr(quest["q17", ], 5, nchar(quest["q17", ]))`
 \
 **Answer:**
 \
+
+**Please download the plot associated with Q17 and copy-paste it into your report below.**
+
+*Figure 4. ARIMA predictions of out-of-sample observations of the environmental case study target variable* 
 
 18. `r substr(quest["q18", ], 5, nchar(quest["q18", ]))`
 \
@@ -327,11 +327,31 @@ knitr::kable(env_var_rel)
 **Answer:**
 \
 
-**Please download the plot associated with Q19 and copy-paste it into your report below.**
+20. `r substr(quest["q20", ], 5, nchar(quest["q20", ]))`
+\
+**Answer:**
+\
+
+**Please download the plot associated with Q20 and copy-paste it into your report below.**
 
 *Figure 5. ARIMA predictions with uncertainty of out-of-sample observations of the environmental case study target variable*
 
-20. `r substr(quest["q20", ], 5, nchar(quest["q20", ]))`
+21. `r substr(quest["q21", ], 5, nchar(quest["q21", ]))`
+\
+**Answer:**
+\
+
+22. `r substr(quest["q22", ], 5, nchar(quest["q22", ]))`
+\
+**Answer:**
+\
+
+23. `r substr(quest["q23", ], 5, nchar(quest["q23", ]))`
+\
+**Answer:**
+\
+
+24. `r substr(quest["q24", ], 5, nchar(quest["q24", ]))`
 \
 **Answer:**
 \
@@ -347,31 +367,31 @@ knitr::kable(env_var_rel)
 
 ***
 
-24. `r substr(quest["q24", ], 6, nchar(quest["q24", ]))`  
-\
-**Answer:** 
-\
-
 25. `r substr(quest["q25", ], 6, nchar(quest["q25", ]))`  
 \
 **Answer:** 
 \
 
-26. `r substr(quest["q26", ], 6, nchar(quest["q26", ]))`
+26. `r substr(quest["q26", ], 6, nchar(quest["q26", ]))`  
 \
-    a.  `r substr(quest["q26a", ], 3, nchar(quest["q26a", ]))`  
+**Answer:** 
+\
+
+27. `r substr(quest["q27", ], 6, nchar(quest["q27", ]))`
+\
+    a.  `r substr(quest["q27a", ], 3, nchar(quest["q27a", ]))`  
     \
     **Answer:**  
     \
-    b.  `r substr(quest["q26b", ], 3, nchar(quest["q26b", ]))`  
+    b.  `r substr(quest["q27b", ], 3, nchar(quest["q27b", ]))`  
     \
     **Answer:**   
     \
-    c.  `r substr(quest["q26c", ], 3, nchar(quest["q26c", ]))`  
+    c.  `r substr(quest["q27c", ], 3, nchar(quest["q27c", ]))`  
     \
     **Answer:**   
     \
-    d.  `r substr(quest["q26d", ], 3, nchar(quest["q26d", ]))`  
+    d.  `r substr(quest["q27d", ], 3, nchar(quest["q27d", ]))`  
     \
     **Answer:**   
     \
@@ -385,11 +405,6 @@ knitr::kable(env_var_rel)
 
 ***
 
-27. `r substr(quest["q27", ], 6, nchar(quest["q27", ]))`  
-\
-**Answer:** 
-\
-
 28. `r substr(quest["q28", ], 6, nchar(quest["q28", ]))`  
 \
 **Answer:** 
@@ -400,27 +415,32 @@ knitr::kable(env_var_rel)
 **Answer:** 
 \
 
-30. `r substr(quest["q30", ], 6, nchar(quest["q30", ]))`
+30. `r substr(quest["q30", ], 6, nchar(quest["q30", ]))`  
 \
-    a.  `r substr(quest["q30a", ], 3, nchar(quest["q30a", ]))`  
+**Answer:** 
+\
+
+31. `r substr(quest["q31", ], 6, nchar(quest["q31", ]))`
+\
+    a.  `r substr(quest["q31a", ], 3, nchar(quest["q31a", ]))`  
     \
     **Answer:**  
     \
-    b.  `r substr(quest["q30b", ], 3, nchar(quest["q30b", ]))`  
+    b.  `r substr(quest["q31b", ], 3, nchar(quest["q31b", ]))`  
     \
     **Answer:**   
     \
-    c.  `r substr(quest["q30c", ], 3, nchar(quest["q30c", ]))`  
+    c.  `r substr(quest["q31c", ], 3, nchar(quest["q31c", ]))`  
     \
     **Answer:**   
     \
-    d.  `r substr(quest["q30d", ], 3, nchar(quest["q30d", ]))`  
+    d.  `r substr(quest["q31d", ], 3, nchar(quest["q31d", ]))`  
     \
     **Answer:**   
     \
 \
 
-31. `r substr(quest["q31", ], 6, nchar(quest["q31", ]))`  
+32. `r substr(quest["q32", ], 6, nchar(quest["q32", ]))`  
 \
 **Answer:** 
 \
@@ -433,16 +453,16 @@ knitr::kable(env_var_rel)
 
 ***
 
-32. `r substr(quest["q32", ], 6, nchar(quest["q32", ]))`  
+33. `r substr(quest["q33", ], 6, nchar(quest["q33", ]))`  
 \
 **Answer:** 
 \
 
-**Please download the plot associated with Q32 and copy-paste it into your report below.**
+**Please download the plot associated with Q33 and copy-paste it into your report below.**
 
 *Figure 6. ARIMA predictions with uncertainty of out-of-sample observations of the standardized dataset target variable*
 
-33. `r substr(quest["q33", ], 6, nchar(quest["q33", ]))`  
+34. `r substr(quest["q34", ], 6, nchar(quest["q34", ]))`  
 \
 **Answer:** 
 \
@@ -458,25 +478,20 @@ knitr::kable(env_var_rel)
 
 ***
 
-34. `r substr(quest["q34", ], 6, nchar(quest["q34", ]))`
+35. `r substr(quest["q35", ], 6, nchar(quest["q35", ]))`
 \
-    a.  `r substr(quest["q34a", ], 3, nchar(quest["q34a", ]))`  
+    a.  `r substr(quest["q35a", ], 3, nchar(quest["q35a", ]))`  
     \
     **Answer:**  
     \
-    b.  `r substr(quest["q34b", ], 3, nchar(quest["q34b", ]))`  
+    b.  `r substr(quest["q35b", ], 3, nchar(quest["q35b", ]))`  
     \
     **Answer:**   
     \
-    c.  `r substr(quest["q34c", ], 3, nchar(quest["q34c", ]))`  
+    c.  `r substr(quest["q35c", ], 3, nchar(quest["q35c", ]))`  
     \
     **Answer:**   
     \
-\
-
-35. `r substr(quest["q35", ], 6, nchar(quest["q35", ]))`  
-\
-**Answer:** 
 \
 
 36. `r substr(quest["q36", ], 6, nchar(quest["q36", ]))`  
@@ -489,7 +504,12 @@ knitr::kable(env_var_rel)
 **Answer:** 
 \
 
-**Please download the plot associated with Q37 and copy-paste it into your report below.**
+38. `r substr(quest["q38", ], 6, nchar(quest["q38", ]))`  
+\
+**Answer:** 
+\
+
+**Please download the plot associated with Q38 and copy-paste it into your report below.**
 
 *Figure 7. ARIMA, NNETAR, persistence, and DOY model fits for the standardized dataset target variable*
 
@@ -501,45 +521,40 @@ knitr::kable(env_var_rel)
 
 ***
 
-38. `r substr(quest["q38", ], 6, nchar(quest["q38", ]))`  
-\
-**Answer:** 
-\
-
-**Please download the plot associated with Q38 and copy-paste it into your report below.**
-
-*Figure 8. Distributions of the residuals of ARIMA, NNETAR, persistence, and DOY model fits for the standardized dataset target variable*
-
 39. `r substr(quest["q39", ], 6, nchar(quest["q39", ]))`  
 \
 **Answer:** 
 \
+
+**Please download the plot associated with Q39 and copy-paste it into your report below.**
+
+*Figure 8. Distributions of the residuals of ARIMA, NNETAR, persistence, and DOY model fits for the standardized dataset target variable*
 
 40. `r substr(quest["q40", ], 6, nchar(quest["q40", ]))`  
 \
 **Answer:** 
 \
 
-**Please download the plot associated with Q40 and copy-paste it into your report below.**
-
-*Figure 9. Predictions with uncertainty of ARIMA, NNETAR, persistence, and DOY models fit to the standardized dataset target variable*
-
 41. `r substr(quest["q41", ], 6, nchar(quest["q41", ]))`  
 \
 **Answer:** 
 \
 
+**Please download the plot associated with Q41 and copy-paste it into your report below.**
+
+*Figure 9. Predictions with uncertainty of ARIMA, NNETAR, persistence, and DOY models fit to the standardized dataset target variable*
+
 42. `r substr(quest["q42", ], 6, nchar(quest["q42", ]))`  
+\
+**Answer:** 
+\
+
+43. `r substr(quest["q43", ], 6, nchar(quest["q43", ]))`  
 \
 *Table 4. RMSE and ignorance score of the ARIMA, NNETAR, persistence, and DOY models*
 ```{r}
 knitr::kable(model_perf) 
 ```
-\
-
-43. `r substr(quest["q43", ], 6, nchar(quest["q43", ]))`  
-\
-**Answer:** 
 \
 
 44. `r substr(quest["q44", ], 6, nchar(quest["q44", ]))`  
@@ -552,6 +567,11 @@ knitr::kable(model_perf)
 **Answer:** 
 \
 
+46. `r substr(quest["q46", ], 6, nchar(quest["q46", ]))`  
+\
+**Answer:** 
+\
+
 This module was developed by Lofton, M.E., M.R. Hipsey, K. Kurucz, and C.C. Carey. 08 August 2025. Macrosystems EDDIE: Time Series Modeling and Prediction of Environmental Data. Macrosystems EDDIE Module 11, Version 1. https://serc.carleton.edu/eddie/teaching_materials/modules/module11.html. Module development was supported by NSF grants EF 2318861, DEB 2213550, and OISE 2330211.
 
-This document last modified: 11 August 2025 by MEL.
+This document last modified: 24 February 2026 by MEL.

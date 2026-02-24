@@ -514,7 +514,7 @@ server <- function(input, output, session) {#
   # Download scatterplot of lagged chl-a
   output$save_lag_plot <- downloadHandler(
     filename = function() {
-      paste("Q8-lag-scatterplot-", Sys.Date(), ".png", sep="")
+      paste("Q8-plot-", Sys.Date(), ".png", sep="")
     },
     content = function(file) {
       device <- function(..., width, height) {
@@ -609,7 +609,7 @@ server <- function(input, output, session) {#
   # Download scatterplot of pacf
   output$save_pacf_plot <- downloadHandler(
     filename = function() {
-      paste("Q10-pacf-plot-", Sys.Date(), ".png", sep="")
+      paste("Q9-plot-", Sys.Date(), ".png", sep="")
     },
     content = function(file) {
       device <- function(..., width, height) {
@@ -680,7 +680,7 @@ server <- function(input, output, session) {#
   # Download scatterplot of diff
   output$save_diff_plot <- downloadHandler(
     filename = function() {
-      paste("Q11-differencing-plot-", Sys.Date(), ".png", sep="")
+      paste("Q10-plot-", Sys.Date(), ".png", sep="")
     },
     content = function(file) {
       device <- function(..., width, height) {
@@ -852,6 +852,19 @@ server <- function(input, output, session) {#
   }) %>%
     bindEvent(input$select, input$no_reg, input$standardize_data)
   
+  # Download standardized regressors
+  output$save_standardize_plot <- downloadHandler(
+    filename = function() {
+      paste("Q13-plot-", Sys.Date(), ".png", sep="")
+    },
+    content = function(file) {
+      device <- function(..., width, height) {
+        grDevices::png(..., width = 8, height = 4,
+                       res = 200, units = "in")
+      }
+      ggsave(file, plot = plot.stand$main, device = device)
+    }
+  )
   
   # Fit ARIMA with selected variables
   actA.arima <- reactiveValues(arima=NULL)
@@ -891,7 +904,7 @@ server <- function(input, output, session) {#
       # Make sure it closes when we exit this reactive, even if there's an error
       on.exit(progress$close())
       progress$set(message = "Fitting ARIMA model",
-                   detail = "Depending on the size of your dataset, it may take a minute or two to fit the model. This window will disappear
+                   detail = "Depending on the size of your dataset, it may take a minute to two to fit the model. This window will disappear
                      when it is done.", value = 0.2)
       
       row_selected = sites_df[input$table01_rows_selected, ]
@@ -1008,7 +1021,7 @@ server <- function(input, output, session) {#
         # Make sure it closes when we exit this reactive, even if there's an error
         on.exit(progress$close())
         progress$set(message = "Fitting ARIMA model",
-                     detail = "Depending on the size of your dataset, it may take a minute or two to fit the model. This window will disappear
+                     detail = "Depending on the size of your dataset, it may take a minute to two to fit the model. This window will disappear
                      when it is done.", value = 0.2)
         
         row_selected = sites_df[input$table01_rows_selected, ]
@@ -1194,6 +1207,20 @@ server <- function(input, output, session) {#
     
   })  %>%
     bindEvent(input$select, input$no_reg, input$table01_rows_selected)
+  
+  # Download scatterplot of arima
+  output$save_arima_plot <- downloadHandler(
+    filename = function() {
+      paste("Q12-plot-", Sys.Date(), ".png", sep="")
+    },
+    content = function(file) {
+      device <- function(..., width, height) {
+        grDevices::png(..., width = 8, height = 4,
+                       res = 200, units = "in")
+      }
+      ggsave(file, plot = plot.arima$main, device = device)
+    }
+  )
   
   # Model coefficient table output
   coeff.table <- reactiveValues(main=NULL)
@@ -1384,6 +1411,20 @@ server <- function(input, output, session) {#
   }) %>%
     bindEvent(input$select, input$no_reg, input$table01_rows_selected)
   
+  # Download train test plot
+  output$save_train_test_plot <- downloadHandler(
+    filename = function() {
+      paste("QXX-plot-", Sys.Date(), ".png", sep="")
+    },
+    content = function(file) {
+      device <- function(..., width, height) {
+        grDevices::png(..., width = 8, height = 4,
+                       res = 200, units = "in")
+      }
+      ggsave(file, plot = plot.train.test$main, device = device)
+    }
+  )
+  
   # predictions on testing data plot
   plot.test.pred <- reactiveValues(main=NULL)
   
@@ -1426,7 +1467,7 @@ server <- function(input, output, session) {#
       # Make sure it closes when we exit this reactive, even if there's an error
       on.exit(progress$close())
       progress$set(message = "Generating ARIMA predictions",
-                   detail = "Depending on the size of your dataset, it may take a minute or two to generate predictions. This window will disappear
+                   detail = "Depending on the size of your dataset, it may take a minute to two to generate predictions. This window will disappear
                      when it is done.", value = 0.2)
       
       
@@ -1546,7 +1587,7 @@ server <- function(input, output, session) {#
         # Make sure it closes when we exit this reactive, even if there's an error
         on.exit(progress$close())
         progress$set(message = "Generating ARIMA predictions",
-                     detail = "Depending on the size of your dataset, it may take a minute or two to generate predictions. This window will disappear
+                     detail = "Depending on the size of your dataset, it may take a minute to two to generate predictions. This window will disappear
                      when it is done.", value = 0.2)
         
         
@@ -1647,7 +1688,7 @@ server <- function(input, output, session) {#
   # Download test pred plot
   output$save_test_pred_plot <- downloadHandler(
     filename = function() {
-      paste("Q17-actA-ARIMA-pred-plot-", Sys.Date(), ".png", sep="")
+      paste("QXX-plot-", Sys.Date(), ".png", sep="")
     },
     content = function(file) {
       device <- function(..., width, height) {
@@ -1727,6 +1768,21 @@ server <- function(input, output, session) {#
   })  %>%
     bindEvent(input$select, input$no_reg, input$table01_rows_selected)
   
+  
+  # Download residuals histogram
+  output$save_resid_plot <- downloadHandler(
+    filename = function() {
+      paste("QXX-plot-", Sys.Date(), ".png", sep="")
+    },
+    content = function(file) {
+      device <- function(..., width, height) {
+        grDevices::png(..., width = 8, height = 4,
+                       res = 200, units = "in")
+      }
+      ggsave(file, plot = plot.resid$main, device = device)
+    }
+  )
+  
   # Predictions with uncertainty plot
   # Residuals plot
   plot.uc <- reactiveValues(main=NULL)
@@ -1770,7 +1826,7 @@ server <- function(input, output, session) {#
       # Make sure it closes when we exit this reactive, even if there's an error
       on.exit(progress$close())
       progress$set(message = "Generating ARIMA predictions",
-                   detail = "Depending on the size of your dataset, it may take a minute or two to generate predictions. This window will disappear
+                   detail = "Depending on the size of your dataset, it may take a minute to two to generate predictions. This window will disappear
                      when it is done.", value = 0.2)
       
       row_selected = sites_df[input$table01_rows_selected, ]
@@ -1900,7 +1956,7 @@ server <- function(input, output, session) {#
         # Make sure it closes when we exit this reactive, even if there's an error
         on.exit(progress$close())
         progress$set(message = "Generating ARIMA predictions",
-                     detail = "Depending on the size of your dataset, it may take a minute or two to generate predictions. This window will disappear
+                     detail = "Depending on the size of your dataset, it may take a minute to two to generate predictions. This window will disappear
                      when it is done.", value = 0.2)
         
         row_selected = sites_df[input$table01_rows_selected, ]
@@ -2012,7 +2068,7 @@ server <- function(input, output, session) {#
   # Download predictions with uc plot
   output$save_uc_plot <- downloadHandler(
     filename = function() {
-      paste("Q20-actA-ARIMA-pred-uc-plot-", Sys.Date(), ".png", sep="")
+      paste("QXX-plot-", Sys.Date(), ".png", sep="")
     },
     content = function(file) {
       device <- function(..., width, height) {
@@ -2705,6 +2761,20 @@ server <- function(input, output, session) {#
   }) %>%
     bindEvent(input$select_reg_actB, input$no_reg1, input$standardize_data2)
   
+  # Download standardized regressors
+  output$save_standardize_plot2 <- downloadHandler(
+    filename = function() {
+      paste("QXX-plot-", Sys.Date(), ".png", sep="")
+    },
+    content = function(file) {
+      device <- function(..., width, height) {
+        grDevices::png(..., width = 8, height = 4,
+                       res = 200, units = "in")
+      }
+      ggsave(file, plot = plot.stand2$main, device = device)
+    }
+  )
+  
   # Fit ARIMA with selected variables
   actB.arima <- reactiveValues(arima=NULL,
                                nrow_model_df = 31)
@@ -2818,7 +2888,7 @@ server <- function(input, output, session) {#
       # Make sure it closes when we exit this reactive, even if there's an error
       on.exit(progress$close())
       progress$set(message = "Fitting ARIMA model",
-                   detail = "Depending on the size of your dataset, it may take a minute or two to fit the ARIMA model. This window will disappear
+                   detail = "Depending on the size of your dataset, it may take a minute to two to fit the ARIMA model. This window will disappear
                      when it is done.", value = 0.2)
       
       dat <- stand.data()
@@ -2892,7 +2962,7 @@ server <- function(input, output, session) {#
         # Make sure it closes when we exit this reactive, even if there's an error
         on.exit(progress$close())
         progress$set(message = "Fitting ARIMA model",
-                     detail = "Depending on the size of your dataset, it may take a minute or two to fit the ARIMA model. This window will disappear
+                     detail = "Depending on the size of your dataset, it may take a minute to two to fit the ARIMA model. This window will disappear
                      when it is done.", value = 0.2)
         
         dat <- stand.data()
@@ -2931,6 +3001,8 @@ server <- function(input, output, session) {#
   observe({
     input$select_reg_actB
     input$no_reg1
+    input$select_tar_actB
+    
     output$arima_order2 <- renderText({
       
       validate(
@@ -2977,17 +3049,13 @@ server <- function(input, output, session) {#
   
   # ARIMA plot ----
   plot.arima2 <- reactiveValues(main=NULL)
-  track.fit_arima2 <- reactiveValues(plot_val = 0,
-                                     order_val = 0,
-                                     resid_val = 0,
-                                     pred_val = 0,
-                                     ign_val = 0)
+  track.fit_arima2 <- reactiveValues(prev = 0,
+                                     curr = 0)
   
   observe({
+    input$fit_arima2
     
-    track.fit_arima2$plot_val = 1
-    track.fit_arima2$order_val = 1
-    message(paste0("Tracker in Obj. 7: ",track.fit_arima2$plot_val))
+    track.fit_arima2$curr = track.fit_arima2$curr + 1
     
     output$arima_plot2 <- renderPlotly({ 
       
@@ -3061,10 +3129,11 @@ server <- function(input, output, session) {#
       
     })
     
-  }) %>%
-    bindEvent(input$fit_arima2)
+  })
   
   observe({
+    input$select_reg_actB
+    input$no_reg1
     
     output$arima_plot2 <- renderPlotly({ 
       
@@ -3123,10 +3192,21 @@ server <- function(input, output, session) {#
       
     })
     
-  }) %>%
-    bindEvent(input$select_tar_actB,
-              input$select_reg_actB,
-              input$no_reg1)
+  })
+  
+  # Download scatterplot of arima
+  output$save_arima_plot2 <- downloadHandler(
+    filename = function() {
+      paste("QXX-plot-", Sys.Date(), ".png", sep="")
+    },
+    content = function(file) {
+      device <- function(..., width, height) {
+        grDevices::png(..., width = 8, height = 4,
+                       res = 200, units = "in")
+      }
+      ggsave(file, plot = plot.arima2$main, device = device)
+    }
+  )
   
   # Model coefficient table output
   coeff.table2 <- reactiveValues(main=NULL)
@@ -3189,7 +3269,6 @@ server <- function(input, output, session) {#
   })
   
   observe({
-    input$select_tar_actB
     input$select_reg_actB
     input$no_reg1
     
@@ -3402,6 +3481,20 @@ server <- function(input, output, session) {#
     
   })
   
+  # Download train test plot
+  output$save_train_test_plot2 <- downloadHandler(
+    filename = function() {
+      paste("QXX-plot-", Sys.Date(), ".png", sep="")
+    },
+    content = function(file) {
+      device <- function(..., width, height) {
+        grDevices::png(..., width = 8, height = 4,
+                       res = 200, units = "in")
+      }
+      ggsave(file, plot = plot.train.test2$main, device = device)
+    }
+  )
+  
   # predictions on testing data plot
   plot.test.pred2 <- reactiveValues(main=NULL)
   
@@ -3458,7 +3551,7 @@ server <- function(input, output, session) {#
       # Make sure it closes when we exit this reactive, even if there's an error
       on.exit(progress$close())
       progress$set(message = "Generating ARIMA predictions",
-                   detail = "Depending on the size of your dataset, it may take a minute or two to generate the predictions. This window will disappear
+                   detail = "Depending on the size of your dataset, it may take a minute to two to generate the predictions. This window will disappear
                      when it is done.", value = 0.2)
       
       dat <- stand.data()
@@ -3600,6 +3693,21 @@ server <- function(input, output, session) {#
     
   })
   
+  # Download scatterplot of arima
+  output$save_test_pred_plot2 <- downloadHandler(
+    filename = function() {
+      paste("QXX-plot-", Sys.Date(), ".png", sep="")
+    },
+    content = function(file) {
+      device <- function(..., width, height) {
+        grDevices::png(..., width = 8, height = 4,
+                       res = 200, units = "in")
+      }
+      ggsave(file, plot = plot.test.pred2$main, device = device)
+    }
+  )
+  
+  
   # Residuals plot
   plot.resid2 <- reactiveValues(main=NULL)
   
@@ -3690,21 +3798,17 @@ server <- function(input, output, session) {#
              message = "Please select a target variable from the dropdown menu in Objective 7.")
       )
       validate(
-        need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
-             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
+        need(!is.null(input$select_reg_actB),
+             message = "Please select at least 1 predictor from the dropdown menu in Objective 7.")
       )
-      
-      if(input$no_reg1 == FALSE){
-        validate(
-          need(length(input$select_reg_actB) <= 3,
-               message = "Please only select up to 3 regressors to fit your model.")
-        )
-        validate(
-          need(input$standardize_data2 == TRUE,
-               message = "Please standardize your exogenous regressors.")
-        )
-      }
-      
+      validate(
+        need(length(input$select_reg_actB) <= 3,
+             message = "Please only select up to 3 regressors to fit your model in Objective 7.")
+      )
+      validate(
+        need(plot.stand2$stand.tracker == 1,
+             message = "Please standardize your exogenous regressors in Objective 7.")
+      )
       validate(
         need(input$prop <= 0.9,
              message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
@@ -3737,6 +3841,20 @@ server <- function(input, output, session) {#
     })
     
   })
+  
+  # Download scatterplot of arima
+  output$save_resid_plot2 <- downloadHandler(
+    filename = function() {
+      paste("QXX-plot-", Sys.Date(), ".png", sep="")
+    },
+    content = function(file) {
+      device <- function(..., width, height) {
+        grDevices::png(..., width = 8, height = 4,
+                       res = 200, units = "in")
+      }
+      ggsave(file, plot = plot.resid2$main, device = device)
+    }
+  )
   
   # Predictions with uncertainty plot
   plot.uc2 <- reactiveValues(main=NULL)
@@ -3795,7 +3913,7 @@ server <- function(input, output, session) {#
       # Make sure it closes when we exit this reactive, even if there's an error
       on.exit(progress$close())
       progress$set(message = "Generating ARIMA predictions",
-                   detail = "Depending on the size of your dataset, it may take a minute or two to generate the predictions. This window will disappear
+                   detail = "Depending on the size of your dataset, it may take a minute to two to generate the predictions. This window will disappear
                      when it is done.", value = 0.2)
       
       dat <- stand.data()
@@ -3951,7 +4069,7 @@ server <- function(input, output, session) {#
   # Download scatterplot of arima
   output$save_uc_plot2 <- downloadHandler(
     filename = function() {
-      paste("Q33-actB-ARIMA-pred-uc-plot-", Sys.Date(), ".png", sep="")
+      paste("QXX-plot-", Sys.Date(), ".png", sep="")
     },
     content = function(file) {
       device <- function(..., width, height) {
@@ -4111,7 +4229,7 @@ server <- function(input, output, session) {#
              message = "Click 'Calculate RMSE and ignorance score'")
       )
       
-      rmse_out2 <- paste0("You've selected new regressors! Please click 'Fit ARIMA' in Obj. 7 to recalculate RMSE!")
+      rmse_out2 <- paste0("You've selected new regressors! Please click 'Fit ARIMA' in Obj. 4 to recalculate the ignorance score!")
       
       rmse.text2$main <- rmse_out2
       
@@ -4299,10 +4417,9 @@ server <- function(input, output, session) {#
                                 doy = NULL)
   
   observe({
-
-    message(paste0("Tracker in Obj. 9 pre-plot: ",track.fit_arima2$plot_val))
+    input$fit_addn_mod
     
-    if(track.fit_arima2$plot_val == 1){
+    if(track.fit_arima2$curr > track.fit_arima2$prev){
 
     output$plot_models <- renderPlotly({ 
       
@@ -4355,7 +4472,7 @@ server <- function(input, output, session) {#
       # Make sure it closes when we exit this reactive, even if there's an error
       on.exit(progress$close())
       progress$set(message = "Fitting additional models",
-                   detail = "Depending on the size of your dataset, it may take a minute or two to fit additional models. This window will disappear
+                   detail = "Depending on the size of your dataset, it may take a minute to two to fit additional models. This window will disappear
                      when it is done.", value = 0.2)
       
       
@@ -4458,11 +4575,7 @@ server <- function(input, output, session) {#
       
     })
     
-    track.fit_arima2$plot_val = 0
-    track.fit_arima2$resid_val = 1
-    track.fit_arima2$pred_val = 1
-    track.fit_arima2$ign_val = 1
-    message(paste0("Tracker in Obj. 9 post-plot: ",track.fit_arima2$plot_val))
+    track.fit_arima2$prev = track.fit_arima2$curr
     
     } else {
       
@@ -4522,7 +4635,7 @@ server <- function(input, output, session) {#
                 axis.line = element_blank())
         
         plot.models$main <- p
-        
+
         
         return(ggplotly(p, dynamicTicks = TRUE))
         
@@ -4530,12 +4643,14 @@ server <- function(input, output, session) {#
       
     }
     
-  }) %>%
-    bindEvent(input$fit_addn_mod)
+  })
   
   observe({
+    input$select_reg_actB
+    input$select_tar_actB
+    input$no_reg1
     
-    if(track.fit_arima2$plot_val == 1){
+    if(track.fit_arima2$curr > track.fit_arima2$prev){
     
     output$plot_models <- renderPlotly({ 
       
@@ -4663,16 +4778,12 @@ server <- function(input, output, session) {#
       
     }
     
-  }) %>%
-    bindEvent(input$select_reg_actB,
-              input$select_tar_actB,
-              input$no_reg1,
-              input$fit_arima2)
+  })
   
   # Download additional model fits
   output$save_plot_models <- downloadHandler(
     filename = function() {
-      paste("Q38-all-models-plot-", Sys.Date(), ".png", sep="")
+      paste("QXX-plot-", Sys.Date(), ".png", sep="")
     },
     content = function(file) {
       device <- function(..., width, height) {
@@ -4684,9 +4795,10 @@ server <- function(input, output, session) {#
   )
   
   observe({
+    input$fit_addn_mod
     
-    if(track.fit_arima2$order_val == 1){
-
+    if(track.fit_arima2$curr > track.fit_arima2$prev){
+      
     output$nnetar_order <- renderText({
       
       validate(
@@ -4734,15 +4846,16 @@ server <- function(input, output, session) {#
              message = "Click 'Fit additional models'")
       )
       
-      order0 <- as.character(actC.models$nnetar$NNETAR)
-      order <- substr(order0, 2, nchar(order0) - 1)
-      
+      if(input$no_reg1 == TRUE){
+        order0 <- as.character(actC.models$nnetar$NNETAR)
+        order <- substr(order0, 2, nchar(order0) - 1)
+      } else {
+        order <- as.character(actC.models$nnetar$NNETAR)
+      }
       order_txt <- paste0("Fitted a ",order, " model.")
       
       return(order_txt)
     })
-    
-    track.fit_arima2$order_val = 0
     
     } else {
       
@@ -4799,13 +4912,15 @@ server <- function(input, output, session) {#
       
     }
     
-  }) %>%
-    bindEvent(input$fit_addn_mod)
+  })
   
   # Reset NNETAR order text when change selected variables
   observe({
+    input$select_reg_actB
+    input$select_tar_actB
+    input$no_reg1
     
-    if(track.fit_arima2$order_val == 1){
+    if(track.fit_arima2$curr > track.fit_arima2$prev){
     
     output$nnetar_order <- renderText({
       
@@ -4913,11 +5028,7 @@ server <- function(input, output, session) {#
       
     }
     
-  }) %>%
-    bindEvent(input$select_reg_actB,
-              input$select_tar_actB,
-              input$no_reg1,
-              input$fit_arima2)
+  })
   
   # Objective 10
   
@@ -4925,9 +5036,8 @@ server <- function(input, output, session) {#
   plot.resid3 <- reactiveValues(main=NULL)
   
   observe({
+    input$fit_arima2
     
-    if(track.fit_arima2$resid_val == 1){
-
     output$resid_plot3 <- renderPlot({ 
       
       validate(
@@ -5024,155 +5134,84 @@ server <- function(input, output, session) {#
       
     })
     
-    track.fit_arima2$resid_val = 0
+  })
+  
+  observe({
+    input$select_tar_actB
+    input$select_reg_actB
+    input$no_reg1
     
-    } else if(track.fit_arima2$resid_val == 0 & track.fit_arima2$plot_val == 1) {
+    output$resid_plot3 <- renderPlotly({ 
       
-      output$resid_plot3 <- renderPlot({ 
-        
-        validate(
-          need(!is.null(input$upload_data),
-               message = "Please upload your data in Objective 6.")
-        )
-        validate(
-          need(valid$main == TRUE,
-               message = "Please correct your data format in Objective 6.")
-        )
-        validate(
-          need(!is.null(input$select_tar_actB),
-               message = "Please select a target variable from the dropdown menu in Objective 7.")
-        )
-        validate(
-          need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
-               message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
-        )
-        
-        if(input$no_reg1 == FALSE){
-          validate(
-            need(length(input$select_reg_actB) <= 3,
-                 message = "Please only select up to 3 regressors to fit your model.")
-          )
-          validate(
-            need(input$standardize_data2 == TRUE,
-                 message = "Please standardize your exogenous regressors.")
-          )
-        }
-        
-        validate(
-          need(input$prop <= 0.9,
-               message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
-        )
-        validate(
-          need(actB.arima$nrow_model_df >= 60,
-               message = "You are using fewer than 60 data points for model training. Please select a larger proportion of your data for training in Objective 7.")
-        )
-        validate(
-          need(!is.null(actB.arima$arima),
-               message = "Please fit an ARIMA model in Objective 7.")
-        )
-        validate(
-          need(!is.null(actC.models$nnetar),
-               message = "Please fit additional models in Objective 9.")
-        )
-        validate(
-          need(input$view_resid3 > 0,
-               message = "Click 'View residuals'")
-        )
-        
-        p <- ggplot() +
-          annotate("text", x = 10,  y = 10,
-                   size = 8,
-                   label = "Click 'Fit additional models' in Obj. 9 \nto regenerate this plot.") + 
-          theme_void()+
-          theme(panel.grid = element_blank(),
-                axis.line = element_blank())
-        
-        plot.resid3$main <- p
-        
-        return(p)
-        
-      })
+      validate(
+        need(!is.null(input$upload_data),
+             message = "Please upload your data in Objective 6.")
+      )
+      validate(
+        need(valid$main == TRUE,
+             message = "Please correct your data format in Objective 6.")
+      )
+      validate(
+        need(!is.null(input$select_tar_actB),
+             message = "Please select a target variable from the dropdown menu in Objective 7.")
+      )
+      validate(
+        need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
+      )
       
-    } else if(track.fit_arima2$resid_val == 0 & track.fit_arima2$plot_val == 0){
+      if(input$no_reg1 == FALSE){
+        validate(
+          need(length(input$select_reg_actB) <= 3,
+               message = "Please only select up to 3 regressors to fit your model.")
+        )
+        validate(
+          need(input$standardize_data2 == TRUE,
+               message = "Please standardize your exogenous regressors.")
+        )
+      }
       
-      output$resid_plot3 <- renderPlot({ 
-        
-        validate(
-          need(!is.null(input$upload_data),
-               message = "Please upload your data in Objective 6.")
-        )
-        validate(
-          need(valid$main == TRUE,
-               message = "Please correct your data format in Objective 6.")
-        )
-        validate(
-          need(!is.null(input$select_tar_actB),
-               message = "Please select a target variable from the dropdown menu in Objective 7.")
-        )
-        validate(
-          need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
-               message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
-        )
-        
-        if(input$no_reg1 == FALSE){
-          validate(
-            need(length(input$select_reg_actB) <= 3,
-                 message = "Please only select up to 3 regressors to fit your model.")
-          )
-          validate(
-            need(input$standardize_data2 == TRUE,
-                 message = "Please standardize your exogenous regressors.")
-          )
-        }
-        
-        validate(
-          need(input$prop <= 0.9,
-               message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
-        )
-        validate(
-          need(actB.arima$nrow_model_df >= 60,
-               message = "You are using fewer than 60 data points for model training. Please select a larger proportion of your data for training in Objective 7.")
-        )
-        validate(
-          need(!is.null(actB.arima$arima),
-               message = "Please fit an ARIMA model in Objective 7.")
-        )
-        validate(
-          need(!is.null(actC.models$nnetar),
-               message = "Please fit additional models in Objective 9.")
-        )
-        validate(
-          need(input$view_resid3 > 0,
-               message = "Click 'View residuals'")
-        )
-        
-        p <- ggplot() +
-          annotate("text", x = 10,  y = 10,
-                   size = 8,
-                   label = "Looks like you've chosen new regressors!\nPlease click 'Fit ARIMA' in Obj. 7 and then\n 'Fit additional models' in Obj. 9 \nto regenerate this plot!") + 
-          theme_void()+
-          theme(panel.grid = element_blank(),
-                axis.line = element_blank())
-        
-        plot.resid3$main <- p
-        
-        return(p)
-        
-      })
+      validate(
+        need(input$prop <= 0.9,
+             message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
+      )
+      validate(
+        need(actB.arima$nrow_model_df >= 60,
+             message = "You are using fewer than 60 data points for model training. Please select a larger proportion of your data for training in Objective 7.")
+      )
+      validate(
+        need(!is.null(actB.arima$arima),
+             message = "Please fit an ARIMA model in Objective 7.")
+      )
+      validate(
+        need(!is.null(actC.models$nnetar),
+             message = "Please fit additional models in Objective 9.")
+      )
+      validate(
+        need(input$view_resid3 > 0,
+             message = "Click 'View residuals'")
+      )
       
-    }
+      p <- ggplot() +
+        annotate("text", x = 10,  y = 10,
+                 size = 4,
+                 label = "You've chosen new regressors!\nClick 'Fit ARIMA' in Obj. 7 \nto regenerate this plot.") + 
+        theme_void()+
+        theme(panel.grid = element_blank(),
+              axis.line = element_blank())
+      
+      plot.resid3$main <- p
+      
+      return(ggplotly(p, dynamicTicks = TRUE))
+      
+    })
     
-  }) %>%
-    bindEvent(input$fit_addn_mod,
-              input$fit_arima2,
-              input$select_reg_actB,
-              input$select_tar_actB,
-              input$no_reg1)
+  })
   
   # Download scatterplot of arima
   output$save_resid_plot3 <- downloadHandler(
     filename = function() {
-      paste("Q39-all-models-resid-plot-", Sys.Date(), ".png", sep="")
+      paste("QXX-plot-", Sys.Date(), ".png", sep="")
     },
     content = function(file) {
       device <- function(..., width, height) {
@@ -5191,9 +5230,8 @@ server <- function(input, output, session) {#
                              doy=NULL)
   
   observe({
+    input$fit_arima2
     
-    if(track.fit_arima2$pred_val == 1){
-
     output$pred_all_plot <- renderPlotly({ 
       
       validate(
@@ -5390,153 +5428,84 @@ server <- function(input, output, session) {#
       
     })
     
-    track.fit_arima2$pred_val = 0
+  })
+  
+  observe({
+    input$select_tar_actB
+    input$select_reg_actB
+    input$no_reg1
     
-    } else if(track.fit_arima2$pred_val == 0 & track.fit_arima2$plot_val == 1){
+    output$pred_all_plot <- renderPlotly({ 
       
-      output$pred_all_plot <- renderPlotly({ 
-        
-        validate(
-          need(!is.null(input$upload_data),
-               message = "Please upload your data in Objective 6.")
-        )
-        validate(
-          need(valid$main == TRUE,
-               message = "Please correct your data format in Objective 6.")
-        )
-        validate(
-          need(!is.null(input$select_tar_actB),
-               message = "Please select a target variable from the dropdown menu in Objective 7.")
-        )
-        validate(
-          need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
-               message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
-        )
-        
-        if(input$no_reg1 == FALSE){
-          validate(
-            need(length(input$select_reg_actB) <= 3,
-                 message = "Please only select up to 3 regressors to fit your model.")
-          )
-          validate(
-            need(input$standardize_data2 == TRUE,
-                 message = "Please standardize your exogenous regressors.")
-          )
-        }
-        validate(
-          need(input$prop <= 0.9,
-               message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
-        )
-        validate(
-          need(actB.arima$nrow_model_df >= 60,
-               message = "You are using fewer than 60 data points for model training. Please select a larger proportion of your data for training in Objective 7.")
-        )
-        validate(
-          need(!is.null(actB.arima$arima),
-               message = "Please fit an ARIMA model in Objective 7.")
-        )
-        validate(
-          need(!is.null(actC.models$nnetar),
-               message = "Please fit additional models in Objective 9.")
-        )
-        validate(
-          need(input$plot_pred_models > 0,
-               message = "Click 'Generate predictions with uncertainty'")
-        )
-        
-        p <- ggplot() +
-          annotate("text", x = 10,  y = 10,
-                   size = 4,
-                   label = "Please click 'Fit additional models' in Obj. 9 to regenerate this plot.") + 
-          theme_void()+
-          theme(panel.grid = element_blank(),
-                axis.line = element_blank())
-        
-        plot.pred.all$main <- p
-        
-        return(ggplotly(p, dynamicTicks = TRUE))
-        
-      })
+      validate(
+        need(!is.null(input$upload_data),
+             message = "Please upload your data in Objective 6.")
+      )
+      validate(
+        need(valid$main == TRUE,
+             message = "Please correct your data format in Objective 6.")
+      )
+      validate(
+        need(!is.null(input$select_tar_actB),
+             message = "Please select a target variable from the dropdown menu in Objective 7.")
+      )
+      validate(
+        need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
+      )
       
-    } else if(track.fit_arima2$pred_val == 0 & track.fit_arima2$plot_val == 0){
+      if(input$no_reg1 == FALSE){
+        validate(
+          need(length(input$select_reg_actB) <= 3,
+               message = "Please only select up to 3 regressors to fit your model.")
+        )
+        validate(
+          need(input$standardize_data2 == TRUE,
+               message = "Please standardize your exogenous regressors.")
+        )
+      }
       
-      output$pred_all_plot <- renderPlotly({ 
-        
-        validate(
-          need(!is.null(input$upload_data),
-               message = "Please upload your data in Objective 6.")
-        )
-        validate(
-          need(valid$main == TRUE,
-               message = "Please correct your data format in Objective 6.")
-        )
-        validate(
-          need(!is.null(input$select_tar_actB),
-               message = "Please select a target variable from the dropdown menu in Objective 7.")
-        )
-        validate(
-          need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
-               message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
-        )
-        
-        if(input$no_reg1 == FALSE){
-          validate(
-            need(length(input$select_reg_actB) <= 3,
-                 message = "Please only select up to 3 regressors to fit your model.")
-          )
-          validate(
-            need(input$standardize_data2 == TRUE,
-                 message = "Please standardize your exogenous regressors.")
-          )
-        }
-        validate(
-          need(input$prop <= 0.9,
-               message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
-        )
-        validate(
-          need(actB.arima$nrow_model_df >= 60,
-               message = "You are using fewer than 60 data points for model training. Please select a larger proportion of your data for training in Objective 7.")
-        )
-        validate(
-          need(!is.null(actB.arima$arima),
-               message = "Please fit an ARIMA model in Objective 7.")
-        )
-        validate(
-          need(!is.null(actC.models$nnetar),
-               message = "Please fit additional models in Objective 9.")
-        )
-        validate(
-          need(input$plot_pred_models > 0,
-               message = "Click 'Generate predictions with uncertainty'")
-        )
-        
-        p <- ggplot() +
-          annotate("text", x = 10,  y = 10,
-                   size = 4,
-                   label = "Looks like you've chosen new regressors!\nPlease click 'Fit ARIMA' in Obj. 7 and 'Fit additional models' in Obj. 9 to regenerate this plot.") + 
-          theme_void()+
-          theme(panel.grid = element_blank(),
-                axis.line = element_blank())
-        
-        plot.pred.all$main <- p
-        
-        return(ggplotly(p, dynamicTicks = TRUE))
-        
-      })
+      validate(
+        need(input$prop <= 0.9,
+             message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
+      )
+      validate(
+        need(actB.arima$nrow_model_df >= 60,
+             message = "You are using fewer than 60 data points for model training. Please select a larger proportion of your data for training in Objective 7.")
+      )
+      validate(
+        need(!is.null(actB.arima$arima),
+             message = "Please fit an ARIMA model in Objective 7.")
+      )
+      validate(
+        need(!is.null(actC.models$nnetar),
+             message = "Please fit additional models in Objective 9.")
+      )
+      validate(
+        need(input$plot_pred_models > 0,
+             message = "Click 'Generate predictions with uncertainty'")
+      )
       
-    }
+      p <- ggplot() +
+        annotate("text", x = 10,  y = 10,
+                 size = 4,
+                 label = "Looks like you've chosen new regressors!\nPlease click 'Fit ARIMA' in Obj. 7 and 'Fit additional models' in Obj. 9 to regenerate this plot.") + 
+        theme_void()+
+        theme(panel.grid = element_blank(),
+              axis.line = element_blank())
+      
+      plot.pred.all$main <- p
+      
+      return(ggplotly(p, dynamicTicks = TRUE))
+      
+    })
     
-  }) %>%
-    bindEvent(input$fit_addn_mod,
-              input$fit_arima2,
-              input$select_reg_actB,
-              input$select_tar_actB,
-              input$no_reg1)
+  })
   
   # Download predictions of all models
   output$save_pred_all_plot <- downloadHandler(
     filename = function() {
-      paste("Q41-all-models-pred-uc-plot-", Sys.Date(), ".png", sep="")
+      paste("QXX-plot-", Sys.Date(), ".png", sep="")
     },
     content = function(file) {
       device <- function(..., width, height) {
@@ -5559,8 +5528,7 @@ server <- function(input, output, session) {#
                                doy=NULL)
   
   observe({
-    
-    if(track.fit_arima2$ign_val == 1){
+    input$fit_arima2
 
     output$ign_table <- renderDT({ 
 
@@ -5692,142 +5660,75 @@ server <- function(input, output, session) {#
       
     })
     
-    track.fit_arima2$ign_val = 0
+  })
+  
+  observe({
+    input$select_tar_actB
+    input$select_reg_actB
+    input$no_reg1
     
-    } else if(track.fit_arima2$ign_val == 0 & track.fit_arima2$plot_val == 1){
+    output$ign_table <- renderDT({ 
       
-      output$ign_table <- renderDT({ 
-        
-        validate(
-          need(!is.null(input$upload_data),
-               message = "Please upload your data in Objective 6.")
-        )
-        validate(
-          need(valid$main == TRUE,
-               message = "Please correct your data format in Objective 6.")
-        )
-        validate(
-          need(!is.null(input$select_tar_actB),
-               message = "Please select a target variable from the dropdown menu in Objective 7.")
-        )
-        validate(
-          need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
-               message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
-        )
-        
-        if(input$no_reg1 == FALSE){
-          validate(
-            need(length(input$select_reg_actB) <= 3,
-                 message = "Please only select up to 3 regressors to fit your model.")
-          )
-          validate(
-            need(input$standardize_data2 == TRUE,
-                 message = "Please standardize your exogenous regressors.")
-          )
-        }
-        
-        validate(
-          need(input$prop <= 0.9,
-               message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
-        )
-        validate(
-          need(actB.arima$nrow_model_df >= 60,
-               message = "You are using fewer than 60 data points for model training. Please select a larger proportion of your data for training in Objective 7.")
-        )
-        validate(
-          need(!is.null(actB.arima$arima),
-               message = "Please fit an ARIMA model in Objective 7.")
-        )
-        validate(
-          need(!is.null(actC.models$nnetar),
-               message = "Please fit additional models in Objective 9.")
-        )
-        validate(
-          need(!is.null(dist_params$nnetar),
-               message = "Please generate predictions with uncertainty above.")
-        )
-        validate(
-          need(input$calc_ign3 > 0,
-               message = "Click 'Calculate RMSE and ignorance scores'")
-        )
-        
-        ign.table <- data.frame(Message = c("Please re-fit the models in Obj. 9."))
-        
-        return(ign.table)
-        
-      })
+      validate(
+        need(!is.null(input$upload_data),
+             message = "Please upload your data in Objective 6.")
+      )
+      validate(
+        need(valid$main == TRUE,
+             message = "Please correct your data format in Objective 6.")
+      )
+      validate(
+        need(!is.null(input$select_tar_actB),
+             message = "Please select a target variable from the dropdown menu in Objective 7.")
+      )
+      validate(
+        need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
+             message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
+      )
       
-    } else if(track.fit_arima2$ign_val == 0 & track.fit_arima2$plot_val == 0){
+      if(input$no_reg1 == FALSE){
+        validate(
+          need(length(input$select_reg_actB) <= 3,
+               message = "Please only select up to 3 regressors to fit your model.")
+        )
+        validate(
+          need(input$standardize_data2 == TRUE,
+               message = "Please standardize your exogenous regressors.")
+        )
+      }
       
-      output$ign_table <- renderDT({ 
-        
-        validate(
-          need(!is.null(input$upload_data),
-               message = "Please upload your data in Objective 6.")
-        )
-        validate(
-          need(valid$main == TRUE,
-               message = "Please correct your data format in Objective 6.")
-        )
-        validate(
-          need(!is.null(input$select_tar_actB),
-               message = "Please select a target variable from the dropdown menu in Objective 7.")
-        )
-        validate(
-          need(!is.null(input$select_reg_actB) | input$no_reg1 == TRUE,
-               message = "Please select at least 1 predictor from the dropdown menu OR check the box indicating that you are not including regressors.")
-        )
-        
-        if(input$no_reg1 == FALSE){
-          validate(
-            need(length(input$select_reg_actB) <= 3,
-                 message = "Please only select up to 3 regressors to fit your model.")
-          )
-          validate(
-            need(input$standardize_data2 == TRUE,
-                 message = "Please standardize your exogenous regressors.")
-          )
-        }
-        
-        validate(
-          need(input$prop <= 0.9,
-               message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
-        )
-        validate(
-          need(actB.arima$nrow_model_df >= 60,
-               message = "You are using fewer than 60 data points for model training. Please select a larger proportion of your data for training in Objective 7.")
-        )
-        validate(
-          need(!is.null(actB.arima$arima),
-               message = "Please fit an ARIMA model in Objective 7.")
-        )
-        validate(
-          need(!is.null(actC.models$nnetar),
-               message = "Please fit additional models in Objective 9.")
-        )
-        validate(
-          need(!is.null(dist_params$nnetar),
-               message = "Please generate predictions with uncertainty above.")
-        )
-        validate(
-          need(input$calc_ign3 > 0,
-               message = "Click 'Calculate RMSE and ignorance scores'")
-        )
-        
-        ign.table <- data.frame(Message = c("You've changed regressors! Please re-fit your ARIMA in Obj. 7 and additional models in Obj. 9."))
-        
-        return(ign.table)
-        
-      })
+      validate(
+        need(input$prop <= 0.9,
+             message = "Please reserve at least 10% of your data for testing (select a proportion of training data = 0.9 or less) in Objective 7.")
+      )
+      validate(
+        need(actB.arima$nrow_model_df >= 60,
+             message = "You are using fewer than 60 data points for model training. Please select a larger proportion of your data for training in Objective 7.")
+      )
+      validate(
+        need(!is.null(actB.arima$arima),
+             message = "Please fit an ARIMA model in Objective 7.")
+      )
+      validate(
+        need(!is.null(actC.models$nnetar),
+             message = "Please fit additional models in Objective 9.")
+      )
+      validate(
+        need(!is.null(dist_params$nnetar),
+             message = "Please generate predictions with uncertainty above.")
+      )
+      validate(
+        need(input$calc_ign3 > 0,
+             message = "Click 'Calculate RMSE and ignorance scores'")
+      )
       
-    }
+      ign.table <- data.frame(Message = c("You've changed regressors! Please re-fit your ARIMA in Obj. 7."))
+      
+      return(ign.table)
+      
+    })
     
-  }) %>%
-    bindEvent(input$fit_addn_mod,
-              input$fit_arima2,
-              input$select_reg_actB,
-              input$select_tar_actB,
-              input$no_reg1)
+  })
   
   # Navigating Tabs ----
   #* Main Tab ====
