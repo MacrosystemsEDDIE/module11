@@ -2973,7 +2973,7 @@ server <- function(input, output, session) {#
   #** Create hyperlink ----
   observeEvent(input$actB_dataset, {
     
-    if(input$actB_dataset == "KonzaPrarieBiologicalStationNEON"){
+    if(input$actB_dataset == "KonzaPrairieBiologicalStationNEON"){
       url <- paste0("https://www.neonscience.org/field-sites/field-sites-map/konz")
     }
     if(input$actB_dataset == "CanningRiverKentStWeir"){
