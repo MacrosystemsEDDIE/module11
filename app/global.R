@@ -111,11 +111,11 @@ data_format_table <- data.frame(
   mutate(RowName = c("Column Name","Format","Description","Example"))
 
 # Datasets provided for Activities B/C
-actB_choices <- c("CanningRiverKentStWeir","KonzaPrarieBiologicalStationNEON")
+actB_choices <- c("CanningRiverKentStWeir","KonzaPrairieBiologicalStationNEON")
 CanningRiverKentStWeirData <- read_csv("./data/kent_download.csv")
 CanningRiverKentStWeirMetadata <- read_csv("./data/kent_metadata.csv")
-KonzaPrarieBiologicalStationNEONData <- read_csv("./data/konz_download.csv")
-KonzaPrarieBiologicalStationNEONMetadata <- read_csv("./data/konz_metadata.csv")
+KonzaPrairieBiologicalStationNEONData <- read_csv("./data/konz_download.csv")
+KonzaPrairieBiologicalStationNEONMetadata <- read_csv("./data/konz_metadata.csv")
 
 
 # Tab names for updating buttons
