@@ -17,20 +17,20 @@ When launching first it will take a while for the Shiny app to boot up. If you a
 
 ### Step 1: Download this repository
 There are two options:  
-1. Download the repository as a .zip file. (Easiest option).  
+1. Download the repository as a .zip file (This is the easiest option!).  
     a.  Click the green "Code" button on this page and select "Download ZIP".  
     b.  Unzip this file on your computer.  
 2. Clone this repository into RStudio.  
 		a.  Open RStudio.  
 		b.  Click "File > New Project...".  
-		c.  In the "Create Project dialog select "Version Control: Checkout a project from a version control repository".  
-		d. Select "Git: Clone a project from a Git repository.  
-		e. In the "Repository URL:" option input the URL to this repository, select where to save the project directory.  
+		c.  In the "Create Project dialog, select "Version Control: Checkout a project from a version control repository".  
+		d. Select "Git: Clone a project from a Git repository".  
+		e. In the "Repository URL:" option, input the URL to this repository, and select where to save the project directory locally.  
 		f. Click "Create Project".  
 		g. You will then have a project with all the files from this repository.  
 		
 ### Step 2: Install required R packages
-1. The list of required of packages is detailed in the `install.R` script in this repository. Open and run this script to install the necessary packages.  
+1. The list of required packages is detailed in the `install.R` script in this repository. Open and run this script to install the necessary packages.  
   Watch out for errors in package installation. Most can be avoided using the most up-to-date version of R (4.0.3 as of 2021-01-22).  
   Updating of current R packages on your system is recommended.
 
