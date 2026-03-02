@@ -64,9 +64,9 @@ In the course of this module, you will:
 
 # Summary:
 
-Advances in environmental sensor technology in recent decades are enabling the collection of environmental data at high temporal frequencies (e.g., every 10 minutes) across many ecosystems. These time series of environmental data can be used to gain information about previous and current conditions of ecosystems, as well as make predictions about ecosystem conditions in the future. To help researchers and managers understand the complex patterns that can occur in high-frequency environmental time series data, they commonly apply a range of time series models. These models use statistical and machine learning methods to identify signals in high-frequency environmental data.
+Advances in environmental sensor technology in recent decades are enabling the collection of environmental data at high temporal frequencies (e.g., every 10 minutes) across many ecosystems. These time series of environmental data can be used to gain information about previous and current conditions of ecosystems, as well as make predictions about ecosystem conditions in the future. Researchers and managers commonly apply a range of time series models to understand the complex patterns that can occur in high-frequency environmental time series data. These models use statistical and machine learning methods to identify signals in high-frequency environmental data.
 
-In this module, students will apply several different time series and machine learning models to explore, analyze, and interpret environmental data. They will explore data from an environmental case study of their choice, choose which environmental variables to use to fit a time series model, assess the model, and apply the model to make predictions of future ecosystem conditions. Then, students will process a new dataset into a standardized format, upload it into the module's R Shiny App, and fit several other models to compare predictive performance across models. Students will also evaluate the ecological understanding that can be drawn from each model (e.g., which driver variables are important for explaining the dynamics of the target environmental variable being predicted).
+In this module, students will apply several different time series and machine learning models to explore, analyze, and interpret environmental data. They will explore data from an environmental case study of their choice, choose which environmental variables to use to fit a time series model, assess the model, and apply the model to make predictions of future ecosystem conditions. Then, students will process a new dataset into a standardized format, upload it into the module's R Shiny App, and fit several other models to compare predictive performance across models. Students will also evaluate the ecological understanding that can be gained from each model (e.g., which driver variables are important for explaining the dynamics of the target environmental variable being predicted).
 
 ## Module overview:
 
@@ -236,8 +236,13 @@ knitr::kable(env_var_rel)
 
 10. `r substr(quest["q10", ], 5, nchar(quest["q10", ]))`
 \
-**Answer:**
-\
+    a.  `r substr(quest["q10a", ], 3, nchar(quest["q10a", ]))`  
+    \
+    **Answer:**  
+    \
+    b.  `r substr(quest["q10b", ], 3, nchar(quest["q10b", ]))`  
+    \
+    **Answer:**   
 
 **Please download the plot associated with Q10 and copy-paste it into your report below.**
 
@@ -245,8 +250,13 @@ knitr::kable(env_var_rel)
 
 11. `r substr(quest["q11", ], 5, nchar(quest["q11", ]))`
 \
-**Answer:**
-\
+    a.  `r substr(quest["q11a", ], 3, nchar(quest["q11a", ]))`  
+    \
+    **Answer:**  
+    \
+    b.  `r substr(quest["q11b", ], 3, nchar(quest["q11b", ]))`  
+    \
+    **Answer:**   
 
 **Please download the plot associated with Q11 and copy-paste it into your report below.**
 
@@ -438,6 +448,10 @@ knitr::kable(env_var_rel)
     \
     **Answer:**   
     \
+    e.  `r substr(quest["q31e", ], 3, nchar(quest["q31e", ]))`  
+    \
+    **Answer:**   
+    \
 \
 
 32. `r substr(quest["q32", ], 6, nchar(quest["q32", ]))`  
@@ -568,6 +582,11 @@ knitr::kable(model_perf)
 \
 
 46. `r substr(quest["q46", ], 6, nchar(quest["q46", ]))`  
+\
+**Answer:** 
+\
+
+47. `r substr(quest["q47", ], 6, nchar(quest["q47", ]))`  
 \
 **Answer:** 
 \

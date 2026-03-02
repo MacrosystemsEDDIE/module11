@@ -31,7 +31,7 @@ There are two options:
 		
 ### Step 2: Install required R packages
 1. The list of required packages is detailed in the `install.R` script in this repository. Open and run this script to install the necessary packages.  
-  Watch out for errors in package installation. Most can be avoided using the most up-to-date version of R (4.0.3 as of 2021-01-22).  
+  Watch out for errors in package installation. Most can be avoided using the most up-to-date version of R (4.5.0 as of 2025-04-11).  
   Updating of current R packages on your system is recommended.
 
 ### Step 3: Launch Shiny App

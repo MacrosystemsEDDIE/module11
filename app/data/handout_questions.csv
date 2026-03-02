@@ -1,5 +1,5 @@
 ﻿q_no,Question
-q1,Q1. Why is close attention to data standards needed when using time series models in environmental science? What are the risks of not following data standards?
+q1,Q1. Why do you think it is important to make out-of-sample predictions when assessing the skill of time series models?
 q2,Q2. How can use of time series models improve both natural resource management and ecological understanding?
 q3,Q3. Fill out information about your selected case study site:
 q3a,a. Name of selected site
@@ -8,18 +8,22 @@ q3c,c. Latitude
 q3d,d. Longitude
 q3e,f. Elevation (m)
 q4,Q4. What is the desired target variable for prediction in the case study you have chosen? Why is that variable important for ecosystem function and management?
-q5,Q5. Fill out the table below with the description of site variables:
+q5,Q5. Fill out the Q5 table in your Word document report with the descriptions of site variables.
 q5a,a. Variable name
 q5b,b. Units
 q5c,c. Maximum value
 q5d,d. Minimum value
 q5e,e. Mean value
-q6,"Q6. Describe the relationship between each driver variable and the target variable. For each variable, write in the table below whether increases in that driver variable are associated with increases in the target variable (positive relationship), decreases in the target variable (negative relationship), or no change in the target variable (no relationship). "
+q6,"Q6. In the Q6 table in your Word document report, describe the relationship between each driver variable and the target variable. For each variable, write in the table below whether increases in that driver variable are associated with increases in the target variable (positive relationship), decreases in the target variable (negative relationship), or no change in the target variable (no relationship). "
 q7,"Q7. Describe the three components of an ARIMA model (autoregressive, integrated, moving average) in your own words."
 q8,Q8. Observe the plot on the right. Does the target variable exhibit autocorrelation at a 1-day lag? Explain how you know.
 q9,"Q9. Compare the R2 value between the one-day lag and the current value of your target variable with the R2 values you received when investigating relationships between environmental variables and the target variables in Objective 2, Q6. Which R2 value is the highest, and what does this mean about the relative importance of the one-day lag vs. environmental variables in predicting your target variable?"
-q10,"Q10. Observe the PACF (partial autocorrelation function) plot on the right. Based on this figure, how many lags of the target variable do you anticipate being included in the fitted ARIMA model? Explain your reasoning."
-q11,"Q11. Observe the plot on the right. Based on visual inspection, does differencing substantially improve the stationarity of the target variable data? Explain your reasoning."
+q10,Q10. Observe the PACF (partial autocorrelation function) plot on the right. 
+q10a,"a. Based on this figure, how many lags of the target variable do you anticipate being included in the fitted ARIMA model? Explain your reasoning."
+q10b,"b. Use your answer to Q10a to estimate a good value for the p parameter in the ARIMA(p, d, q) model order for your chosen dataset. Explain your reasoning."
+q11,Q11. Observe the plot on the right. 
+q11a,"a. Based on visual inspection, does differencing substantially improve the stationarity of the target variable data? Explain your reasoning."
+q11b,"b. Use your answer to Q11a to estimate a good value for the d parameter in the ARIMA(p, d, q) model order for your chosen dataset. Explain your reasoning. "
 q12,"Q12. List up to three exogenous regressors that you would like to include in your fitted ARIMA model. For each regressor, explain why you chose to include it in the model. If you choose not to include any regressors, explain your reasoning."
 q13,"Q13. Examine the (p, d, q) order of your ARIMA model printed above. Interpret the order of your ARIMA. "
 q13a,a. Record the order of your ARIMA model printed above.
@@ -35,15 +39,15 @@ q19,Q19. Record the standard deviation of the model residuals.
 q20,"Q20. Inspect the plot of model predictions with uncertainty. Now that you can see the uncertainty associated with model predictions, how well do you think the model predictions fit the observations in the test dataset? Explain your reasoning."
 q21,Q21. Compare your answers to Q17 and Q20. Were there any differences in your interpretation of model fit when you visualized predictions with and without uncertainty? Why do you think this might be?
 q22,Q22. Briefly define (a) RMSE and (b) ignorance score in your own words.
-q23,"Q23. Click ""Assess model"" and record the value of the RMSE and ignorance score for your fitted ARIMA model."
+q23,"Q23. Click ""Assess model"" and record the value of the RMSE and ignorance score for your fitted ARIMA model. Be sure to include the appropriate units for each score as part of your answer."
 q24,Q24. Compare the RMSE and ignorance score for your model to your partner's model. Whose model scored better? Explain your reasoning.
 q25,"Q25. Describe one example of a benefit of using data standards in ecology and environmental science, as well as one example of a risk if data standards are not followed."
 q26,Q26. Is the standardized data format for this module a long or a wide format? Explain how you know.
 q27,Q27. Fill out the following information:
 q27a,a. Minimum number of timesteps required for dataset
 q27b,b. Maximum number of allowed unique values for 'site_id'.
-q27c,c. Maximum number of allowed unique values for 'variable'.
-q27d,"d. Required format of 'date' column, using Y for year, M for month, and D for day."
+q27c,c. Maximum number of allowed unique values for 'variable'
+q27d,"d. Required format of 'date' column, using Y for year, M for month, and D for day"
 q28,Q28. What is the target variable for your dataset?
 q29,"Q29. List the three exogenous regressors that you would like to include in your ARIMA model. For each regressor, explain why you chose to include it in the model. If you choose not to include any regressors, explain your reasoning."
 q30,Q30. Record the proportion of data you chose to use for model training.
@@ -52,9 +56,10 @@ q31a,a. Record the order of your ARIMA model printed above.
 q31b,b. How many lags are included in the model? How do you know?
 q31c,c. Are the data differenced to fit the model? How do you know?
 q31d,d. How many timesteps of previous errors are included in the model? How do you know?
+q31e,e. How similar or different is the order of your ARIMA model to the model you fit in Activity A? Why do you think this is the case?
 q32,"Q32. Which term is most important in your fitted model (i.e., has the greatest absolute value)?"
 q33,Q33. Inspect the plot above. How well do you think the model predictions with uncertainty fit the observations in the test dataset? Explain your reasoning.
-q34,Q34. Record the RMSE and ignorance score for your model.
+q34,Q34. Record the RMSE and ignorance score for your model. Be sure to include the appropriate units for each score as part of your answer.
 q35,"Q35. Briefly describe, in your own words, each of the three additional models you will be fitting to your data."
 q35a,a. autoregressive neural network model (NNETAR)
 q35b,b. historical mean model
@@ -70,3 +75,4 @@ q43,Q43. Record the RMSE and ignorance scores of your four models.
 q44,Q44. Which of your models performs best according to RMSE?
 q45,Q45. Which of your models performs best according to the ignorance score?
 q46,"Q46. Did the more complex models (ARIMA, NNETAR) perform better than the historical mean and/or DOY models? What does this result indicate about the importance of using more complex models (and exogenous regressors if you chose to include them) for predicting the target variable in your chosen dataset?"
+q47,Q47. Use one or both of the peer-reviewed articles provided above (Tredennick et al. is open-access) to help you think of at least one way in which complex ecological models can be useful even if they do not beat simple null models when it comes to prediction of ecological variables.

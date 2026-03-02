@@ -40,7 +40,7 @@ ui <- function(request) {
                              "https://serc.carleton.edu/eddie/teaching_materials/modules/module11.html.", target="_blank"))),
              h2(tags$b("Module 11: Time Series Modeling and Prediction of Environmental Data")),
              bookmarkButton(id = "bookmarkBtn", label = "Bookmark my Activity A progress"),
-             p(tags$em("At any time, use this button to obtain a link that saves your progress in Activity A. Bookmarking for Activities B and C is not supported as these activities require users to upload their own data, which we do not store within the app. Please plan to allocate 45-60 minutes to complete Activities B and C."))
+             p(tags$em("At any time, use this button to obtain a link that saves your progress in Activity A. Bookmarking for Activities B and C is not supported as these activities require users to upload their own data, which we do not store within the app. Please plan to allocate at least 60 minutes to complete Activities B and C."))
              ),
       column(1, align = "right",
              br(),
@@ -243,7 +243,8 @@ ui <- function(request) {
                                  h5("Click the arrows to navigate through the slides", align = "center"),
                                  wellPanel(
                                    slickROutput("slides", width = "600px", height = "450px")
-                                 )
+                                 ),
+                                 p(tags$i("All photos, graphs, and diagrams without credits were taken or developed by the module author team."))
                           )
                         )
                ),
@@ -499,10 +500,7 @@ ui <- function(request) {
                                                       br(),
                                                       p(HTML(paste0("To help you answer Q6, the R",tags$sup("2")," between the X variable you have chosen and the target variable for your focal site is displayed below."))),
                                                       p(HTML(paste0("R",tags$sup("2")," (also called the coefficient of determination) ranges between 0-1 and measures how well an independent variable (here, the X variable you have selected to plot) explains variance in a dependent variable (here, the target variable) in a regression model."))),
-                                                      p(HTML(paste0("The higher the R",tags$sup("2"),", the better the independent variable explains the dependent variable."))),
-                                                      h4(tags$div(
-                                                        HTML(paste("R", tags$sup(2), sep = ""))
-                                                      )),
+                                                      p(HTML(paste0("The higher the R",tags$sup("2"),", the better the independent variable explains the dependent variable. We note here that we’re focused on exploring linear relationships for simplicity, even if the data are not truly linear."))),
                                                       wellPanel(htmlOutput("r2_text")
                                                       ),
                                                       tags$head(
@@ -606,9 +604,6 @@ ui <- function(request) {
                                                       br(), br(),
                                                       p(HTML(paste0("To help you answer Q9, the R",tags$sup("2")," between the one-day lag and the current value of the target variable for your focal site is displayed below."))),
                                                       p(HTML(paste0("Remember, R",tags$sup("2")," varies between 0-1 and the higher the R",tags$sup("2"),", the better the independent variable (in this case, the one-day lag) explains the dependent variable (in this case, the current value of the target variable)."))),
-                                                      h4(tags$div(
-                                                        HTML(paste("R", tags$sup(2), sep = ""))
-                                                      )),
                                                       wellPanel(htmlOutput("r2_lag_text")
                                                       ),
                                                       tags$head(
@@ -648,7 +643,10 @@ ui <- function(request) {
                                                             column(10, offset = 1,
                                                                    h3("Questions"),
                                                                    p(tags$b(quest["q10", 1])),
-                                                                   p(tags$i("Hint: Remember, values close to -1 or 1, such as 0.7 or -0.8, indicate strong autocorrelation, which means that lag is likely to be included in a fitted ARIMA model. Values close to 0, such as 0.1 or -0.2, indicate weak autocorrelation."))
+                                                                   p(tags$b(quest["q10a", 1])),
+                                                                   p(tags$b(quest["q10b", 1])),
+                                                                   p(tags$i("Hint for Q10a: Remember, values close to -1 or 1, such as 0.7 or -0.8, indicate strong autocorrelation, which means that lag is likely to be included in a fitted ARIMA model. Values close to 0, such as 0.1 or -0.2, indicate weak autocorrelation.")),
+                                                                   p(tags$i("Hint for Q10b: Recall that the p parameter is the number of lags included in the ARIMA model."))
                                                             )
                                                           )
                                                       )
@@ -665,7 +663,7 @@ ui <- function(request) {
                                                column(6,
                                                       h3("Differenced time series"),
                                                       p("Recall that the ",tags$b("integrated")," component of an ARIMA model refers to whether or not the time series is differenced to achieve ",tags$b("stationarity")," in the data."),
-                                                      p(tags$b("Stationary"), " data are data whose mean and variance do not vary over time. If data are not stationarity, one method for achieving stationarity is ",tags$b("differencing,"), " or subtracting each value in the time series from the value after it."),
+                                                      p(tags$b("Stationary"), " data are data whose mean and variance do not vary over time. If data are not stationary, one method for achieving stationarity is ",tags$b("differencing,"), " or subtracting each value in the time series from the value after it."),
                                                       p("Let's plot the differenced time series of the target varible for your chosen environmental case study and see whether we think differencing improves the stationarity of the data."),
                                                       actionButton("plot_diff",label = "Plot differenced data"),
                                                       br(),br(),
@@ -675,7 +673,10 @@ ui <- function(request) {
                                                             column(10, offset = 1,
                                                                    h3("Questions"),
                                                                    p(tags$b(quest["q11", 1])),
-                                                                   p(tags$i("Hint: look at slide 5 in the slide deck at the top of this objective page to see examples of non-stationary and stationary data."))
+                                                                   p(tags$b(quest["q11a", 1])),
+                                                                   p(tags$b(quest["q11b", 1])),
+                                                                   p(tags$i("Hint for Q11a: look at slide 5 in the slide deck at the top of this objective page to see examples of non-stationary and stationary data.")),
+                                                                   p(tags$i("Hint for Q11b: Recall that the d parameter is the number of times the data in the ARIMA model are differenced. The plot to the right shows data that are differenced once."))
                                                             )
                                                           )
                                                       )
@@ -709,7 +710,7 @@ ui <- function(request) {
                                              fluidRow(
                                                column(6,
                                                       h3("Decide whether to include exogenous regressors"),
-                                                      p("Optionally, ARIMA models may include ",tags$b("exogenous regressors,")," which are variables other than the target variable that a modeler believes may help explain patterns in the target variable. For example, if your target variable is chlorophyll-a concentrations in a river, you may hypothesize that nutrient concentrations may help explain patterns in chlorophyll-a."),
+                                                      p("Optionally, ARIMA models may include ",tags$b("exogenous regressors,")," which are independent variables other than the target variable that a modeler believes may help explain patterns in the target variable. For example, if your target variable is chlorophyll-a concentrations in a river, you may hypothesize that nutrient concentrations may help explain patterns in chlorophyll-a."),
                                                       p("Before fitting an ARIMA model to the target variable from your environmental case study, consider whether you would like to include any exogenous regressors in the model. For simplicity, we will limit ourselves to a maximum of 3 regressors."),
                                                       p(tags$i("Choose your regressors using the dropdown menu on the right and then answer Q12."))
                                                       ),
@@ -793,6 +794,7 @@ ui <- function(request) {
                                                       h3("Interpret model terms"),
                                                       p("We can look at the estimated values of the coefficients for each model term to determine which model terms are most important for explaining patterns in our target variable"),
                                                       p("Generally speaking, the greater the absolute value of an estimated coefficient (i.e., the farther the value is from 0), the more important that term is in the model."),
+                                                      p("So, if an AR term has the greatest absolute value of an estimated coefficient, a lag was the most useful for making predictions of the target variable. If an MA term has the greatest absolute value of a coefficient, the error from a previous prediction was most useful in making predictions of the target variable. If the coefficient for an exogenous regressor has the greatest absolute value, that regressor was the most important term for making predictions of the target variable."),
                                                       p("Because we standardized our exogenous regressors prior to model fitting, we can directly compare the coefficient values on the regressor terms."),
                                                       p(tags$i("Please use the model coefficient table to answer the questions below.")),
                                                       box(id = "box2", width = 12, status = "primary",
@@ -934,7 +936,7 @@ ui <- function(request) {
                                                       p(tags$em("Use the slides and text below to understand the what the ignorance score is and how we can use it to assess model predictions.")),
                                                       p(tags$b("What is RMSE?")),
                                                       tags$ul(
-                                                        tags$li(tags$b("Root mean square error (RMSE)"), " assesses the performance of a prediction by giving a sense of, on average, how far your predictions are from observed values.")
+                                                        tags$li(tags$b("Root mean square error (RMSE)"), " assesses the performance of a prediction by giving a sense of, on average, how far your predictions are from observed values. The units of RMSE are the same as the units of the target variable.")
                                                       ),
                                                       p(tags$b("How is RMSE interpreted?")),
                                                       tags$ul(
@@ -942,7 +944,7 @@ ui <- function(request) {
                                                       ),
                                                       p(tags$b("What is the ignorance score?")),
                                                       tags$ul(
-                                                        tags$li("The ",tags$b("ignorance score"), " assesses the performance of a prediction based on the probability that a prediction assigns to the eventual outcome. Predictions that place a high probability on the actual outcome score better than predictions that place a low probability on the outcome.")
+                                                        tags$li("The ",tags$b("ignorance score"), " assesses the performance of a prediction based on the probability that a prediction assigns to the eventual outcome. Predictions that place a high probability on the actual outcome score better than predictions that place a low probability on the outcome. The unit of the ignorance score is ",tags$i("nats."))
                                                       ),
                                                       p(tags$b("How is the ignorance score interpreted?")),
                                                       tags$ul(
@@ -1112,7 +1114,8 @@ ui <- function(request) {
                                                       selectizeInput("actB_dataset", "Option 2 only: Pick a dataset", choices = actB_choices),
                                                       tableOutput("preview_actB_dataset"),
                                                       column(6,
-                                                             downloadButton("download_actB_dataset", "Download .csv")
+                                                             downloadButton("download_actB_dataset", "Download .csv"),
+                                                             p(tags$i("If you open this file in Microsoft Excel, you may get a message asking you whether you would like to convert numbers into scientific notation. You should select 'Don't convert'."))
                                                              ),
                                                       column(6,
                                                              downloadButton("download_actB_metadata", "Download metadata")
@@ -1229,7 +1232,8 @@ ui <- function(request) {
                                                                    p(tags$b(quest["q31a", 1])),
                                                                    p(tags$b(quest["q31b", 1])),
                                                                    p(tags$b(quest["q31c", 1])),
-                                                                   p(tags$b(quest["q31d", 1]))
+                                                                   p(tags$b(quest["q31d", 1])),
+                                                                   p(tags$b(quest["q31e", 1]))
                                                             )
                                                           )
                                                       )
@@ -1246,6 +1250,7 @@ ui <- function(request) {
                                                       h3("Interpret model terms"),
                                                       p("As a reminder, we can look at the estimated values of the coefficients for each model term to determine which model terms are most important for explaining patterns in our target variable"),
                                                       p("Generally speaking, the greater the absolute value of an estimated coefficient (i.e., the farther the value is from 0), the more important that term is in the model."),
+                                                      p("So, if an AR term has the greatest absolute value of an estimated coefficient, a lag was the most useful for making predictions of the target variable. If an MA term has the greatest absolute value of a coefficient, the error from a previous prediction was most useful in making predictions of the target variable. If the coefficient for an exogenous regressor has the greatest absolute value, that regressor was the most important term for making predictions of the target variable."),
                                                       p("Because we standardized our exogenous regressors prior to model fitting, we can directly compare the coefficient values on the regressor terms."),
                                                       p(tags$i("Please use the model coefficient table to answer the questions below.")),
                                                       box(id = "box2", width = 12, status = "primary",
@@ -1431,6 +1436,7 @@ ui <- function(request) {
                                                                    p(tags$b(quest["q35a", 1])),
                                                                    p(tags$b(quest["q35b", 1])),
                                                                    p(tags$b(quest["q35c", 1])),
+                                                                   p(tags$i("Hint: review the slides to learn more about the differences among these models.")),
                                                                    p(tags$b(quest["q36", 1]))
                                                             )
                                                           )
@@ -1555,7 +1561,13 @@ ui <- function(request) {
                                                                    p(tags$b(quest["q43", 1])),
                                                                    p(tags$b(quest["q44", 1])),
                                                                    p(tags$b(quest["q45", 1])),
-                                                                   p(tags$b(quest["q46", 1]))
+                                                                   p(tags$i("It is common in ecology and environmental science for null models to perform extremely well compared to more complex models when it comes to prediction. However, this does not mean that more complex ecological models are not useful. Often, they can provide researchers with a better understanding of ecological systems, even if they do not make particularly accurate predictions. For more information related to this idea, we recommend the following papers:")),
+                                                                   tags$ul(
+                                                                     tags$li(tags$i("Rastetter, E.B. Modeling for Understanding v. Modeling for Numbers. Ecosystems 20, 215–221 (2017). ",a(href = "https://doi.org/10.1007/s10021-016-0067-y", "https://doi.org/10.1007/s10021-016-0067-y", target = "_blank"))),
+                                                                     tags$li(tags$i("Tredennick, A. T., Hooker, G., Ellner, S. P., & Adler, P. B. (2021). A practical guide to selecting models for exploration, inference, and prediction in ecology. Ecology, 1–44. ",a(href = "https://doi.org/10.1002/ecy.3336", "https://doi.org/10.1002/ecy.3336", target = "_blank")))
+                                                                   ),
+                                                                   p(tags$b(quest["q46", 1])),
+                                                                   p(tags$b(quest["q47", 1]))
                                                             )
                                                           )
                                                       )

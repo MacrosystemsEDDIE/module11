@@ -310,8 +310,9 @@ server <- function(input, output, session) {#
     
     sum_stat <- summary(site_DT()$data)
     ridx <- grep(input$stat_calc, sum_stat[, ncol(sum_stat)])
-    out_stat <- sum_stat[ridx, ncol(sum_stat)]
-    
+    out_stat_num <- str_split_i(sum_stat[ridx, ncol(sum_stat)], pattern = ":", i = 2)
+    out_stat <- paste0(input$stat_calc," = ",out_stat_num)
+
     return(out_stat)
   })
   
@@ -699,8 +700,6 @@ server <- function(input, output, session) {#
   
   observeEvent(input$table01_rows_selected, {
     
-    print(restoreState())
-    
     if (!restoreState()){   
     validate(
       need(input$table01_rows_selected != "",
@@ -720,7 +719,6 @@ server <- function(input, output, session) {#
     multi.select$lst <- select_list[-1]
     
     updateSelectizeInput(session, "select", choices = multi.select$lst)
-    print("I ran!")
     }
     restoreState(F)
     
@@ -1145,8 +1143,6 @@ server <- function(input, output, session) {#
   
   observe({
     
-    message(paste0("model_refit_tt pre-refit in obj. 4",actA.arima$model_refit_tt))
-    
     if(input$no_reg == FALSE){
 
     output$arima_plot <- renderPlotly({ 
@@ -1271,8 +1267,6 @@ server <- function(input, output, session) {#
     actA.arima$model_refit_preduc = TRUE
     actA.arima$model_refit_rmse = TRUE
     actA.arima$model_refit_ign = TRUE
-    
-    message(paste0("model_refit_tt post-refit in obj. 4",actA.arima$model_refit_tt))
     
   })  %>%
     bindEvent(input$fit_arima)
@@ -1521,8 +1515,6 @@ server <- function(input, output, session) {#
   
   observe({
     
-    message(paste0("model_refit_tt pre-plot in obj. 5",actA.arima$model_refit_tt))
-    
     if(actA.arima$model_refit_tt == TRUE){
     
     output$train_test_plot <- renderPlotly({ 
@@ -1662,8 +1654,6 @@ server <- function(input, output, session) {#
         
       })
     }
-    
-    message(paste0("model_refit_tt post-plot in obj. 5",actA.arima$model_refit_tt))
     
   }) %>%
     bindEvent(input$fit_arima, input$select, input$no_reg, input$table01_rows_selected)
@@ -3390,8 +3380,6 @@ server <- function(input, output, session) {#
       
       actB.arima$nrow_model_df <- nrow(model_df4)
       
-      message(actB.arima$nrow_model_df)
-      
       validate(
         need(actB.arima$nrow_model_df >= 60,
              message = "You are using fewer than 60 data points for model training. Please select a larger proportion of your data for training.")
@@ -3479,8 +3467,6 @@ server <- function(input, output, session) {#
           select(all_of(col_names)) 
         
         actB.arima$nrow_model_df <- nrow(model_df4)
-        
-        message(actB.arima$nrow_model_df)
         
         validate(
           need(actB.arima$nrow_model_df >= 60,
@@ -3619,8 +3605,7 @@ server <- function(input, output, session) {#
     
     track.fit_arima2$plot_val = 1
     track.fit_arima2$order_val = 1
-    message(paste0("Tracker in Obj. 7: ",track.fit_arima2$plot_val))
-    
+
     output$arima_plot2 <- renderPlotly({ 
       
       validate(
@@ -4932,8 +4917,6 @@ server <- function(input, output, session) {#
   
   observe({
 
-    message(paste0("Tracker in Obj. 9 pre-plot: ",track.fit_arima2$plot_val))
-    
     if(track.fit_arima2$plot_val == 1){
 
     output$plot_models <- renderPlotly({ 
@@ -5094,8 +5077,7 @@ server <- function(input, output, session) {#
     track.fit_arima2$resid_val = 1
     track.fit_arima2$pred_val = 1
     track.fit_arima2$ign_val = 1
-    message(paste0("Tracker in Obj. 9 post-plot: ",track.fit_arima2$plot_val))
-    
+
     } else {
       
       output$plot_models <- renderPlotly({ 
@@ -6552,13 +6534,6 @@ server <- function(input, output, session) {#
           "Don't forget to save your progress as you go just in case you lose your internet connection. Click 'Bookmark my progress' at the top of the page and copy-paste the link into your report.")
       )
       save_prompt$times <- save_prompt$times+1
-    } else if(input$maintab == "mtab5" & input$tabseries2 == "obj8" & save_prompt$times < 2) {
-      showModal(
-        modalDialog(
-          title = "Save Progress",
-          "Don't forget to save your progress as you go just in case you lose your internet connection. Click 'Bookmark my progress' at the top of the page and copy-paste the link into your report.")
-      )
-      save_prompt$times <- save_prompt$times+1
     } else {
 
     curr_tab1 <- input$maintab
@@ -6700,7 +6675,6 @@ server <- function(input, output, session) {#
 
   # Read values from state$values when we restore
   onRestore(function(state) {
-    print(paste("begin onRestore",restoreState()))
     updateTabsetPanel(session, "maintab",
                       selected = "mtab4")
     updateTabsetPanel(session, "tabseries1",
@@ -6709,7 +6683,6 @@ server <- function(input, output, session) {#
     updateSelectizeInput(session, "select", choices = state$values$sel_choices, selected = state$values$sel_reg)
     multi.select$lst <- state$values$sel_choices
     restoreState(T)
-    print(paste("end onRestore",restoreState()))
   })
 
   # observe({
