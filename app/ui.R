@@ -758,6 +758,7 @@ ui <- function(request) {
                                                column(6,
                                                       h3("Fit ARIMA model"),
                                                       p("Click the button below to fit an ARIMA model to the target variable from your selected environmental case study, including the regressors you have chosen above."),
+                                                      p("The model selection algorithm will automatically select the (p, d, q) order of your model, based on patterns in your data."),
                                                       p(tags$b("Important Note! We are only using 80% of the available data to fit the ARIMA model. This leaves 20% of the data to be used for model assessment in Objective 5.")),
                                                       actionButton("fit_arima",label = "Fit ARIMA"),
                                                       br(),br(),
@@ -944,7 +945,7 @@ ui <- function(request) {
                                                       ),
                                                       p(tags$b("What is the ignorance score?")),
                                                       tags$ul(
-                                                        tags$li("The ",tags$b("ignorance score"), " assesses the performance of a prediction based on the probability that a prediction assigns to the eventual outcome. Predictions that place a high probability on the actual outcome score better than predictions that place a low probability on the outcome. The unit of the ignorance score is ",tags$i("nats."))
+                                                        tags$li("The ",tags$b("ignorance score"), " assesses the performance of a prediction based on the probability that a prediction assigns to the eventual outcome. Predictions that place a high probability on the actual outcome score better than predictions that place a low probability on the outcome. The unit of the ignorance score is ",tags$i("nats,")," which is the natural logarithm of the probability density.")
                                                       ),
                                                       p(tags$b("How is the ignorance score interpreted?")),
                                                       tags$ul(
@@ -1103,7 +1104,7 @@ ui <- function(request) {
                                                       h4("Option 1"),
                                                       p("Your instructor will provide you with datasets or other resources which you can use to find datasets to upload to the module. In this case, you will be responsible for 'wrangling' your own data into the correct format for the module, with assistance from your instructor."),
                                                       h4("Option 2"),
-                                                      p("You may select one of the datasets provided with the module to upload. We currently provide one dataset for each case study in the module, typically from a different site than is used in Activity A. ",tags$b("Be warned! Each of the provided datasets has a formatting flaw which you will need to fix before you will be able to successfully re-upload the dataset to the module.")," This is to provide you with practice in 'wrangling' data to meet data standards."),
+                                                      p("You may select one of the datasets provided with the module to upload. We currently provide one dataset for each case study in the module, typically from a different site than is used in Activity A. ",tags$b("Be warned! Each of the provided datasets has a formatting flaw which you will need to fix before you will be able to successfully re-upload the dataset to the module.")," This is to provide you with practice in 'wrangling' data to meet data standards. For example, you may need to adjust the date format to match what is required by the module."),
                                                       wellPanel(
                                                         h4(tags$b("Option 2 Only: About Site")),
                                                         textOutput("actB_site_info"),
